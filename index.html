@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V20.0 FLOW MASTER</title>
+    <title>3 LINE-AR | V21.0 DIRECT</title>
     
-    <!-- Dependencias -->
+    <!-- Tailwind & Estilos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { 
@@ -24,20 +24,19 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* FONDO GENERAL */
+        /* FONDO */
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #050510 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
         
         canvas { display: block; outline: none; } 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
         
-        /* PANELES UI */
+        /* UI ELEMENTS */
         .glass-panel {
             background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 40px rgba(0, 243, 255, 0.15);
             border-radius: 12px;
         }
-        
         .btn-neon {
             background: linear-gradient(180deg, rgba(0,243,255,0.1), rgba(0,243,255,0));
             border: 1px solid #00f3ff; color: #00f3ff; font-weight: 800;
@@ -59,7 +58,7 @@
         .rolling { animation: shake 0.4s infinite; background: #00f3ff; color: #000; text-shadow: none; }
         @keyframes shake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
 
-        /* MENSAJES */
+        /* TOAST & LOADERS INTERNOS */
         .toast-box {
             background: #000; border: 1px solid #00f3ff; border-left-width: 5px;
             padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace';
@@ -67,18 +66,16 @@
         }
         .toast-box.show { transform: translateY(0); opacity: 1; }
 
-        /* LOADER */
-        #loader { position: absolute; inset: 0; background: black; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; pointer-events: auto; }
-        .scanner { width: 200px; height: 2px; background: #00f3ff; box-shadow: 0 0 15px #00f3ff; animation: scan 1.5s infinite ease-in-out; }
-        @keyframes scan { 0%,100% { transform: scaleX(0); opacity: 0; } 50% { transform: scaleX(1); opacity: 1; } }
-
+        /* Mini Loader (Solo texto, no bloqueante) */
+        #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
+        
         /* SELECTOR */
         .opt { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: 0.2s; transform: scale(0.9); }
         .opt.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
         .opt-i { font-size: 20px; color: #555; transition: 0.2s; cursor: pointer; }
         .opt-i.active { color: #00f3ff; transform: scale(1.2); text-shadow: 0 0 10px #00f3ff; }
 
-        /* AR Button Override */
+        /* AR Button Fix */
         #ar-zone button {
             background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important;
             color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
@@ -91,32 +88,26 @@
 <body>
     <canvas id="bg-canvas"></canvas>
 
-    <!-- 1. PANTALLA DE CARGA INICIAL (Visible por defecto) -->
-    <div id="loader">
-        <h2 class="text-4xl font-black text-white mb-4 tracking-widest italic">CARGANDO</h2>
-        <div class="scanner mb-4"></div>
-        <p id="load-msg" class="text-[10px] text-cyber font-mono uppercase tracking-widest">INICIALIZANDO SISTEMA...</p>
-    </div>
-
     <!-- CAPA UI -->
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
-        <!-- 2. LOGIN -->
-        <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50 hidden">
+        <!-- 1. PANTALLA LOGIN (VISIBLE POR DEFECTO - SIN CARGA BLOQUEANTE) -->
+        <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
                 <div class="text-6xl text-cyber animate-pulse-fast drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]"><i class="fas fa-cube"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V20.0 FLOW MASTER</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V21.0 DIRECT ACCESS</p>
                 </div>
+                <!-- Botón listo para usar de inmediato -->
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
                 </button>
-                <p class="text-[9px] text-gray-600">ACCESO SEGURO REQUERIDO</p>
+                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA EN ESPERA</p>
             </div>
         </div>
 
-        <!-- 3. MENÚ (PERFIL Y SELECCIÓN) -->
+        <!-- 2. MENÚ PRINCIPAL -->
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
             <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
                 <!-- Cabecera -->
@@ -137,7 +128,7 @@
                         <div class="flex gap-2" id="c-pick">
                             <div onclick="window.setProf('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 10px #00f3ff"></div>
                             <div onclick="window.setProf('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
-                            <div onclick="window.setOpt('c','#39ff14',this)" class="opt bg-[#39ff14]"></div>
+                            <div onclick="window.setProf('c','#39ff14',this)" class="opt bg-[#39ff14]"></div>
                             <div onclick="window.setProf('c','#ffd700',this)" class="opt bg-[#ffd700]"></div>
                         </div>
                     </div>
@@ -175,7 +166,7 @@
             </div>
         </div>
 
-        <!-- 4. JUEGO HUD -->
+        <!-- 3. JUEGO HUD -->
         <div id="s-game" class="hidden flex flex-col justify-between h-full pointer-events-none relative z-10">
             <!-- Top Bar -->
             <div class="interactive glass-panel p-3 flex justify-between items-center mt-2 mx-2 backdrop-blur-md">
@@ -207,6 +198,12 @@
                 <span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">
                     SALA: <span id="room-lbl" class="text-white">--</span>
                 </span>
+            </div>
+
+            <!-- Loader Interno (No Bloqueante) -->
+            <div id="mini-loader" class="hidden text-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div>
+                <span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span>
             </div>
 
             <!-- Mensajes -->
@@ -254,7 +251,7 @@
         let app, auth, db;
         try { app = initializeApp(CONF); auth = getAuth(app); db = getFirestore(app); } catch(e) { console.error(e); }
 
-        // AUDIO
+        // AUDIO SYSTEM
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -301,36 +298,32 @@
             } else el.innerText="MODO 3D (PC)";
         }
 
-        // --- LOGICA DE ESTADO (CORREGIDA) ---
-        
-        // 1. Fallback de Seguridad: Si en 3 segundos Firebase no responde, ir a Login
-        setTimeout(() => {
-            const loader = document.getElementById('loader');
-            if(!loader.classList.contains('hidden') && !S.user) {
-                nav('s-login'); // Forzar login si se traba
-            }
-        }, 3000);
-
+        // --- AUTH ---
+        // Solo escuchamos cambios. El HTML ya muestra LOGIN por defecto.
         onAuthStateChanged(auth, async u => {
             S.user = u;
             if(u) {
-                // SI HAY USUARIO -> IR A MENU
+                // Si hay usuario, saltamos al menú
                 document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE';
-                nav('s-menu'); // Ocultar loader y login, mostrar menu
+                nav('s-menu'); 
                 checkAR();
-            } else {
-                // NO HAY USUARIO -> IR A LOGIN
-                nav('s-login');
             }
+            // Si no hay usuario, nos quedamos en s-login (que ya es visible por HTML)
         });
 
-        window.doLogin = async () => { try{ await signInWithPopup(auth, new GoogleAuthProvider()); }catch(e){ alert("Error Auth"); } };
-        window.logout = () => { if(confirm("¿Salir?")) signOut(auth).then(()=>location.reload()); };
+        window.doLogin = async () => { 
+            try{ 
+                document.getElementById('login-msg').innerText = "CONECTANDO...";
+                await signInWithPopup(auth, new GoogleAuthProvider()); 
+            } catch(e) { 
+                alert("Por favor, permite las ventanas emergentes para iniciar sesión."); 
+                document.getElementById('login-msg').innerText = "ERROR: POPUP BLOQUEADO";
+            } 
+        };
+        
+        window.logout = () => { if(confirm("¿Cerrar sesión?")) signOut(auth).then(()=>location.reload()); };
 
         function nav(id) {
-            // Ocultar Loader siempre que navegamos
-            document.getElementById('loader').classList.add('hidden');
-            
             ['s-login','s-menu','s-game'].forEach(i => document.getElementById(i).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
@@ -347,16 +340,15 @@
         }
         window.showJoin = () => document.getElementById('join-box').classList.remove('hidden');
         
-        // Nueva función de loading interno (solo texto overlay)
         function showLoad(show, txt) {
-            const l = document.getElementById('loader');
-            if(show) { l.classList.remove('hidden'); document.getElementById('load-msg').innerText=txt; } 
+            const l = document.getElementById('mini-loader');
+            if(show) { l.classList.remove('hidden'); document.getElementById('mini-load-txt').innerText=txt; } 
             else l.classList.add('hidden');
         }
 
         // ROOMS
         window.quickMatch = async () => {
-            S.cpu=false; showLoad(true,"BUSCANDO RIVAL...");
+            S.cpu=false; showLoad(true,"BUSCANDO...");
             try {
                 const q = await getDocs(collection(db,'artifacts',APP_ID,'rooms'));
                 let f=null; for(const d of q.docs) { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) { f=d.id; break; } }
@@ -373,14 +365,14 @@
 
         async function create(pub) {
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
-            showLoad(true,"CALIBRANDO...");
+            showLoad(true,"CREANDO...");
             await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
                 host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
             });
             sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
         async function join(c) {
-            S.role='guest'; S.room=c; showLoad(true,"SINCRONIZANDO...");
+            S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
             await updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
             sub(c); document.getElementById('room-lbl').innerText=c;
         }
@@ -390,11 +382,11 @@
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
-                    else if(S.role==='host') showLoad(true,"ESPERANDO RIVAL...");
+                    else if(S.role==='host') showLoad(true,"ESPERANDO...");
                 }
             });
         }
-        function start() { showLoad(false); nav('s-game'); init3D(); toast("SISTEMA","RED NEURONAL ACTIVA"); }
+        function start() { showLoad(false); nav('s-game'); init3D(); toast("SISTEMA","LISTO"); }
 
         // GAMEPLAY
         window.rollDice = () => {
