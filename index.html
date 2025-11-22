@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V24.0 LOGIC PERFECT</title>
+    <title>3 LINE-AR | V26.0 FINAL FIXED</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -58,7 +58,7 @@
         .rolling { animation: shake 0.4s infinite; background: #00f3ff; color: #000; text-shadow: none; }
         @keyframes shake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
 
-        /* TOAST & LOADERS */
+        /* TOAST */
         .toast-box {
             background: #000; border: 1px solid #00f3ff; border-left-width: 5px;
             padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace';
@@ -66,22 +66,23 @@
         }
         .toast-box.show { transform: translateY(0); opacity: 1; }
 
-        #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
-        
-        /* PANTALLA DE VICTORIA */
-        #win-screen { position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: auto; }
+        /* PANTALLA DE VICTORIA (CORREGIDA: SIN DISPLAY FLEX FORZADO) */
+        #win-screen { 
+            position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 60; 
+            pointer-events: auto;
+            /* Eliminado display: flex para que Tailwind controle la visibilidad */
+        }
 
-        /* SELECTOR ARREGLADO */
+        /* SELECTOR */
         .opt { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: 0.2s; transform: scale(0.9); }
         .opt.active { border-color: white; transform: scale(1.2); box-shadow: 0 0 20px currentColor; border-width: 2px; }
         .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; }
         .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
-        /* AR Button Override */
         #ar-zone button {
             background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important;
             color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
-            border-radius: 6px !important; text-transform: uppercase !important; letter-spacing: 1px !important;
+            border-radius: 6px !important; text-transform: uppercase !important;
         }
     </style>
 
@@ -90,21 +91,20 @@
 <body>
     <canvas id="bg-canvas"></canvas>
 
-    <!-- UI LAYER -->
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
         <!-- 1. LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
-                <div class="text-6xl text-cyber animate-pulse-fast drop-shadow-[0_0_20px_rgba(0,243,255,0.6)]"><i class="fas fa-cube"></i></div>
+                <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-shield-virus"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V24.0 LOGIC PERFECT</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V26.0 FINAL FIXED</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
-                    <i class="fab fa-google"></i> INICIAR SESIÓN
+                    <i class="fab fa-google"></i> CONECTAR
                 </button>
-                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA EN ESPERA</p>
+                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA ONLINE</p>
             </div>
         </div>
 
@@ -116,7 +116,6 @@
                     <button onclick="window.logout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
                 </div>
 
-                <!-- Personalización -->
                 <div class="bg-white/5 p-4 rounded border border-white/10">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-[9px] text-gray-400 font-bold">COLOR</span>
@@ -170,8 +169,6 @@
             
             <div class="text-center mt-2 pointer-events-none"><span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">SALA: <span id="room-lbl" class="text-white">--</span></span></div>
 
-            <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span></div>
-
             <div class="flex justify-center items-center flex-grow pointer-events-none">
                 <div id="toast" class="toast-box text-center"><p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">SISTEMA</p><p id="t-body" class="text-sm tracking-wide">Mensaje</p></div>
             </div>
@@ -182,10 +179,10 @@
             </div>
         </div>
 
-        <!-- WIN SCREEN -->
-        <div id="win-screen" class="hidden">
-            <h1 id="win-title" class="text-6xl font-black text-cyber mb-2 animate-pulse">VICTORIA</h1>
-            <p id="win-msg" class="text-white font-mono mb-8 tracking-widest">AGENTE DOMINANTE</p>
+        <!-- WIN SCREEN (ARREGLADO: Clases Tailwind controlan la visibilidad) -->
+        <div id="win-screen" class="hidden flex-col justify-center items-center">
+            <h1 id="win-title" class="text-6xl font-black text-cyber mb-2 animate-pulse text-center">VICTORIA</h1>
+            <p id="win-msg" class="text-white font-mono mb-8 tracking-widest text-center">AGENTE DOMINANTE</p>
             <div class="flex gap-8 text-center mb-8">
                 <div><span class="text-gray-500 text-xs block">TU PUNTAJE</span><span id="final-p1" class="text-4xl font-bold text-white">0</span></div>
                 <div><span class="text-gray-500 text-xs block">RIVAL</span><span id="final-p2" class="text-4xl font-bold text-white">0</span></div>
@@ -201,7 +198,6 @@
 
     <div id="ar-zone" class="absolute bottom-8 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
 
-    <!-- SCRIPT -->
     <script type="module">
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
@@ -298,17 +294,24 @@
         window.logout = () => { if(confirm("¿Salir?")) signOut(auth).then(()=>location.reload()); };
 
         function nav(id) {
-            ['s-login','s-menu','s-game','win-screen'].forEach(i => document.getElementById(i).classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
+            ['s-login','s-menu','s-game','win-screen'].forEach(i => {
+                const el = document.getElementById(i);
+                el.classList.add('hidden');
+                if(i === 'win-screen') el.classList.remove('flex'); // Fix flex
+            });
+            const target = document.getElementById(id);
+            target.classList.remove('hidden');
+            if(id === 'win-screen') target.classList.add('flex'); // Add flex only when shown
         }
         
         window.goHome = () => {
-            if(roomUnsub) roomUnsub(); roomUnsub=null; nav('s-menu');
+            if(roomUnsub) roomUnsub(); roomUnsub=null; 
+            S.room = null; S.data = null;
+            nav('s-menu');
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
             toast("SISTEMA", "DESCONECTADO");
         }
         
-        // FIX: LLAMADA CORRECTA DESDE HTML
         window.setProf = (t,v,el) => {
             S.prof[t]=v; 
             const parent = el.parentNode; 
@@ -322,16 +325,15 @@
             else { el.style.color='#00f3ff'; el.style.textShadow='0 0 10px #00f3ff'; el.style.transform='scale(1.2)'; }
         }
         window.showJoin = () => document.getElementById('join-box').classList.remove('hidden');
-        function showLoad(show, txt) { const l = document.getElementById('mini-loader'); if(show) { l.classList.remove('hidden'); document.getElementById('mini-load-txt').innerText=txt; } else l.classList.add('hidden'); }
 
         // ROOMS
         window.quickMatch = async () => {
-            S.cpu=false; showLoad(true,"BUSCANDO...");
+            S.cpu=false; toast("BUSCANDO...","RED");
             try {
                 const q = await getDocs(collection(db,'artifacts',APP_ID,'rooms'));
                 let f=null; for(const d of q.docs) { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) { f=d.id; break; } }
                 if(f) join(f); else create(true);
-            } catch(e) { showLoad(false); toast("ERROR","Sin Red. Modo CPU."); setTimeout(window.vsCpu,1500); }
+            } catch(e) { toast("ERROR","Sin Red. Modo CPU."); setTimeout(window.vsCpu,1500); }
         };
         window.createRoom = () => create(false);
         window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
@@ -343,14 +345,13 @@
 
         async function create(pub) {
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
-            showLoad(true,"CREANDO...");
             await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
                 host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof
             });
             sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
         async function join(c) {
-            S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
+            S.role='guest'; S.room=c;
             await updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
             sub(c); document.getElementById('room-lbl').innerText=c;
         }
@@ -361,18 +362,17 @@
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
                     else if(d.stat==='end') endGame(d);
-                    else if(S.role==='host') showLoad(true,"ESPERANDO...");
                 }
             });
         }
-        function start() { showLoad(false); nav('s-game'); init3D(); toast("SISTEMA","LISTO"); }
+        function start() { nav('s-game'); init3D(); toast("SISTEMA","LISTO"); }
 
         // GAMEPLAY
         window.rollDice = () => {
             const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Rival"); if(d.movs>0) return toast("JUEGA","Usa tus líneas");
             const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
             setTimeout(()=>{
-                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v, skips:0}); // Reset skips on roll
+                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v, skips:0});
                 toast("DADO",`ENERGÍA: ${v}`);
             },500);
         };
@@ -382,48 +382,29 @@
             if(d.turn===S.role) {
                 const t = d.turn==='host'?'guest':'host'; 
                 const newSkips = (d.skips || 0) + 1;
-                
-                if(newSkips >= 2) {
-                    update({stat:'end'});
-                } else {
-                    update({movs:0, turn:t, dice:null, skips:newSkips}); 
-                    toast("SISTEMA", "TURNO SALTADO");
-                }
+                if(newSkips >= 2) update({stat:'end'});
+                else { update({movs:0, turn:t, dice:null, skips:newSkips}); toast("SISTEMA", "TURNO SALTADO"); }
             }
         };
 
         function endGame(d) {
-            // SOLO MOSTRAR SI NO ESTAMOS YA EN EL MENU
-            if(!document.getElementById('s-menu').classList.contains('hidden')) return;
-            
-            nav('win-screen');
-            playSfx('end');
+            // CRITICAL CHECK: Only show if game was active
+            if(document.getElementById('s-game').classList.contains('hidden')) return;
+            nav('win-screen'); playSfx('end');
             const win = d.sc.host > d.sc.guest ? 'HOST' : (d.sc.host < d.sc.guest ? 'GUEST' : 'DRAW');
             const isMe = (win === 'HOST' && S.role === 'host') || (win === 'GUEST' && S.role === 'guest');
             
-            const tit = document.getElementById('win-title');
-            const msg = document.getElementById('win-msg');
-            
-            if(win === 'DRAW') {
-                tit.innerText = "EMPATE"; tit.className = "text-6xl font-black text-warn mb-2";
-                msg.innerText = "SIN DOMINIO CLARO";
-            } else if(isMe) {
-                tit.innerText = "VICTORIA"; tit.className = "text-6xl font-black text-neon mb-2 animate-pulse";
-                msg.innerText = "DOMINIO TOTAL";
-            } else {
-                tit.innerText = "DERROTA"; tit.className = "text-6xl font-black text-hot mb-2";
-                msg.innerText = "TERRITORIO PERDIDO";
-            }
+            const tit = document.getElementById('win-title'); const msg = document.getElementById('win-msg');
+            if(win === 'DRAW') { tit.innerText = "EMPATE"; tit.className = "text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "SIN DOMINIO"; }
+            else if(isMe) { tit.innerText = "VICTORIA"; tit.className = "text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL"; }
+            else { tit.innerText = "DERROTA"; tit.className = "text-6xl font-black text-hot mb-2 text-center"; msg.innerText = "TERRITORIO PERDIDO"; }
             document.getElementById('final-p1').innerText = S.role==='host' ? d.sc.host : d.sc.guest;
             document.getElementById('final-p2').innerText = S.role==='host' ? d.sc.guest : d.sc.host;
         }
 
         function update(o) {
-            if(S.cpu) { 
-                Object.assign(S.data,o); 
-                if(S.data.stat === 'end') endGame(S.data);
-                else ui(); 
-            } else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
+            if(S.cpu) { Object.assign(S.data,o); if(S.data.stat === 'end') endGame(S.data); else ui(); } 
+            else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
         }
 
         function ui() {
@@ -454,7 +435,7 @@
             const sc={...d.sc}; if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); toast("CONQUISTA","¡Nexo Cerrado!"); }
             
             let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
-            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0}); // Reset skips on move
+            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
         }
 
         function checkTri(p1,p2,o,ls) {
@@ -477,10 +458,8 @@
                 let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
                 update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
             } else {
-                // CPU SKIPS
                 const newSkips = (S.data.skips || 0) + 1;
-                if(newSkips >= 2) update({stat:'end'});
-                else update({movs:0, turn:'host', dice:null, skips:newSkips});
+                if(newSkips >= 2) update({stat:'end'}); else update({movs:0, turn:'host', dice:null, skips:newSkips});
             }
         }
 
