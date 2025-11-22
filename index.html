@@ -31,6 +31,18 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            overflow: hidden; /* Para contener el patrón */
+        }
+
+        /* Patrón de Triángulos para Tarjetas */
+        .glass-pattern::before {
+            content: "";
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20L40 0H0L20 20z' fill='%23ffffff' fill-opacity='0.03'/%3E%3C/svg%3E");
+            background-size: 20px 20px;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: -1;
         }
 
         .neon-title { color: #fff; text-shadow: 0 0 15px currentColor; transition: color 1s, text-shadow 1s; }
@@ -100,12 +112,12 @@
 
     <canvas id="bg-canvas"></canvas>
     <div class="scanline"></div>
-    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V5.1.0 VISUAL-UPGRADE</div>
+    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V5.2.0 NET-RESILIENT</div>
 
     <div id="ui-layer" class="flex flex-col justify-center items-center p-4 overflow-y-auto min-h-screen bg-black/40">
         
-        <!-- 1. LOGIN SCREEN (Ahora es el primero) -->
-        <div id="screen-login" class="interactive glass p-8 md:p-10 rounded-lg max-w-md w-full text-center fade-in hidden z-50 relative border-t-4 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]">
+        <!-- 1. LOGIN SCREEN -->
+        <div id="screen-login" class="interactive glass glass-pattern p-8 md:p-10 rounded-lg max-w-md w-full text-center fade-in hidden z-50 relative border-t-4 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]">
             <div class="relative z-10">
                 <div class="mb-8 flex justify-center relative">
                     <div class="absolute inset-0 bg-cyan-500 blur-[90px] opacity-20 rounded-full animate-pulse"></div>
@@ -137,8 +149,8 @@
             </div>
         </div>
 
-        <!-- 2. PANTALLA DE VERIFICACIÓN (Después del Login, Solo 1 vez) -->
-        <div id="screen-permissions" class="interactive glass p-8 rounded-lg max-w-md w-full text-left fade-in hidden z-50 relative border-t-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+        <!-- 2. PANTALLA DE VERIFICACIÓN -->
+        <div id="screen-permissions" class="interactive glass glass-pattern p-8 rounded-lg max-w-md w-full text-left fade-in hidden z-50 relative border-t-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
             
             <div class="mb-6 flex justify-center">
                 <div class="relative">
@@ -149,11 +161,11 @@
             </div>
 
             <h2 class="text-xl font-orbitron font-bold text-yellow-400 mb-4 flex items-center justify-center gap-3 uppercase tracking-wider border-b border-white/10 pb-4">
-                <i class="fas fa-check-circle"></i> Activación de Cuenta
+                <i class="fas fa-check-circle"></i> Activación
             </h2>
             
             <p class="text-gray-400 text-xs mb-6 font-mono leading-relaxed text-center">
-                Hola <span id="verify-username" class="text-white font-bold">Operador</span>. Para completar tu registro y habilitar funciones multijugador, necesitamos verificar tu conexión y permisos.
+                Hola <span id="verify-username" class="text-white font-bold">Operador</span>. Completando sincronización de protocolos de seguridad.
             </p>
 
             <div class="space-y-3 mb-6">
@@ -174,7 +186,7 @@
                     <span id="perm-error-msg">...</span>
                 </div>
                 <button onclick="forceAuthorize()" class="mt-3 text-[10px] underline text-red-300 hover:text-white">
-                    Ignorar error y continuar
+                    Ignorar error y continuar (Modo Riesgo)
                 </button>
             </div>
 
@@ -183,19 +195,19 @@
                 <label class="flex items-start gap-3 cursor-pointer group">
                     <input type="checkbox" id="check-terms" class="cyber-check" onchange="checkPermissions()">
                     <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
-                        He leído y acepto los <a href="#" onclick="openTerms(event)" class="text-yellow-500 hover:text-yellow-300 underline">Términos de Servicio</a>.
+                        Acepto los <a href="#" onclick="openTerms(event)" class="text-yellow-500 hover:text-yellow-300 underline">Términos de Servicio</a>.
                     </span>
                 </label>
                 <label class="flex items-start gap-3 cursor-pointer group">
                     <input type="checkbox" id="check-storage" class="cyber-check" onchange="checkPermissions()">
                     <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
-                        Permito guardar mi progreso en la nube.
+                        Permito guardar mi progreso localmente.
                     </span>
                 </label>
             </div>
 
             <button id="btn-authorize" onclick="completeSetup()" class="w-full btn-cyber border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300" disabled>
-                <i class="fas fa-lock mr-2"></i> CONFIRMAR & ENTRAR
+                <i class="fas fa-lock mr-2"></i> CONFIRMAR
             </button>
         </div>
 
@@ -211,15 +223,15 @@
                     <p>Al usar 3 LINE-AR, aceptas estos términos y condiciones legales.</p>
                     <p class="text-yellow-500 font-bold">2. DATOS Y NUBE</p>
                     <p>Tus datos de juego se almacenan de forma segura en Google Cloud Firestore. Vinculamos tu progreso a tu cuenta para que no lo pierdas.</p>
-                    <p class="text-yellow-500 font-bold">3. COMPRAS (FUTURO)</p>
-                    <p>El juego puede incluir compras integradas en el futuro. Todas las transacciones serán finales.</p>
+                    <p class="text-yellow-500 font-bold">3. BLOQUEO DE ANUNCIOS</p>
+                    <p>El uso de bloqueadores de anuncios (AdBlock) puede impedir la conexión con nuestra base de datos. Se recomienda desactivarlos para este sitio.</p>
                     <button onclick="closeTerms()" class="mt-6 w-full btn-cyber border-yellow-500 text-yellow-400 hover:bg-yellow-500/10">ENTENDIDO</button>
                 </div>
             </div>
         </div>
 
         <!-- 3. DASHBOARD -->
-        <div id="screen-dashboard" class="interactive glass p-6 rounded-xl border-r-4 border-purple-500 max-w-md w-full text-center fade-in hidden z-50">
+        <div id="screen-dashboard" class="interactive glass glass-pattern p-6 rounded-xl border-r-4 border-purple-500 max-w-md w-full text-center fade-in hidden z-50">
             <div class="flex items-center justify-between mb-8 border-b border-white/10 pb-4 bg-black/20 p-3 rounded-lg">
                 <div class="flex items-center gap-4">
                     <div class="relative">
@@ -245,7 +257,7 @@
         </div>
 
         <!-- 4. SETUP -->
-        <div id="screen-setup" class="interactive glass p-8 rounded-xl border-l-4 border-green-500 max-w-md w-full text-center fade-in hidden z-50">
+        <div id="screen-setup" class="interactive glass glass-pattern p-8 rounded-xl border-l-4 border-green-500 max-w-md w-full text-center fade-in hidden z-50">
             <div class="flex justify-between items-center mb-8">
                 <button onclick="goBackToDashboard()" class="text-gray-400 hover:text-white text-xs font-orbitron flex items-center gap-2"><i class="fas fa-chevron-left"></i> ATRÁS</button>
                 <h2 class="text-lg text-white font-orbitron font-bold text-green-400 tracking-widest" id="setup-title">CONFIGURAR</h2>
@@ -260,7 +272,7 @@
         </div>
 
         <!-- 5. WAITING -->
-        <div id="screen-waiting" class="interactive glass p-10 rounded-xl border-b-4 border-yellow-500 max-w-md w-full text-center fade-in hidden z-50">
+        <div id="screen-waiting" class="interactive glass glass-pattern p-10 rounded-xl border-b-4 border-yellow-500 max-w-md w-full text-center fade-in hidden z-50">
             <div class="relative w-24 h-24 mx-auto mb-8">
                 <div class="absolute inset-0 border-4 border-yellow-500/20 rounded-full"></div>
                 <div class="absolute inset-0 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
@@ -333,9 +345,8 @@
         }
 
         function createParticles() {
-            bgParticles = []; const count = Math.floor((bgWidth * bgHeight) / 6000); // Más densidad
+            bgParticles = []; const count = Math.floor((bgWidth * bgHeight) / 6000); 
             for (let i = 0; i < count; i++) {
-                // Colores aleatorios para la batalla
                 const team = Math.random() > 0.5 ? 'cyan' : 'magenta';
                 const color = team === 'cyan' ? {r:0,g:229,b:255} : {r:255,g:0,b:85};
                 bgParticles.push({ 
@@ -356,40 +367,20 @@
         function animateBackground() {
             currentColor.r = lerp(currentColor.r, targetColor.r, 0.05); currentColor.g = lerp(currentColor.g, targetColor.g, 0.05); currentColor.b = lerp(currentColor.b, targetColor.b, 0.05);
             const rgbString = `${Math.round(currentColor.r)}, ${Math.round(currentColor.g)}, ${Math.round(currentColor.b)}`;
-            
-            bgContext.clearRect(0, 0, bgWidth, bgHeight); 
-            bgContext.fillStyle = '#000000'; bgContext.fillRect(0, 0, bgWidth, bgHeight);
-
+            bgContext.clearRect(0, 0, bgWidth, bgHeight); bgContext.fillStyle = '#000000'; bgContext.fillRect(0, 0, bgWidth, bgHeight);
             for (let i = 0; i < bgParticles.length; i++) {
                 let p = bgParticles[i]; p.x += p.vx; p.y += p.vy;
                 if (p.x < 0 || p.x > bgWidth) p.vx *= -1; if (p.y < 0 || p.y > bgHeight) p.vy *= -1;
-
                 bgContext.beginPath(); 
-                // Usar color de partícula o el global si estamos en un estado específico
-                const r = p.color.r * 0.5 + currentColor.r * 0.5;
-                const g = p.color.g * 0.5 + currentColor.g * 0.5;
-                const b = p.color.b * 0.5 + currentColor.b * 0.5;
-                
-                bgContext.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
-                bgContext.arc(p.x, p.y, p.size, 0, Math.PI * 2); bgContext.fill();
-
+                const r = p.color.r * 0.5 + currentColor.r * 0.5; const g = p.color.g * 0.5 + currentColor.g * 0.5; const b = p.color.b * 0.5 + currentColor.b * 0.5;
+                bgContext.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`; bgContext.arc(p.x, p.y, p.size, 0, Math.PI * 2); bgContext.fill();
                 for (let j = i + 1; j < bgParticles.length; j++) {
                     let p2 = bgParticles[j]; let d = Math.sqrt(Math.pow(p.x-p2.x,2) + Math.pow(p.y-p2.y,2));
                     if (d < 180) { 
-                        bgContext.beginPath(); 
-                        bgContext.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.3 * (1 - d/180)})`; 
-                        bgContext.lineWidth = 1; bgContext.moveTo(p.x, p.y); bgContext.lineTo(p2.x, p2.y); bgContext.stroke();
-                        
-                        // Triangulos
+                        bgContext.beginPath(); bgContext.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.3 * (1 - d/180)})`; bgContext.lineWidth = 1; bgContext.moveTo(p.x, p.y); bgContext.lineTo(p2.x, p2.y); bgContext.stroke();
                         for (let k = j + 1; k < bgParticles.length; k++) {
-                            let p3 = bgParticles[k];
-                            let d2 = Math.sqrt(Math.pow(p.x-p3.x,2) + Math.pow(p.y-p3.y,2));
-                            let d3 = Math.sqrt(Math.pow(p2.x-p3.x,2) + Math.pow(p2.y-p3.y,2));
-                            if(d2 < 180 && d3 < 180) {
-                                bgContext.beginPath();
-                                bgContext.fillStyle = `rgba(${r}, ${g}, ${b}, 0.05)`; 
-                                bgContext.moveTo(p.x, p.y); bgContext.lineTo(p2.x, p2.y); bgContext.lineTo(p3.x, p3.y); bgContext.fill();
-                            }
+                            let p3 = bgParticles[k]; let d2 = Math.sqrt(Math.pow(p.x-p3.x,2) + Math.pow(p.y-p3.y,2)); let d3 = Math.sqrt(Math.pow(p2.x-p3.x,2) + Math.pow(p2.y-p3.y,2));
+                            if(d2 < 180 && d3 < 180) { bgContext.beginPath(); bgContext.fillStyle = `rgba(${r}, ${g}, ${b}, 0.05)`; bgContext.moveTo(p.x, p.y); bgContext.lineTo(p2.x, p2.y); bgContext.lineTo(p3.x, p3.y); bgContext.fill(); }
                         }
                     }
                 }
@@ -411,14 +402,18 @@
                 const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
                 
                 try {
-                    const snapshot = await getDoc(userRef);
+                    // Intento de lectura con timeout para detectar bloqueo
+                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), 3000));
+                    const snapshot = await Promise.race([getDoc(userRef), timeout]);
+                    
                     if (snapshot.exists() && snapshot.data().termsAccepted) {
                         authorizeSystem(); 
                     } else {
                         showVerificationScreen(user);
                     }
                 } catch (e) {
-                    console.error("Error checking profile:", e);
+                    console.error("Profile Check Error:", e);
+                    // Si falla por timeout (adblock), mostramos verificación para que el usuario pueda usar "Ignorar error"
                     showVerificationScreen(user);
                 }
             } else {
@@ -439,10 +434,10 @@
 
         async function showVerificationScreen(user) {
             hideAllScreens();
-            setBgPalette('#EAB308'); // Amarillo
+            setBgPalette('#EAB308'); 
             document.getElementById('screen-permissions').classList.remove('hidden');
             document.getElementById('verify-username').innerText = user.displayName || "OPERADOR";
-            runSystemCheck(); // Testear red
+            runSystemCheck(); 
         }
 
         function showDashboard(user) {
@@ -477,8 +472,8 @@
                 dbStatus.innerHTML = '<span class="status-dot status-error"></span> FALLO';
                 dbStatus.className = "text-[10px] font-mono text-red-400 flex items-center font-bold uppercase";
                 errBox.classList.remove('hidden');
-                if(e.message === "TIMEOUT") errMsg.innerText = "Bloqueo de red detectado. Desactiva AdBlock.";
-                else errMsg.innerText = "Error de red. Verifica tu conexión.";
+                if(e.message === "TIMEOUT") errMsg.innerText = "Bloqueo de red (AdBlock).";
+                else errMsg.innerText = "Error de red.";
             }
         }
 
@@ -508,19 +503,24 @@
             btn.innerText = "GUARDANDO..."; btn.disabled = true;
             
             try {
+                // Intentamos guardar con timeout para no quedarnos pegados si hay adblock
                 const userRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
-                await setDoc(userRef, {
-                    termsAccepted: true,
-                    acceptedAt: new Date().toISOString(),
-                    email: auth.currentUser.email,
-                    displayName: auth.currentUser.displayName
-                }, { merge: true });
+                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), 3000));
+                
+                await Promise.race([
+                    setDoc(userRef, {
+                        termsAccepted: true,
+                        acceptedAt: new Date().toISOString(),
+                        email: auth.currentUser.email,
+                        displayName: auth.currentUser.displayName
+                    }, { merge: true }),
+                    timeout
+                ]);
                 
                 authorizeSystem();
             } catch (e) {
-                console.error("Error saving terms:", e);
-                alert("No pudimos guardar tu confirmación en la nube (¿Bloqueo de red?), pero puedes entrar.");
-                authorizeSystem();
+                console.warn("Save terms failed (AdBlock?), proceeding anyway:", e);
+                authorizeSystem(); // Dejamos pasar igual
             }
         };
 
@@ -551,7 +551,7 @@
             }
         };
 
-        // --- GAME LOBBY ---
+        // --- GAME LOBBY & LOGIC ---
         window.showCreateRoom = () => { appState.role = 'host'; appState.mode = 'setup'; setupColorPicker(); document.getElementById('setup-title').innerText = "CREAR SALA"; document.getElementById('join-inputs').classList.add('hidden'); hideAllScreens(); document.getElementById('screen-setup').classList.remove('hidden'); setBgPalette('#22C55E'); };
         window.showJoinRoom = () => { appState.role = 'guest'; appState.mode = 'setup'; setupColorPicker(); document.getElementById('setup-title').innerText = "UNIRSE"; document.getElementById('join-inputs').classList.remove('hidden'); hideAllScreens(); document.getElementById('screen-setup').classList.remove('hidden'); setBgPalette('#22C55E'); };
         window.goBackToDashboard = () => showDashboard(appState.user);
@@ -567,7 +567,6 @@
             });
         }
 
-        // --- LOGICA JUEGO ---
         const timeoutPromise = (promise, ms) => new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error("TIMEOUT")), ms);
             promise.then(value => { clearTimeout(timer); resolve(value); }).catch(reason => { clearTimeout(timer); reject(reason); });
@@ -597,7 +596,7 @@
                     appState.roomId = rid; initGameListener(rid);
                 }
             } catch(e) {
-                let msg = e.message === 'TIMEOUT' ? "Error de Red. Reintenta." : e.message;
+                let msg = e.message === 'TIMEOUT' ? "Error de Red (Posible AdBlock). Reintenta." : e.message;
                 alert(msg); btn.innerText = txt; btn.disabled = false;
             }
         };
@@ -690,3 +689,4 @@
     </script>
 </body>
 </html>
+
