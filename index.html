@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V14.0 HYBRID</title>
+    <title>3 LINE-AR | V17.0 PLANAR</title>
     
-    <!-- Tailwind & Config -->
+    <!-- Configuración Gráfica -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { 
             theme: { 
                 extend: { 
-                    colors: { glass: 'rgba(10, 15, 25, 0.9)', cyber: '#00f3ff', neon: '#39ff14', danger: '#ff0055' },
+                    colors: { glass: 'rgba(8, 12, 20, 0.98)', cyber: '#00f3ff', neon: '#39ff14', danger: '#ff0055' },
                     fontFamily: { orbitron: ['Orbitron', 'sans-serif'], mono: ['monospace'] },
-                    animation: { 'pulse-slow': 'pulse 3s infinite' }
+                    animation: { 'spin-slow': 'spin 4s linear infinite' }
                 } 
             } 
         }
@@ -22,204 +22,176 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* CAPAS */
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
-        canvas { display: block; } 
+        /* FONDO */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #0a0a15 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
+        
+        canvas { display: block; outline: none; } 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
         
-        /* UI Elements */
+        /* UI ESTILO */
         .glass-panel {
-            background: rgba(5, 10, 20, 0.95); backdrop-filter: blur(8px);
-            border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            background: rgba(5, 8, 15, 0.96); backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
         }
         
         .btn-cyber {
             background: linear-gradient(90deg, rgba(0,243,255,0.15), transparent);
-            border: 1px solid #00f3ff; color: #00f3ff; font-weight: bold;
-            transition: 0.2s; text-transform: uppercase; letter-spacing: 2px;
+            border: 1px solid #00f3ff; color: #00f3ff; font-weight: 800;
+            transition: all 0.2s; text-transform: uppercase; letter-spacing: 2px;
         }
-        .btn-cyber:active { transform: scale(0.96); background: #00f3ff; color: #000; }
+        .btn-cyber:active { transform: scale(0.95); background: #00f3ff; color: #000; }
         .btn-cyber.danger { border-color: #ff0055; color: #ff0055; background: linear-gradient(90deg, rgba(255,0,85,0.15), transparent); }
 
-        /* Dado */
-        .dice-box { perspective: 800px; width: 60px; height: 60px; pointer-events: auto; cursor: pointer; }
-        .dice-visual {
+        /* DADO */
+        .dice-container { perspective: 800px; width: 64px; height: 64px; pointer-events: auto; cursor: pointer; }
+        .dice-cube {
             width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: rgba(0,0,0,0.8); border: 2px solid #00f3ff;
+            background: rgba(0,0,0,0.9); border: 2px solid #00f3ff;
             display: flex; justify-content: center; align-items: center;
-            font-size: 30px; color: #00f3ff; box-shadow: 0 0 15px #00f3ff;
+            font-size: 32px; color: #00f3ff; box-shadow: 0 0 20px #00f3ff;
         }
         .rolling { animation: shake 0.4s infinite; background: #00f3ff; color: #000; }
         @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
 
-        /* Toast */
+        /* LOADING OVERLAY */
+        #loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-col; justify-content: center; align-items: center; pointer-events: auto; transition: opacity 0.5s; }
+        
+        /* TOAST */
         .toast-msg {
-            background: #000; border-left: 4px solid #00f3ff; border-right: 1px solid #00f3ff;
-            padding: 12px 24px; color: #fff; font-size: 12px;
-            transform: translateY(100%); opacity: 0; transition: all 0.3s ease-out;
+            background: #000; border: 1px solid #00f3ff; border-left-width: 6px;
+            padding: 15px 30px; color: #fff; font-size: 12px;
+            transform: translateY(150%); opacity: 0; transition: all 0.3s ease-out;
         }
         .toast-msg.show { transform: translateY(0); opacity: 1; }
         
-        /* Selector */
-        .sel-opt { border: 2px solid #333; opacity: 0.6; transition: 0.2s; transform: scale(0.9); }
-        .sel-opt.active { border-color: #fff; opacity: 1; transform: scale(1.1); box-shadow: 0 0 10px currentColor; }
+        /* SELECTOR */
+        .sel-opt { border: 2px solid #333; opacity: 0.5; transition: 0.2s; transform: scale(0.9); }
+        .sel-opt.active { border-color: #fff; opacity: 1; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
 
-        /* Estilos Botón AR Three.js Override */
+        /* AR BTN OVERRIDE */
         #ar-btn-zone button {
-            background: rgba(0, 243, 255, 0.1) !important;
-            border: 1px solid #00f3ff !important;
+            background: rgba(0, 0, 0, 0.9) !important;
+            border: 2px solid #00f3ff !important;
             color: #00f3ff !important;
-            font-family: 'Orbitron', sans-serif !important;
-            font-weight: bold !important;
+            font-family: 'Orbitron' !important;
             text-transform: uppercase !important;
-            padding: 10px 20px !important;
-            border-radius: 4px !important;
-            backdrop-filter: blur(4px) !important;
+            padding: 15px 30px !important;
+            font-weight: bold !important;
         }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
 </head>
 <body>
-    <!-- FONDO -->
     <canvas id="bg-canvas"></canvas>
 
-    <!-- UI LAYER -->
+    <!-- LOADING GLOBAL -->
+    <div id="loading-overlay" class="hidden">
+        <div class="w-20 h-20 border-4 border-cyber border-t-transparent rounded-full animate-spin mb-6"></div>
+        <h2 class="text-2xl text-white font-bold mb-2">CARGANDO TABLERO</h2>
+        <p id="loading-txt" class="text-cyber font-mono tracking-widest text-xs animate-pulse">SINCRONIZANDO PUNTOS...</p>
+    </div>
+
+    <!-- CAPA UI -->
     <div id="ui-layer" class="flex flex-col justify-between p-4">
         
         <!-- LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
-            <div class="glass-panel p-8 text-center w-full max-w-xs">
-                <h1 class="text-4xl font-black text-white mb-2 tracking-widest italic">3 LINE<span class="text-cyber">-AR</span></h1>
-                <div class="h-px w-full bg-gradient-to-r from-transparent via-cyber to-transparent mb-4"></div>
-                <p class="text-gray-400 text-xs mb-8 font-mono">V14.0 HYBRID SYSTEM</p>
-                
-                <button onclick="window.doLogin()" class="btn-cyber w-full py-4 mb-4 flex justify-center items-center gap-2">
-                    <i class="fab fa-google"></i> CONECTAR
-                </button>
-                <p id="login-log" class="text-[9px] text-gray-600 font-mono">INICIALIZANDO MOTORES...</p>
+            <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center">
+                <!-- Logo Abstracto Triangulo -->
+                <svg class="w-24 h-24 mb-6 text-cyber animate-pulse" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M50 10 L90 90 L10 90 Z" />
+                    <circle cx="50" cy="10" r="5" fill="currentColor"/>
+                    <circle cx="90" cy="90" r="5" fill="currentColor"/>
+                    <circle cx="10" cy="90" r="5" fill="currentColor"/>
+                </svg>
+
+                <h1 class="text-4xl font-black text-white italic">3 LINE<span class="text-cyber">-AR</span></h1>
+                <p class="text-gray-500 text-[10px] mb-8 font-mono tracking-[0.3em] mt-2">V17.0 PLANAR CHAOS</p>
+                <button onclick="window.doLogin()" class="btn-cyber w-full py-4 mb-2 flex justify-center items-center gap-3"><i class="fab fa-google"></i> ACCEDER</button>
+                <p id="login-log" class="text-[9px] text-gray-600 font-mono uppercase">Red Neuronal Activa</p>
             </div>
         </div>
 
         <!-- MENU -->
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
-            <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-4">
-                <div class="flex justify-between items-center border-b border-white/10 pb-2">
-                    <div>
-                        <span class="text-[9px] text-cyber block">OPERADOR</span>
-                        <span id="u-name" class="text-white font-bold text-lg">...</span>
-                    </div>
-                    <button onclick="window.logout()" class="text-danger hover:text-white"><i class="fas fa-power-off"></i></button>
+            <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
+                <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                    <div><span class="text-[9px] text-cyber block">AGENTE</span><span id="u-name" class="text-white font-bold text-xl">...</span></div>
+                    <button onclick="window.logout()" class="w-8 h-8 rounded text-danger border border-danger hover:bg-danger hover:text-white"><i class="fas fa-sign-out-alt"></i></button>
                 </div>
 
-                <!-- Custom -->
-                <div class="bg-white/5 p-3 rounded border border-white/10">
-                    <div class="flex justify-between mb-3" id="c-pick">
+                <!-- Personalización -->
+                <div class="bg-white/5 p-4 rounded border border-white/10">
+                    <p class="text-[9px] text-gray-400 mb-2">COLOR DE NEXO</p>
+                    <div class="flex justify-between mb-4" id="c-pick">
                         <div onclick="window.setOpt('c','#00f3ff',this)" class="sel-opt w-8 h-8 rounded-full bg-[#00f3ff] active shadow-[0_0_10px_#00f3ff]"></div>
                         <div onclick="window.setOpt('c','#ff0055',this)" class="sel-opt w-8 h-8 rounded-full bg-[#ff0055]"></div>
                         <div onclick="window.setOpt('c','#39ff14',this)" class="sel-opt w-8 h-8 rounded-full bg-[#39ff14]"></div>
-                        <div onclick="window.setOpt('c','#e0e0e0',this)" class="sel-opt w-8 h-8 rounded-full bg-[#e0e0e0]"></div>
+                        <div onclick="window.setOpt('c','#f0f',this)" class="sel-opt w-8 h-8 rounded-full bg-[#f0f]"></div>
                     </div>
+                    <p class="text-[9px] text-gray-400 mb-2">SIGILO DE CONQUISTA</p>
                     <div class="flex justify-between text-xl text-white" id="i-pick">
-                        <i onclick="window.setOpt('i','gem',this)" class="sel-opt fas fa-gem active p-1 text-cyber"></i>
-                        <i onclick="window.setOpt('i','bolt',this)" class="sel-opt fas fa-bolt p-1"></i>
-                        <i onclick="window.setOpt('i','star',this)" class="sel-opt fas fa-star p-1"></i>
-                        <i onclick="window.setOpt('i','dragon',this)" class="sel-opt fas fa-dragon p-1"></i>
+                        <i onclick="window.setOpt('i','gem',this)" class="sel-opt fas fa-gem active p-2 text-cyber"></i>
+                        <i onclick="window.setOpt('i','bolt',this)" class="sel-opt fas fa-bolt p-2"></i>
+                        <i onclick="window.setOpt('i','star',this)" class="sel-opt fas fa-star p-2"></i>
+                        <i onclick="window.setOpt('i','dragon',this)" class="sel-opt fas fa-dragon p-2"></i>
                     </div>
                 </div>
 
-                <button onclick="window.quickMatch()" class="btn-cyber py-4 text-lg shadow-[0_0_15px_rgba(0,243,255,0.2)]">
-                    <i class="fas fa-search mr-2"></i> PARTIDA PÚBLICA
-                </button>
-                
+                <button onclick="window.quickMatch()" class="btn-cyber py-5 text-lg"><i class="fas fa-globe mr-2"></i> PARTIDA RÁPIDA</button>
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="window.createRoom()" class="btn-cyber py-3 text-xs">CREAR SALA</button>
+                    <button onclick="window.createRoom()" class="btn-cyber py-3 text-xs">CREAR</button>
                     <button onclick="window.showJoin()" class="btn-cyber py-3 text-xs">UNIRSE</button>
                 </div>
-                
                 <div id="join-box" class="hidden flex gap-2 mt-1">
-                    <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-2 uppercase font-mono" placeholder="CÓDIGO" maxlength="4">
-                    <button onclick="window.joinRoom()" class="btn-cyber w-12"><i class="fas fa-arrow-right"></i></button>
+                    <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg" placeholder="CÓDIGO" maxlength="4">
+                    <button onclick="window.joinRoom()" class="btn-cyber w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
-
-                <button onclick="window.vsCpu()" class="btn-cyber danger py-3 text-xs mt-2">
-                    <i class="fas fa-robot mr-2"></i> VS CPU
-                </button>
-                
-                <!-- SYSTEM STATUS -->
-                <div id="sys-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">
-                    DETECTANDO HARDWARE...
-                </div>
+                <button onclick="window.vsCpu()" class="btn-cyber danger py-3 text-xs mt-2"><i class="fas fa-robot mr-2"></i> PRÁCTICA (CPU)</button>
+                <div id="sys-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono pt-2 border-t border-white/10">ESCANEO DE SENSORES...</div>
             </div>
         </div>
 
         <!-- GAME HUD -->
         <div id="s-game" class="hidden flex flex-col justify-between h-full pointer-events-none relative z-10">
-            <!-- Top Stats -->
-            <div class="interactive glass-panel p-2 flex justify-between items-center mt-2 mx-2">
-                <div class="text-center w-16">
-                    <span class="text-[8px] text-gray-400 block">PUNTAJE</span>
-                    <span id="sc-p1" class="text-3xl text-white font-bold leading-none">0</span>
-                </div>
-                
-                <div class="flex flex-col items-center -mt-8 z-20">
-                    <div class="dice-box" onclick="window.rollDice()">
-                        <div id="dice-vis" class="dice-visual"><i class="fas fa-dice-d20"></i></div>
-                    </div>
-                    <div id="mov-box" class="bg-black/90 px-4 py-1 mt-2 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[80px]">
-                        <p class="text-[8px] text-gray-400 tracking-widest">MOVS</p>
-                        <p id="mov-num" class="text-xl text-cyber font-bold leading-none">0</p>
+            <div class="interactive glass-panel p-3 flex justify-between items-center mt-2 mx-2">
+                <div class="text-center w-16"><span class="text-[8px] text-gray-400 block">TÚ</span><span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span></div>
+                <div class="flex flex-col items-center -mt-10 z-20">
+                    <div class="dice-container" onclick="window.rollDice()"><div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div></div>
+                    <div id="mov-box" class="bg-black/90 px-4 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[90px]">
+                        <p class="text-[8px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-num" class="text-2xl text-cyber font-bold leading-none">0</p>
                     </div>
                 </div>
-
-                <div class="text-center w-16">
-                    <span class="text-[8px] text-gray-400 block">RIVAL</span>
-                    <span id="sc-p2" class="text-3xl text-white font-bold leading-none">0</span>
-                </div>
+                <div class="text-center w-16"><span class="text-[8px] text-gray-400 block">RIVAL</span><span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span></div>
             </div>
             
-            <div class="text-center mt-1 pointer-events-none">
-                <span class="bg-black/60 text-[9px] px-3 py-1 rounded-full text-gray-300 border border-white/10">
-                    SALA: <span id="room-id" class="text-white font-bold tracking-widest">--</span>
-                </span>
-            </div>
+            <div class="text-center mt-2 pointer-events-none"><span class="bg-black/70 text-[10px] px-4 py-1 rounded text-gray-300 border border-white/10">SALA: <span id="room-id" class="text-cyber font-bold">--</span></span></div>
 
-            <!-- Mensajes -->
             <div class="flex justify-center items-center flex-grow">
-                <div id="toast" class="toast-msg text-center shadow-2xl">
-                    <p id="t-tit" class="font-bold text-cyber text-xs mb-1 uppercase tracking-widest">SISTEMA</p>
-                    <p id="t-msg" class="text-sm font-mono">Mensaje</p>
-                </div>
+                <div id="toast" class="toast-msg text-center shadow-2xl"><p id="t-tit" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1">ALERTA</p><p id="t-msg" class="text-sm font-mono">Msg</p></div>
             </div>
 
-            <!-- Bottom Controls -->
-            <div class="interactive flex justify-center gap-4 pb-20 md:pb-8">
-                <button onclick="window.exit()" class="w-12 h-12 rounded-full bg-red-900/80 border border-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition">
-                    <i class="fas fa-times"></i>
-                </button>
-                <!-- Botón Recentrar 3D (Se oculta en AR) -->
-                <button onclick="window.recenter()" id="btn-rec" class="px-6 rounded-full bg-gray-800/90 border border-white/30 text-xs text-white font-mono shadow-lg hover:bg-white/20 transition">
-                    <i class="fas fa-compress-arrows-alt mr-2"></i> 3D RESET
-                </button>
+            <div class="interactive flex justify-center gap-6 pb-20 md:pb-10 items-end">
+                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-900/90 border border-gray-500 text-gray-300 flex items-center justify-center shadow-lg flex-col gap-1"><i class="fas fa-home text-lg"></i><span class="text-[8px]">MENU</span></button>
+                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/20 border border-cyber text-xs text-white font-mono shadow-lg flex items-center"><i class="fas fa-sync mr-2"></i> RE-CENTRAR</button>
             </div>
         </div>
 
-        <!-- AR Hint (Solo AR) -->
         <div id="ar-hint" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden flex-col items-center z-0">
-            <div class="w-20 h-20 border border-cyber rounded-full animate-ping absolute opacity-50"></div>
-            <span class="bg-black/80 text-[10px] px-3 py-1 text-cyber border border-cyber rounded mt-4">DETECTANDO SUPERFICIE...</span>
+            <div class="w-24 h-24 border-2 border-cyber rounded-full animate-ping absolute opacity-40"></div>
+            <i class="fas fa-crosshairs text-white text-4xl drop-shadow-lg"></i>
+            <span class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-6 font-bold tracking-widest">APUNTA AL SUELO</span>
         </div>
     </div>
 
-    <!-- Zona Botón AR (Solo si es compatible) -->
-    <div id="ar-btn-zone" class="absolute bottom-6 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center"></div>
+    <div id="ar-btn-zone" class="absolute bottom-6 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
 
-    <!-- LÓGICA -->
     <script type="module">
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
@@ -235,89 +207,158 @@
         try { app = initializeApp(CONF); auth = getAuth(app); db = getFirestore(app); } catch(e) { console.error(e); }
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
-        let pts=[], selPt=null, placed=false;
+        let pts=[], selPt=null, placed=false, roomUnsub=null;
         
-        // --- DETECCIÓN AR AUTOMÁTICA ---
-        async function checkARSupport() {
-            const statusEl = document.getElementById('sys-status');
-            if ('xr' in navigator) {
-                try {
-                    const supported = await navigator.xr.isSessionSupported('immersive-ar');
-                    if (supported) {
-                        statusEl.innerHTML = '<span class="text-cyber"><i class="fas fa-vr-cardboard"></i> AR DISPONIBLE</span>';
-                        return true;
+        // --- GENERADOR PLANAR (2D en 3D) ---
+        function generatePlanarPoints() {
+            const p = [];
+            const count = 16; // Cantidad de puntos
+            const minDist = 0.25; // Distancia mínima para evitar solapamiento
+
+            for(let i=0; i<count; i++) {
+                let valid = false;
+                let pt = {};
+                let attempts = 0;
+                
+                while(!valid && attempts < 100) {
+                    // Generar en plano XZ (Y=0 siempre)
+                    // Rango aprox -0.8 a 0.8
+                    pt = {
+                        x: (Math.random() - 0.5) * 1.6,
+                        y: 0, 
+                        z: (Math.random() - 0.5) * 1.6
+                    };
+
+                    // Verificar distancia con anteriores
+                    let tooClose = false;
+                    for(let existing of p) {
+                        const dx = existing.x - pt.x;
+                        const dz = existing.z - pt.z;
+                        if(Math.sqrt(dx*dx + dz*dz) < minDist) {
+                            tooClose = true;
+                            break;
+                        }
                     }
-                } catch (e) { console.log("AR Check failed", e); }
+                    if(!tooClose) valid = true;
+                    attempts++;
+                }
+                p.push(pt);
             }
-            statusEl.innerHTML = '<span class="text-gray-500"><i class="fas fa-desktop"></i> MODO 3D (PC/COMPATIBLE)</span>';
-            return false;
+            return p;
         }
 
-        // --- AUTH & INIT ---
+        async function checkAR() {
+            const st = document.getElementById('sys-status');
+            if ('xr' in navigator) {
+                try {
+                    const ok = await navigator.xr.isSessionSupported('immersive-ar');
+                    if(ok) { st.innerHTML='<span class="text-cyber"><i class="fas fa-check-circle"></i> MÓVIL AR DETECTADO</span>'; return; }
+                } catch(e){}
+            }
+            st.innerHTML='<span class="text-gray-500">PC / 3D MODE</span>';
+        }
+
         onAuthStateChanged(auth, async u => {
             S.user = u;
             if(u) {
                 document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE';
-                nav('s-menu');
-                await checkARSupport(); // Verificar hardware
+                nav('s-menu'); await checkAR();
             } else nav('s-login');
         });
 
-        window.doLogin = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { alert("Popups bloqueados."); } };
-        window.logout = () => signOut(auth).then(()=>location.reload());
+        window.doLogin = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { alert("Login Error"); } };
+        window.logout = () => { if(confirm("¿Cerrar Sesión?")) signOut(auth).then(() => location.reload()); };
 
         function nav(id) {
             ['s-login','s-menu','s-game'].forEach(i => document.getElementById(i).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
         
+        window.goHome = () => {
+            if(roomUnsub) roomUnsub(); roomUnsub = null; S.room = null; S.data = null;
+            nav('s-menu');
+            if(group) { 
+                while(group.children.length > 0){ group.remove(group.children[0]); }
+            }
+            toast("SISTEMA", "SALA ABANDONADA");
+        };
+
         window.setOpt = (t,v,el) => {
             S.prof[t]=v; const p=el.parentNode; Array.from(p.children).forEach(c=>{c.classList.remove('active'); if(t==='c')c.style.boxShadow='none'; else c.style.color='white'});
             el.classList.add('active'); if(t==='c')el.style.boxShadow=`0 0 15px ${v}`; else el.style.color='#00f3ff';
         }
         window.showJoin = () => document.getElementById('join-box').classList.remove('hidden');
+        window.loading = (show, txt) => {
+            const el = document.getElementById('loading-overlay');
+            if(show) { el.classList.remove('hidden'); document.getElementById('loading-txt').innerText=txt; }
+            else el.classList.add('hidden');
+        }
 
-        // --- MATCHMAKING ---
+        // --- ROOM LOGIC ---
         window.quickMatch = async () => {
-            S.cpu=false; toast("RED", "BUSCANDO SALA...");
+            S.cpu=false; loading(true, "BUSCANDO SEÑAL...");
             try {
                 const coll = collection(db, 'artifacts', APP_ID, 'public', 'data', 'rooms');
                 const q = await getDocs(coll);
                 let found = null;
-                for (const docSnap of q.docs) { const d=docSnap.data(); if(d.stat==='wait' && d.host!==S.user.uid) { found=docSnap.id; break; } }
+                for (const d of q.docs) { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) { found=d.id; break; } }
                 if(found) join(found); else create(true);
-            } catch(e) { toast("ERROR", "Sin conexión. Modo CPU."); setTimeout(window.vsCpu, 2000); }
+            } catch(e) { loading(false); toast("ERROR", "Sin red. Modo CPU."); setTimeout(window.vsCpu, 1500); }
         };
+
         window.createRoom = () => create(false);
         window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
+        
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
-            S.data={stat:'play', turn:'host', lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof, p2:{c:'#ff0055', i:'skull'}};
+            const rawPts = generatePlanarPoints();
+            S.data={stat:'play', turn:'host', points:rawPts, lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof, p2:{c:'#ff0055', i:'skull'}};
             startGame();
         };
 
         async function create(pub) {
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
+            loading(true, "CALIBRANDO TABLERO...");
+            const rawPts = generatePlanarPoints();
             await setDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), {
-                host:S.user.uid, stat:'wait', public:pub, turn:'host', lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
+                host:S.user.uid, stat:'wait', public:pub, turn:'host', 
+                points: rawPts, 
+                lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
             });
-            sub(c); nav('s-game'); document.getElementById('room-id').innerText=pub?"PÚBLICA":c;
+            sub(c); document.getElementById('room-id').innerText=pub?"PÚBLICA":c;
         }
+
         async function join(c) {
             S.role='guest'; S.room=c;
+            loading(true, "SINCRONIZANDO...");
             await updateDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
-            sub(c); nav('s-game'); document.getElementById('room-id').innerText=c;
+            sub(c); document.getElementById('room-id').innerText=c;
         }
+        
         function sub(c) {
-            onSnapshot(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), s => {
-                if(s.exists()) { const d=s.data(); S.data=d; if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) startGame(); renderUI(); } }
+            if(roomUnsub) roomUnsub();
+            roomUnsub = onSnapshot(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), s => {
+                if(s.exists()) { 
+                    const d=s.data(); S.data=d; 
+                    if(d.stat==='play') { 
+                        if(document.getElementById('s-game').classList.contains('hidden')) startGame(); 
+                        renderUI(); 
+                    } else {
+                        if(S.role==='host') loading(true, "ESPERANDO RIVAL...");
+                    }
+                }
             });
         }
 
-        function startGame() { nav('s-game'); init3D(); toast("ENLACE", "SISTEMA ONLINE"); }
+        function startGame() { 
+            loading(false); nav('s-game'); 
+            init3D(); 
+            toast("SISTEMA", "LISTO PARA EL COMBATE"); 
+        }
 
+        // --- GAMEPLAY ---
         window.rollDice = () => {
-            const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Rival"); if(d.movs>0) return toast("JUEGA","Tienes movimientos");
+            const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Enemigo"); if(d.movs>0) return toast("ACCIÓN","Tienes movimientos");
             const el=document.getElementById('dice-vis'); el.classList.add('rolling');
             setTimeout(()=>{
                 el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v}); toast("DADO",`Sacaste ${v}`);
@@ -333,9 +374,14 @@
             const d=S.data;
             document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
             document.getElementById('sc-p2').innerText = S.role==='host'?d.sc.guest:d.sc.host;
-            const b=document.getElementById('mov-box'); const dv=document.getElementById('dice-vis');
-            if(d.turn===S.role && d.movs>0) { b.style.opacity=1; document.getElementById('mov-num').innerText=d.movs; dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; }
-            else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#333'; }
+            const box=document.getElementById('mov-box'); const dv=document.getElementById('dice-vis');
+            
+            if(d.turn===S.role && d.movs>0) {
+                box.style.opacity=1; document.getElementById('mov-num').innerText=d.movs; 
+                dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff';
+            } else {
+                box.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#333'; dv.style.color='#555';
+            }
             render3D();
             if(S.cpu && d.turn==='guest') {
                 if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3}),1000);
@@ -343,30 +389,36 @@
             }
         }
 
-        function onPointClick(id) {
+        function onPtClick(id) {
             const d=S.data; if(d.turn!==S.role || d.movs<=0) return toast("ERROR","Lanza el dado");
             if(selPt===null) { selPt=id; highlight(id,true); }
             else {
                 if(selPt===id) { highlight(id,false); selPt=null; }
-                else { tryConnect(selPt,id); highlight(selPt,false); selPt=null; }
+                else { tryLink(selPt,id); highlight(selPt,false); selPt=null; }
             }
         }
 
-        function tryConnect(p1,p2) {
-            const d=S.data; const pos1=pts[p1].position; const pos2=pts[p2].position;
-            if(pos1.distanceTo(pos2)>0.26) return toast("RANGO","Muy lejos");
-            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("OCUPADO","Ya existe");
+        function tryLink(p1,p2) {
+            const d=S.data; 
+            // VALIDACION RELAJADA PARA PERMITIR CRUCES
+            // Solo validamos que la linea no exista YA entre esos dos puntos especificos
+            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("ERROR","Ya conectado");
             
+            // Validar distancia maxima (para no cruzar todo el mapa si no se quiere)
+            // Aumentamos rango para permitir juego fluido
+            const v1=pts[p1].position; const v2=pts[p2].position;
+            if(v1.distanceTo(v2) > 1.0) return toast("RANGO","Demasiado lejos"); 
+
             const nl=[...d.lines, {s:p1,e:p2,own:S.role}];
             const nt=checkTri(p1,p2,S.role,nl);
-            const sc={...d.sc}; if(nt.length) { sc[S.role]+=nt.length; toast("CONQUISTA","¡Capturado!"); }
+            const sc={...d.sc}; if(nt.length){ sc[S.role]+=nt.length; toast("CONQUISTA","¡Triángulo cerrado!"); }
             
-            let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
+            let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){t=t==='host'?'guest':'host'; di=null;}
             update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di});
         }
 
         function checkTri(p1,p2,o,ls) {
-            const f=[]; for(let p3=0; p3<16; p3++) {
+            const f=[]; for(let p3=0; p3<pts.length; p3++) {
                 if(p3!==p1 && p3!==p2) {
                     if(ls.some(l=>(l.s===p1&&l.e===p3)||(l.s===p3&&l.e===p1)) && ls.some(l=>(l.s===p2&&l.e===p3)||(l.s===p3&&l.e===p2))) {
                         const v=[p1,p2,p3].sort();
@@ -377,96 +429,115 @@
         }
 
         function cpuMove() {
-            let m=null;
-            for(let i=0;i<16;i++) for(let j=i+1;j<16;j++) if(pts[i].position.distanceTo(pts[j].position)<0.26 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) { m={s:i,e:j}; break; }
+            let m=null; 
+            // CPU intenta conectar puntos cercanos (< 0.6)
+            for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) 
+                if(pts[i].position.distanceTo(pts[j].position)<0.6 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) { m={s:i,e:j}; break; }
+            
             if(m) {
-                const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}];
-                const nt=checkTri(m.s,m.e,'guest',nl);
+                const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=checkTri(m.s,m.e,'guest',nl);
                 const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
-                let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){ t='host'; di=null; }
+                let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
                 update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di});
             } else update({movs:0,turn:'host',dice:null});
         }
 
-        // --- 3D & AR ENGINE ---
+        // --- 3D ENGINE ---
         let scene, cam, ren, group, ray, reticle, arHit, controls;
 
         function init3D() {
-            if(scene) return;
+            if(!S.data.points) return;
+            if(scene) {
+                while(group.children.length > 0){ group.remove(group.children[0]); }
+                pts=[];
+                buildBoard();
+                return;
+            }
+
             scene = new THREE.Scene();
             cam = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
             
             ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             ren.setSize(window.innerWidth, window.innerHeight);
             ren.xr.enabled = true;
-            ren.domElement.style.position = 'absolute'; ren.domElement.style.top = '0'; ren.domElement.style.left = '0'; ren.domElement.style.zIndex = '1';
+            ren.domElement.style.position = 'absolute'; ren.domElement.style.top = '0'; ren.domElement.style.zIndex = '1';
             document.body.appendChild(ren.domElement);
 
-            // AR Button Setup
             const btn = ARButton.createButton(ren, { requiredFeatures:['hit-test'], optionalFeatures:['dom-overlay'], domOverlay:{root:document.body} });
+            btn.style.pointerEvents = 'auto';
             document.getElementById('ar-btn-zone').appendChild(btn);
             
-            // Eventos de Sesión AR
             btn.addEventListener('click', () => {
-                // Iniciar AR
                 placed = false; group.visible = false;
-                document.getElementById('bg-canvas').style.opacity = '0'; // Ocultar fondo
+                document.getElementById('bg-canvas').style.opacity = '0';
                 document.getElementById('btn-rec').style.display = 'none';
             });
-            
-            // Detectar fin de sesión AR para restaurar 3D
             ren.xr.addEventListener('sessionend', () => {
                  window.recenter();
                  document.getElementById('bg-canvas').style.opacity = '1';
-                 document.getElementById('btn-rec').style.display = 'block';
+                 document.getElementById('btn-rec').style.display = 'flex';
             });
 
-            scene.add(new THREE.HemisphereLight(0xffffff, 0x404040, 3));
+            scene.add(new THREE.HemisphereLight(0xffffff, 0x222222, 3));
             group = new THREE.Group(); scene.add(group);
 
-            // Puntos
-            const geo=new THREE.SphereGeometry(0.035,16,16);
-            const mat=new THREE.MeshBasicMaterial({color:0x444444}); 
-            const edgeMat=new THREE.MeshBasicMaterial({color:0x00f3ff, wireframe:true});
-            const hitGeo=new THREE.SphereGeometry(0.09); const hitMat=new THREE.MeshBasicMaterial({visible:false});
-
-            for(let z=0;z<4;z++) for(let x=0;x<4;x++) {
-                const m=new THREE.Mesh(geo,mat.clone());
-                m.position.set((x-1.5)*0.25,0,(z-1.5)*0.25);
-                m.userData.id=pts.length;
-                const edge=new THREE.Mesh(geo,edgeMat); edge.scale.set(1.1,1.1,1.1); m.add(edge);
-                const h=new THREE.Mesh(hitGeo,hitMat); m.add(h);
-                group.add(m); pts.push(m);
-            }
+            buildBoard();
 
             reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color:0x00f3ff}));
             reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
 
             ray=new THREE.Raycaster();
             ren.setAnimationLoop(loop);
-            window.addEventListener('pointerdown', onInput);
+            
+            window.addEventListener('pointerdown', (e) => {
+                if(e.target.closest('.interactive') || e.target.closest('#ar-btn-zone')) return;
+                const cv = ren.domElement;
+                const m = new THREE.Vector2((e.clientX/cv.width)*2-1, -(e.clientY/cv.height)*2+1);
+                ray.setFromCamera(m,cam);
+                const hits=ray.intersectObjects(group.children,true);
+                const h=hits.find(x=>x.object.parent && x.object.parent.userData.id!==undefined);
+                if(h) onPtClick(h.object.parent.userData.id);
+            });
+
             controls=new OrbitControls(cam, ren.domElement);
             window.recenter();
         }
 
-        window.recenter = () => {
-            group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0);
-            cam.position.set(0,1.4,1.1); cam.lookAt(0,0,0);
+        function buildBoard() {
+            pts=[];
+            const dataPoints = S.data.points; 
+            
+            // ESFERAS BRILLANTES (ESTILO IMAGEN)
+            const geo=new THREE.SphereGeometry(0.05,32,32);
+            const mat=new THREE.MeshStandardMaterial({
+                color:0x000000, emissive:0x00f3ff, emissiveIntensity:2, roughness:0.1
+            }); 
+            const hitGeo=new THREE.SphereGeometry(0.15); // Hitbox grande
+            const hitMat=new THREE.MeshBasicMaterial({visible:false});
+
+            dataPoints.forEach((p, i) => {
+                const m=new THREE.Mesh(geo,mat.clone());
+                m.position.set(p.x, p.y, p.z);
+                m.userData.id = i;
+                
+                // Brillo externo
+                const glow = new THREE.Mesh(new THREE.SphereGeometry(0.07,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3}));
+                m.add(glow);
+
+                const h=new THREE.Mesh(hitGeo,hitMat); m.add(h);
+                group.add(m); pts.push(m);
+            });
         }
 
-        function onInput(e) {
-            if(e.target.closest('.interactive') || e.target.closest('#ar-btn-zone')) return;
-            const m=new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
-            ray.setFromCamera(m,cam);
-            const hits=ray.intersectObjects(group.children,true);
-            const h=hits.find(x=>x.object.parent && x.object.parent.userData.id!==undefined);
-            if(h) onPointClick(h.object.parent.userData.id);
+        window.recenter = () => {
+            group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0);
+            cam.position.set(0,2.2,0.1); cam.lookAt(0,0,0); // VISTA DESDE ARRIBA (TOP DOWN)
         }
 
         function highlight(id,on) {
             const m=pts[id];
-            if(on) { m.scale.set(1.5,1.5,1.5); m.material.color.setHex(0xffffff); }
-            else { m.scale.set(1,1,1); m.material.color.setHex(0x444444); }
+            if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); }
+            else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); }
         }
 
         function render3D() {
@@ -476,7 +547,7 @@
             S.data.lines.forEach(l=>{
                 const p=l.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff';
                 const p1=pts[l.s].position; const p2=pts[l.e].position;
-                const g=new THREE.CylinderGeometry(0.008,0.008,p1.distanceTo(p2),6);
+                const g=new THREE.CylinderGeometry(0.015,0.015,p1.distanceTo(p2),8); // Lineas mas gruesas tipo neon
                 const m=new THREE.MeshBasicMaterial({color:c});
                 const mesh=new THREE.Mesh(g,m);
                 mesh.position.copy(p1).lerp(p2,0.5); mesh.lookAt(p2); mesh.rotateX(Math.PI/2);
@@ -487,7 +558,7 @@
                 const p=t.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff'; const i=p?p.i:'gem';
                 const v=new Float32Array([pts[t.p1].position.x,pts[t.p1].position.y,pts[t.p1].position.z,pts[t.p2].position.x,pts[t.p2].position.y,pts[t.p2].position.z,pts[t.p3].position.x,pts[t.p3].position.y,pts[t.p3].position.z]);
                 const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(v,3));
-                const m=new THREE.MeshBasicMaterial({color:c, opacity:0.5, transparent:true, side:THREE.DoubleSide});
+                const m=new THREE.MeshBasicMaterial({color:c, opacity:0.4, transparent:true, side:THREE.DoubleSide});
                 const mesh=new THREE.Mesh(g,m); mesh.userData.temp=true;
                 
                 let ig; if(i==='skull')ig=new THREE.BoxGeometry(0.05,0.05,0.05); else if(i==='star')ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='dragon')ig=new THREE.TorusKnotGeometry(0.03,0.01,64,8); else ig=new THREE.IcosahedronGeometry(0.04,0);
@@ -520,7 +591,7 @@
         }
 
         function toast(t,m){const e=document.getElementById('toast');document.getElementById('t-tit').innerText=t;document.getElementById('t-msg').innerText=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3000);}
-        window.exit = () => location.reload();
+        window.exit = () => { if(confirm("¿Salir?")) location.reload(); }
     </script>
 </body>
 </html>
