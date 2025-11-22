@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V30.0 MASTER</title>
+    <title>3 LINE-AR | V31.0 FULL FIX</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -82,13 +82,13 @@
         .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; pointer-events: auto; }
         .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
-        /* AR Button Override & Hiding Fallback */
+        /* AR Button Override */
         #ar-zone button {
             background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important;
             color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
             border-radius: 6px !important; text-transform: uppercase !important;
         }
-        /* Ocultar mensaje feo de ThreeJS si no es un botón */
+        /* Ocultar mensaje feo de ThreeJS */
         #ar-zone a { display: none !important; } 
     </style>
 
@@ -102,15 +102,15 @@
         <!-- 1. LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
-                <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-network-wired"></i></div>
+                <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-project-diagram"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V30.0 MASTER POLISH</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V31.0 FULL FIX</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
                 </button>
-                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA ONLINE</p>
+                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA EN ESPERA</p>
             </div>
         </div>
 
@@ -205,7 +205,7 @@
         </div>
     </div>
 
-    <!-- Zona AR Limpia -->
+    <!-- Zona AR -->
     <div id="ar-zone" class="absolute bottom-8 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
 
     <script type="module">
@@ -222,7 +222,6 @@
         let app, auth, db;
         try { app = initializeApp(CONF); auth = getAuth(app); db = getFirestore(app); } catch(e) { console.error(e); }
 
-        // AUDIO
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -311,7 +310,7 @@
             toast("SISTEMA", "DESCONECTADO");
         }
         
-        window.setProf = (t,v,el) => {
+        window.setOpt = (t,v,el) => {
             S.prof[t]=v; 
             const parent = el.parentNode; 
             Array.from(parent.children).forEach(c=>{ 
@@ -345,36 +344,38 @@
         async function create(pub) {
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
             showLoad(true,"CREANDO...");
-            await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
+            // FIX: Use correct path with APP_ID
+            await setDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), {
                 host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof
             });
             sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
         async function join(c) {
             S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
-            await updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
+            // FIX: Use correct path with APP_ID
+            await updateDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
             sub(c); document.getElementById('room-lbl').innerText=c;
         }
         function sub(c) {
             if(roomUnsub) roomUnsub();
-            roomUnsub = onSnapshot(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), s => {
+            // FIX: Use correct path with APP_ID
+            roomUnsub = onSnapshot(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), s => {
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
                     else if(d.stat==='end') endGame(d);
+                    else if(S.role==='host') showLoad(true,"ESPERANDO...");
                 }
             });
         }
         function start() { showLoad(false); nav('s-game'); init3D(); gameStartTime = Date.now(); toast("SISTEMA","LISTO"); }
 
-        // AUTO-ARBITER: CHECK MOVES LEFT
+        // AUTO-ARBITER
         function checkStatus() {
             const d = S.data;
             let movesLeft = 0;
-            // Scan every possible pair of points
             for(let i=0; i<pts.length; i++) {
                 for(let j=i+1; j<pts.length; j++) {
-                    // Check if connection is valid (distance, not existing, no collision)
                     if(pts[i].position.distanceTo(pts[j].position) < 1.2 && 
                        !d.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && 
                        !checkCollision(i,j,d.tris)) {
@@ -382,10 +383,7 @@
                     }
                 }
             }
-            // If NO moves are possible for ANYONE, end game
-            if(movesLeft === 0) {
-                update({stat: 'end'});
-            }
+            if(movesLeft === 0) update({stat: 'end'});
         }
 
         window.rollDice = () => {
@@ -401,7 +399,6 @@
             const d=S.data; 
             if(d.turn===S.role) {
                 const t = d.turn==='host'?'guest':'host'; 
-                // In case auto-arbiter fails, manual skip can trigger end
                 const newSkips = (d.skips || 0) + 1;
                 if(newSkips >= 2) update({stat:'end'});
                 else { update({movs:0, turn:t, dice:null, skips:newSkips}); toast("SISTEMA", "TURNO SALTADO"); }
@@ -424,7 +421,8 @@
 
         function update(o) {
             if(S.cpu) { Object.assign(S.data,o); if(S.data.stat === 'end') endGame(S.data); else ui(); } 
-            else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
+            // FIX: Use correct path with APP_ID
+            else updateDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${S.room}`), o);
         }
 
         function ui() {
@@ -436,7 +434,6 @@
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#444'; dv.style.color='#555'; }
             draw();
             if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3, skips:0}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
-            
             if(S.role === 'host') checkStatus();
         }
 
@@ -457,7 +454,7 @@
             const sc={...d.sc}; if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); toast("CONQUISTA","¡Nexo Cerrado!"); }
             
             let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
-            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di});
+            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
         }
 
         function checkTri(p1,p2,o,ls) {
@@ -484,7 +481,7 @@
             if(m) {
                 const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
                 let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
-                update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di});
+                update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
             } else {
                 const newSkips = (S.data.skips || 0) + 1;
                 if(newSkips >= 2) update({stat:'end'}); else update({movs:0, turn:'host', dice:null, skips:newSkips});
@@ -500,7 +497,6 @@
             ren.domElement.style.position='absolute'; ren.domElement.style.top='0'; ren.domElement.style.zIndex='1';
             document.body.appendChild(ren.domElement);
             
-            // CHECK AR SUPPORT BEFORE CREATING BUTTON
             navigator.xr?.isSessionSupported('immersive-ar').then(supported => {
                 if(supported) {
                     const btn=ARButton.createButton(ren,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:document.body}});
