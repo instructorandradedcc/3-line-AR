@@ -3,678 +3,535 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | PRISM EDITION v10.0</title>
+    <title>3 LINE-AR | CONQUEST V12</title>
     
-    <!-- Dependencias Core -->
+    <!-- Estilos y Utilidades -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { 
             theme: { 
                 extend: { 
-                    colors: { 
-                        cyber: '#00f3ff', 
-                        void: '#050b14', 
-                        danger: '#ff003c',
-                        gold: '#ffd700'
-                    },
-                    fontFamily: {
-                        mono: ['Share Tech Mono', 'monospace'],
-                        sans: ['Rajdhani', 'sans-serif']
-                    },
-                    animation: { 'spin-slow': 'spin 10s linear infinite' }
+                    colors: { glass: 'rgba(20, 20, 30, 0.85)', cyber: '#00f3ff', neon: '#39ff14' },
+                    fontFamily: { orbitron: ['Orbitron', 'sans-serif'], mono: ['monospace'] },
+                    animation: { 'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
                 } 
             } 
         }
     </script>
-    
-    <!-- Fuentes Futuristas -->
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* --- ESTÉTICA PROFESIONAL --- */
-        body { 
-            margin: 0; overflow: hidden; background: transparent; 
-            font-family: 'Rajdhani', sans-serif; color: white; user-select: none;
-        }
-
-        /* Fondo Espacial (Visible solo en modo 3D, oculto en AR) */
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: #050b14; }
+        body { margin: 0; overflow: hidden; background-color: transparent; user-select: none; font-family: 'Orbitron', sans-serif; }
         
-        /* UI Layer */
+        /* Fondo Espacial (Solo visible en modo 3D) */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle, #1a1a2e 0%, #000000 90%); }
+        
+        /* UI Layers */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
-
-        /* Cyberpunk Glass con cortes angulares */
-        .cyber-panel {
-            background: rgba(5, 11, 20, 0.9);
+        
+        /* Paneles Estilo Cyberpunk */
+        .glass-panel {
+            background: rgba(5, 10, 15, 0.9);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
-            clip-path: polygon(
-                20px 0, 100% 0, 
-                100% calc(100% - 20px), calc(100% - 20px) 100%, 
-                0 100%, 0 20px
-            );
-            position: relative;
-        }
-        /* Decoración de esquinas */
-        .cyber-panel::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 15px; height: 15px;
-            border-top: 2px solid #00f3ff; border-left: 2px solid #00f3ff;
-        }
-        .cyber-panel::after {
-            content: ''; position: absolute; bottom: 0; right: 0; width: 15px; height: 15px;
-            border-bottom: 2px solid #00f3ff; border-right: 2px solid #00f3ff;
-        }
-
-        /* Botones Triangulares / Angulares */
-        .btn-tri {
-            background: linear-gradient(45deg, transparent 5%, rgba(0, 243, 255, 0.1) 5%);
-            border: 1px solid #00f3ff;
-            color: #00f3ff;
-            font-family: 'Share Tech Mono', monospace;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
             clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
-        .btn-tri:hover {
-            background: #00f3ff; color: #000;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+        
+        .btn-cyber {
+            background: linear-gradient(90deg, rgba(0,243,255,0.1), transparent);
+            border: 1px solid #00f3ff; color: #00f3ff;
+            transition: all 0.2s; text-transform: uppercase; letter-spacing: 1px;
+            position: relative; overflow: hidden;
         }
-        .btn-tri:active { transform: scale(0.98); }
-        .btn-tri.danger { border-color: #ff003c; color: #ff003c; background: linear-gradient(45deg, transparent 5%, rgba(255, 0, 60, 0.1) 5%); }
-        .btn-tri.danger:hover { background: #ff003c; color: white; box-shadow: 0 0 20px rgba(255, 0, 60, 0.6); }
+        .btn-cyber:active { transform: scale(0.95); background: #00f3ff; color: black; }
+        .btn-cyber.danger { border-color: #ff0055; color: #ff0055; background: linear-gradient(90deg, rgba(255,0,85,0.1), transparent); }
+        
+        /* Selector de Color/Icono */
+        .opt-btn { border: 2px solid transparent; opacity: 0.5; transition: 0.2s; cursor: pointer; }
+        .opt-btn.selected { border-color: white; opacity: 1; transform: scale(1.1); box-shadow: 0 0 10px currentColor; }
 
-        /* LOGO DELTA INFINITO */
-        .delta-logo {
-            width: 80px; height: 70px; margin: 0 auto 20px; position: relative;
+        /* Dado HUD */
+        .dice-container { perspective: 1000px; width: 70px; height: 70px; pointer-events: auto; cursor: pointer; }
+        .dice-cube {
+            width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
+            transition: transform 0.5s ease-out; text-align: center; line-height: 70px;
+            font-size: 35px; font-weight: bold; color: #00f3ff;
+            background: rgba(0,0,0,0.8); border: 2px solid #00f3ff;
+            box-shadow: 0 0 15px #00f3ff;
         }
-        .delta-outer {
-            position: absolute; inset: 0;
-            border-bottom: 4px solid #00f3ff;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            width: 0; height: 0;
-            border-left-width: 40px; border-right-width: 40px; border-bottom-width: 70px;
-            filter: drop-shadow(0 0 10px #00f3ff);
-            animation: pulse-glow 2s infinite;
-        }
-        .delta-inner {
-            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            width: 0; height: 0;
-            border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 45px solid rgba(0, 243, 255, 0.2);
-        }
-        @keyframes pulse-glow { 0%,100% { filter: drop-shadow(0 0 5px #00f3ff); } 50% { filter: drop-shadow(0 0 20px #00f3ff); } }
+        .dice-rolling { animation: shake 0.5s infinite; color: white; background: #00f3ff; }
+        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
 
-        /* HOLOGRAM DICE (PRISM) */
-        .prism-container { width: 80px; height: 80px; position: relative; perspective: 1000px; cursor: pointer; pointer-events: auto; }
-        .holo-num {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 40px; font-weight: bold; color: #fff; font-family: 'Share Tech Mono';
-            text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff;
-            opacity: 0; transition: opacity 0.3s; z-index: 10; pointer-events: none;
+        /* Notificaciones */
+        .toast {
+            background: rgba(0,0,0,0.9); border-left: 4px solid #00f3ff;
+            padding: 10px 20px; color: white; font-size: 12px;
+            transform: translateY(50px); opacity: 0; transition: all 0.3s;
         }
-        .holo-active { opacity: 1; animation: float-text 1s infinite alternate; }
-        @keyframes float-text { from { transform: translate(-50%, -50%); } to { transform: translate(-50%, -60%); } }
-
-        /* DEBUG CONSOLE */
-        #sys-log {
-            position: fixed; bottom: 10px; left: 10px; color: rgba(0,243,255,0.5);
-            font-size: 9px; font-family: 'Share Tech Mono'; z-index: 9999; pointer-events: none;
-            text-shadow: 0 0 2px black;
-        }
+        .toast.show { transform: translateY(0); opacity: 1; }
     </style>
-    
-    <!-- THREE.JS -->
+
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
 </head>
 <body>
-    
-    <!-- Fondo -->
     <canvas id="bg-canvas"></canvas>
-    <div id="sys-log">SYS.INIT.OK</div>
 
-    <!-- UI LAYER -->
-    <div id="ui-layer" class="flex flex-col items-center justify-center h-full w-full p-4">
+    <div id="ui-layer" class="flex flex-col justify-between p-4">
         
-        <!-- 1. LOGIN SCREEN (GOOGLE ONLY) -->
-        <div id="s-login" class="interactive cyber-panel p-8 w-full max-w-xs text-center flex flex-col gap-6">
-            <div class="delta-logo">
-                <div class="delta-outer"></div>
-                <div class="delta-inner"></div>
-            </div>
-            <div>
-                <h1 class="text-4xl font-bold tracking-widest text-white font-sans italic">3 LINE-AR</h1>
-                <p class="text-cyber text-xs tracking-[0.5em] mt-1">PRISM EDITION</p>
-            </div>
-            
-            <div class="space-y-4 mt-4">
-                <button onclick="window.doLogin()" id="btn-google" class="btn-tri w-full py-4 flex items-center justify-center gap-3 font-bold text-sm">
-                    <i class="fab fa-google"></i> INICIAR SESIÓN
-                </button>
-                <p id="login-msg" class="text-[9px] text-gray-400 font-mono h-4 uppercase">Esperando Credenciales...</p>
+        <!-- 1. PANTALLA LOGIN -->
+        <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
+            <div class="glass-panel p-8 text-center w-full max-w-xs">
+                <h1 class="text-3xl font-black text-white mb-2 tracking-widest">3 LINE-AR</h1>
+                <p class="text-cyber text-xs mb-6">CONQUEST EDITION V12</p>
+                <button onclick="window.doLogin()" class="btn-cyber w-full py-4 font-bold mb-2"><i class="fab fa-google mr-2"></i> CONECTAR</button>
+                <p id="log-status" class="text-[9px] text-gray-500">SISTEMA LISTO</p>
             </div>
         </div>
 
-        <!-- 2. MAIN MENU -->
-        <div id="s-menu" class="interactive cyber-panel p-6 w-full max-w-xs hidden flex-col gap-4">
-            <div class="flex justify-between items-center border-b border-cyber/20 pb-3">
-                <div>
-                    <span class="text-[8px] text-cyber font-mono block mb-1">ID DE OPERADOR</span>
-                    <div id="u-name" class="font-bold text-lg truncate w-40">UNKNOWN</div>
+        <!-- 2. MENU PRINCIPAL -->
+        <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
+            <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-4">
+                <div class="flex justify-between border-b border-gray-700 pb-2">
+                    <span id="u-name" class="text-cyber font-bold">AGENTE</span>
+                    <button onclick="window.logout()" class="text-red-500"><i class="fas fa-power-off"></i></button>
                 </div>
-                <button onclick="window.doLogout()" class="text-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
-            </div>
 
-            <!-- Customization -->
-            <div class="bg-black/40 p-3 clip-path-slanted border-l-2 border-cyber">
-                <p class="text-[9px] text-gray-400 font-mono mb-2">SISTEMA VISUAL</p>
-                <div class="flex justify-between mb-3" id="col-sel">
-                    <div onclick="window.setProf('col','#00f3ff',this)" class="w-6 h-6 bg-[#00f3ff] cursor-pointer border border-white shadow-[0_0_10px_#00f3ff]"></div>
-                    <div onclick="window.setProf('col','#ff003c',this)" class="w-6 h-6 bg-[#ff003c] cursor-pointer border border-transparent opacity-50"></div>
-                    <div onclick="window.setProf('col','#ffd700',this)" class="w-6 h-6 bg-[#ffd700] cursor-pointer border border-transparent opacity-50"></div>
-                    <div onclick="window.setProf('col','#bc13fe',this)" class="w-6 h-6 bg-[#bc13fe] cursor-pointer border border-transparent opacity-50"></div>
+                <!-- PERSONALIZACION -->
+                <div class="bg-black/50 p-3 rounded border border-gray-800">
+                    <p class="text-[10px] text-gray-400 mb-2">TU COLOR</p>
+                    <div class="flex justify-between mb-4" id="col-sel">
+                        <div onclick="window.setProf('c','#00f3ff',this)" class="opt-btn w-6 h-6 bg-[#00f3ff] rounded-full selected shadow-[0_0_10px_#00f3ff]"></div>
+                        <div onclick="window.setProf('c','#ff0055',this)" class="opt-btn w-6 h-6 bg-[#ff0055] rounded-full"></div>
+                        <div onclick="window.setProf('c','#39ff14',this)" class="opt-btn w-6 h-6 bg-[#39ff14] rounded-full"></div>
+                        <div onclick="window.setProf('c','#ffff00',this)" class="opt-btn w-6 h-6 bg-[#ffff00] rounded-full"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mb-2">TU MARCA</p>
+                    <div class="flex justify-between text-white text-xl" id="ico-sel">
+                        <i onclick="window.setProf('i','gem',this)" class="opt-btn fas fa-gem selected text-cyber"></i>
+                        <i onclick="window.setProf('i','bolt',this)" class="opt-btn fas fa-bolt"></i>
+                        <i onclick="window.setProf('i','star',this)" class="opt-btn fas fa-star"></i>
+                        <i onclick="window.setProf('i','skull',this)" class="opt-btn fas fa-skull"></i>
+                    </div>
                 </div>
-                <p class="text-[9px] text-gray-400 font-mono mb-2">FIRMA TÁCTICA</p>
-                <div class="flex justify-between text-white" id="icon-sel">
-                    <i onclick="window.setProf('ico','gem',this)" class="fas fa-gem cursor-pointer text-cyber drop-shadow-[0_0_5px_currentColor]"></i>
-                    <i onclick="window.setProf('ico','star',this)" class="fas fa-star cursor-pointer opacity-50"></i>
-                    <i onclick="window.setProf('ico','bolt',this)" class="fas fa-bolt cursor-pointer opacity-50"></i>
-                    <i onclick="window.setProf('ico','atom',this)" class="fas fa-atom cursor-pointer opacity-50"></i>
+
+                <button onclick="window.quickMatch()" class="btn-cyber py-4 font-bold text-lg"><i class="fas fa-globe mr-2"></i> PARTIDA RÁPIDA</button>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="window.createRoom()" class="btn-cyber py-2 text-xs">CREAR SALA</button>
+                    <button onclick="window.joinRoomUI()" class="btn-cyber py-2 text-xs">UNIRSE</button>
                 </div>
-            </div>
-
-            <button onclick="window.quickMatch()" class="btn-tri w-full py-5 font-bold text-lg">
-                <i class="fas fa-search-location mr-2"></i> BUSCAR PARTIDA
-            </button>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="window.createRoom()" class="btn-tri py-3 text-xs"><i class="fas fa-plus block mb-1"></i> CREAR</button>
-                <button onclick="window.joinRoom()" class="btn-tri py-3 text-xs"><i class="fas fa-code-branch block mb-1"></i> UNIRSE</button>
-            </div>
-
-            <button onclick="window.vsCpu()" class="btn-tri danger py-3 text-xs mt-2">
-                <i class="fas fa-laptop-code mr-2"></i> SIMULACIÓN (CPU)
-            </button>
-        </div>
-
-        <!-- 3. LOBBY -->
-        <div id="s-lobby" class="interactive cyber-panel p-8 w-full max-w-xs text-center hidden">
-            <div class="text-cyber animate-pulse mb-4 text-4xl"><i class="fas fa-wifi"></i></div>
-            <h2 id="lobby-status" class="text-lg font-bold mb-2">ESTABLECIENDO ENLACE...</h2>
-            
-            <div id="lobby-code-wrap" class="hidden bg-black/50 p-4 border border-cyber/30 mb-4">
-                <p class="text-[9px] text-gray-400 font-mono tracking-widest">CÓDIGO DE ENCRIPTACIÓN</p>
-                <p id="room-code" class="text-3xl font-mono font-bold text-cyber mt-1 select-all">----</p>
-            </div>
-
-            <div id="lobby-input-wrap" class="hidden mb-4">
-                <input id="code-input" type="text" maxlength="4" placeholder="XXXX" class="w-full bg-black/50 border-b-2 border-cyber text-center text-2xl text-white font-mono p-2 outline-none focus:bg-cyber/10 uppercase">
-                <button onclick="window.submitCode()" class="btn-tri w-full py-3 mt-4">CONFIRMAR</button>
-            </div>
-
-            <button onclick="window.reset()" class="text-danger text-xs mt-4 hover:underline">ABORTAR MISIÓN</button>
-        </div>
-
-        <!-- 4. HUD JUEGO -->
-        <div id="s-game" class="absolute inset-0 hidden flex-col justify-between p-4 pointer-events-none z-50">
-            <!-- HUD SUPERIOR -->
-            <div class="cyber-panel pointer-events-auto p-3 flex justify-between items-center bg-black/90">
-                <div class="text-center w-20">
-                    <span class="text-[8px] text-cyber font-mono block">TU PUNTAJE</span>
-                    <span id="sc-p1" class="text-3xl font-bold leading-none">0</span>
+                <div id="join-area" class="hidden flex gap-2">
+                    <input id="code-in" class="bg-black border border-cyber text-white w-full text-center uppercase p-2" placeholder="CÓDIGO" maxlength="4">
+                    <button onclick="window.joinRoom()" class="btn-cyber px-4"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 
-                <!-- EL PRISMA (DADO) -->
-                <div class="-mt-16 z-50 flex flex-col items-center">
-                    <div class="prism-container" onclick="window.rollPrism()">
-                        <div id="prism-holo" class="holo-num">0</div>
-                        <!-- El objeto 3D se renderiza detrás en el canvas, este div captura el click -->
+                <button onclick="window.vsCpu()" class="btn-cyber danger py-2 text-xs mt-2"><i class="fas fa-robot mr-2"></i> ENTRENAR (CPU)</button>
+            </div>
+        </div>
+
+        <!-- 3. HUD JUEGO -->
+        <div id="s-game" class="hidden flex flex-col justify-between h-full pointer-events-none relative z-10">
+            <!-- TOP BAR -->
+            <div class="interactive glass-panel p-2 flex justify-between items-center mt-2">
+                <div class="text-center w-20">
+                    <p class="text-[9px] text-gray-400">TU PUNTAJE</p>
+                    <p id="sc-p1" class="text-3xl text-white font-bold leading-none">0</p>
+                </div>
+                
+                <!-- DADO -->
+                <div class="flex flex-col items-center -mt-6">
+                    <div class="dice-container" onclick="window.rollDice()">
+                        <div id="dice" class="dice-cube"><i class="fas fa-dice-d20"></i></div>
                     </div>
-                    <div id="moves-badge" class="bg-black/90 border border-cyber px-3 py-1 mt-1 opacity-0 transition-opacity">
-                        <span class="text-[9px] text-cyber font-mono">ENERGÍA: <span id="mov-cnt" class="text-white text-sm font-bold">0</span></span>
+                    <div id="mov-badge" class="bg-black/80 px-3 py-1 mt-2 rounded border border-cyber text-center opacity-0 transition-opacity">
+                        <p class="text-[8px] text-gray-400">MOVIMIENTOS</p>
+                        <p id="mov-count" class="text-xl text-cyber font-bold leading-none">0</p>
                     </div>
                 </div>
 
                 <div class="text-center w-20">
-                    <span class="text-[8px] text-danger font-mono block">ENEMIGO</span>
-                    <span id="sc-p2" class="text-3xl font-bold leading-none">0</span>
+                    <p class="text-[9px] text-gray-400">RIVAL</p>
+                    <p id="sc-p2" class="text-3xl text-white font-bold leading-none">0</p>
+                </div>
+            </div>
+            
+            <div class="text-center mt-2 pointer-events-none">
+                 <span class="bg-black/50 text-[10px] px-2 py-1 rounded text-gray-400">SALA: <span id="room-id" class="text-white">--</span></span>
+            </div>
+
+            <!-- TOAST -->
+            <div class="flex justify-center items-center flex-grow">
+                <div id="toast" class="toast">
+                    <p id="t-tit" class="font-bold text-cyber mb-1">INFO</p>
+                    <p id="t-msg">Mensaje</p>
                 </div>
             </div>
 
-            <!-- NOTIFICACIONES -->
-            <div id="toast" class="self-center pointer-events-none transition-all duration-300 opacity-0 translate-y-10">
-                <div class="bg-black/90 border-l-4 border-cyber px-6 py-3 shadow-lg clip-path-slanted">
-                    <h3 id="t-tit" class="text-cyber font-bold text-sm font-mono">SISTEMA</h3>
-                    <p id="t-msg" class="text-white text-xs">Mensaje</p>
-                </div>
-            </div>
-
-            <!-- CONTROLES -->
-            <div class="pointer-events-auto flex justify-center gap-4 pb-6">
-                <button onclick="window.exit()" class="w-12 h-12 bg-danger/20 border border-danger text-danger rounded-none clip-path-diamond flex items-center justify-center hover:bg-danger hover:text-white transition">
-                    <i class="fas fa-times"></i>
-                </button>
-                <button onclick="window.recenter()" class="px-6 bg-gray-900/80 border border-white/30 text-white text-xs font-mono hover:bg-white/20 transition clip-path-slanted">
-                    <i class="fas fa-sync mr-2"></i> RE-CALIBRAR
-                </button>
+            <!-- CONTROLES INFERIORES -->
+            <div class="interactive flex justify-center gap-4 pb-8">
+                <button onclick="window.exit()" class="w-12 h-12 rounded-full bg-red-900/50 border border-red-500 text-white flex items-center justify-center"><i class="fas fa-times"></i></button>
+                <button onclick="window.recenter()" id="btn-3d" class="px-6 rounded-full bg-gray-800/80 border border-white text-xs text-white"><i class="fas fa-sync mr-2"></i> RE-CENTRAR</button>
             </div>
         </div>
 
-        <div id="ar-hint" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden flex-col items-center">
-            <div class="w-20 h-20 border-2 border-cyber rounded-full animate-ping absolute opacity-20"></div>
-            <i class="fas fa-crosshairs text-cyber text-2xl animate-pulse"></i>
-            <span class="mt-4 bg-black/70 text-cyber text-[9px] font-mono px-2 py-1 border border-cyber">DETECTANDO SUPERFICIE...</span>
+        <!-- AR HINT -->
+        <div id="ar-hint" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden flex-col items-center z-0">
+            <div class="w-16 h-16 border-2 border-cyber rounded-full animate-ping absolute"></div>
+            <i class="fas fa-crosshairs text-white text-3xl"></i>
+            <span class="bg-black/80 text-[10px] px-2 py-1 mt-4 text-cyber border border-cyber">DETECTANDO SUPERFICIE...</span>
         </div>
     </div>
 
-    <div id="ar-btn-holder"></div>
+    <div id="ar-btn-holder" class="absolute bottom-6 left-1/2 -translate-x-1/2 interactive z-30"></div>
 
-    <!-- LÓGICA DEL SISTEMA -->
+    <!-- LOGICA -->
     <script type="module">
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- CONFIG ---
-        const log = (m) => { document.getElementById('sys-log').innerText = `> ${m}`; console.log(m); };
+        // --- 1. CONFIGURACION ---
         const CONF = { apiKey:"AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
-        
-        // --- FIREBASE INIT ---
         let app, auth, db;
-        try {
-            app = initializeApp(typeof __firebase_config!=='undefined'?JSON.parse(__firebase_config):CONF);
-            auth = getAuth(app); db = getFirestore(app);
-        } catch(e) { alert("Error Crítico de Base de Datos"); }
+        try { app = initializeApp(CONF); auth = getAuth(app); db = getFirestore(app); } catch(e){console.error(e);}
 
-        // --- ESTADO ---
-        let S = { 
-            user: null, room: null, role: null, cpu: false, 
-            data: null, prof: { col: '#00f3ff', ico: 'gem' }
-        };
+        let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
 
-        // --- AUTH ---
+        // --- 2. AUTH & MENU ---
         onAuthStateChanged(auth, u => {
             S.user = u;
             if(u) {
-                document.getElementById('u-name').innerText = u.displayName ? u.displayName.toUpperCase() : 'OPERADOR';
+                document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE';
                 nav('s-menu');
-                initBg();
             } else nav('s-login');
         });
 
-        window.doLogin = async () => {
-            const btn = document.getElementById('btn-google');
-            const msg = document.getElementById('login-msg');
-            btn.disabled = true;
-            msg.innerText = "NEGOCIANDO TOKEN DE SEGURIDAD...";
-            msg.classList.add('text-cyber', 'animate-pulse');
-            
-            try {
-                await signInWithPopup(auth, new GoogleAuthProvider());
-            } catch(e) {
-                console.error(e);
-                btn.disabled = false;
-                msg.innerText = "ERROR: POPUP BLOQUEADO. REVISE PERMISOS.";
-                msg.classList.replace('text-cyber', 'text-danger');
-                alert("SISTEMA DE SEGURIDAD: El navegador bloqueó la ventana de Google. Por favor permita popups para este sitio.");
-            }
+        window.doLogin = async () => { try{await signInWithPopup(auth, new GoogleAuthProvider());}catch(e){alert("Habilita popups");} };
+        window.logout = () => signOut(auth).then(()=>location.reload());
+        window.setProf = (t,v,el) => {
+            S.prof[t]=v;
+            const p=el.parentNode;
+            Array.from(p.children).forEach(c=>{c.classList.remove('selected'); c.style.boxShadow='none'; c.style.color='white'});
+            el.classList.add('selected');
+            if(t==='c') el.style.boxShadow=`0 0 10px ${v}`;
+            else el.style.color = '#00f3ff';
         };
-        window.doLogout = () => signOut(auth).then(()=>location.reload());
 
-        // --- UI NAV ---
         function nav(id) {
-            ['s-login','s-menu','s-lobby','s-game'].forEach(i => document.getElementById(i).classList.add('hidden'));
+            ['s-login','s-menu','s-game'].forEach(i=>document.getElementById(i).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
-            if(id==='s-game') document.getElementById('bg-canvas').style.display='none'; // Dejar que ThreeJS maneje fondo
-            else document.getElementById('bg-canvas').style.display='block';
         }
 
-        window.setProf = (k,v,el) => {
-            S.prof[k]=v;
-            const p = el.parentNode;
-            Array.from(p.children).forEach(c => { c.style.opacity='0.5'; c.style.border='1px solid transparent'; });
-            el.style.opacity='1'; el.style.border='1px solid white';
-        };
-
-        // --- LÓGICA SALAS ---
+        // --- 3. MATCHMAKING ---
         window.quickMatch = async () => {
-            nav('s-lobby'); S.cpu=false;
-            try {
-                const q = await getDocs(collection(db, 'artifacts', CONF.projectId, 'rooms'));
-                let rid = null;
-                q.forEach(d => { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid && v.pub) rid=d.id; });
-                rid ? join(rid.split('_')[1]) : create(true);
-            } catch(e) { window.vsCpu(); }
+            S.cpu=false; 
+            const q = await getDocs(collection(db, 'artifacts', CONF.projectId, 'rooms'));
+            let rid = null;
+            q.forEach(d => { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) rid=d.id; });
+            rid ? join(rid.split('_')[1]) : create();
         };
-        
-        window.createRoom = () => create(false);
-        window.joinRoom = () => { nav('s-lobby'); document.getElementById('lobby-input-wrap').classList.remove('hidden'); };
-        window.submitCode = () => { const c=document.getElementById('code-input').value.toUpperCase(); if(c.length===4) join(c); };
+        window.createRoom = () => create();
+        window.joinRoomUI = () => document.getElementById('join-area').classList.remove('hidden');
+        window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
-            S.data = { stat:'play', turn:'host', lines:[], tris:[], sc:{host:0,guest:0}, dice:0, movs:0, p1:S.prof, p2:{col:'#ff003c',ico:'atom'} };
+            S.data={stat:'play', turn:'host', lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}};
             startGame();
         };
 
-        async function create(pub) {
-            S.role='host'; const code = Math.random().toString(36).substring(2,6).toUpperCase(); S.room=code;
-            nav('s-lobby'); 
-            if(!pub) {
-                document.getElementById('lobby-code-wrap').classList.remove('hidden');
-                document.getElementById('room-code').innerText = code;
-            }
-            await setDoc(doc(db,'artifacts',CONF.projectId,'rooms',`room_${code}`), {
-                host:S.user.uid, stat:'wait', pub:pub, turn:'host', lines:[], tris:[], sc:{host:0,guest:0}, dice:0, movs:0, p1:S.prof
+        async function create() {
+            S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
+            await setDoc(doc(db,'artifacts',CONF.projectId,'rooms',`room_${c}`), {
+                host:S.user.uid, stat:'wait', turn:'host', lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
             });
-            sub(code);
+            sub(c); nav('s-game'); document.getElementById('room-id').innerText = c;
         }
-        async function join(code) {
-            S.role='guest'; S.room=code;
-            await updateDoc(doc(db,'artifacts',CONF.projectId,'rooms',`room_${code}`), { guest:S.user.uid, stat:'play', p2:S.prof });
-            sub(code);
+        async function join(c) {
+            S.role='guest'; S.room=c;
+            await updateDoc(doc(db,'artifacts',CONF.projectId,'rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
+            sub(c); nav('s-game');
         }
-        function sub(code) {
-            onSnapshot(doc(db,'artifacts',CONF.projectId,'rooms',`room_${code}`), s => {
-                if(!s.exists()) return;
-                const d=s.data(); S.data=d;
-                if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) startGame(); renderUI(); }
+        function sub(c) {
+            onSnapshot(doc(db,'artifacts',CONF.projectId,'rooms',`room_${c}`), s => {
+                if(s.exists()){
+                    const d=s.data(); S.data=d;
+                    if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) startGame(); renderUI(); }
+                }
             });
         }
 
-        // --- GAME ENGINE ---
-        function startGame() { nav('s-game'); init3D(); renderUI(); toast("SISTEMA","ENLACE ESTABLECIDO"); }
-        
-        function renderUI() {
+        // --- 4. GAME LOGIC (CORE) ---
+        function startGame() { nav('s-game'); init3D(); toast("SISTEMA","CONEXIÓN ESTABLECIDA"); }
+
+        window.rollDice = () => {
             const d=S.data;
-            document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
-            document.getElementById('sc-p2').innerText = S.role==='host'?d.sc.guest:d.sc.host;
-            const badge = document.getElementById('moves-badge');
-            const holo = document.getElementById('prism-holo');
+            if(d.turn!==S.role) return toast("ESPERA","TURNO RIVAL");
+            if(d.movs>0) return toast("TIENES MOVIMIENTOS",`Te quedan ${d.movs}`);
             
-            if(d.turn===S.role && d.movs>0) {
-                badge.style.opacity='1'; document.getElementById('mov-cnt').innerText=d.movs;
-                holo.innerText=d.dice; holo.classList.add('holo-active');
-            } else {
-                badge.style.opacity='0'; holo.classList.remove('holo-active'); if(!d.dice) holo.innerText="";
-            }
-            
-            render3D();
-            
-            if(S.cpu && d.turn==='guest' && d.movs===0) setTimeout(cpuRoll, 1500);
-            else if(S.cpu && d.turn==='guest' && d.movs>0) setTimeout(cpuMove, 1000);
-        }
-
-        window.rollPrism = () => {
-            if(S.data.turn!==S.role) return toast("DENEGADO","TURNO DEL OPONENTE");
-            if(S.data.movs>0) return toast("ERROR","GASTE SU ENERGÍA PRIMERO");
-            if(prismMesh) prismMesh.userData.spinning = true; // Trigger anim
-            
-            setTimeout(() => {
-                if(prismMesh) prismMesh.userData.spinning = false;
-                const r = Math.ceil(Math.random()*6);
-                update({dice:r, movs:r});
-            }, 800);
+            const el=document.getElementById('dice');
+            el.classList.add('dice-rolling');
+            setTimeout(()=>{
+                const v=Math.ceil(Math.random()*6);
+                update({dice:v, movs:v});
+                el.classList.remove('dice-rolling');
+                toast("DADO",`Sacaste ${v}`);
+            },600);
         };
 
         function update(o) {
-            if(S.cpu) { Object.assign(S.data, o); renderUI(); }
+            if(S.cpu) { Object.assign(S.data,o); renderUI(); }
             else updateDoc(doc(db,'artifacts',CONF.projectId,'rooms',`room_${S.room}`), o);
         }
 
-        function move(p1,p2) {
+        function renderUI() {
             const d=S.data;
-            if(d.turn!==S.role || d.movs<=0) return;
-            if(pts[p1].position.distanceTo(pts[p2].position)>0.26) return toast("ERROR","NODO FUERA DE RANGO");
-            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("ERROR","ENLACE YA EXISTE");
-
-            const nl = [...d.lines, {s:p1,e:p2,own:S.role}];
-            const nt = checkTri(p1,p2,S.role,nl);
-            const sc = {...d.sc}; if(nt.length) sc[S.role]+=nt.length;
+            // Scores
+            document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
+            document.getElementById('sc-p2').innerText = S.role==='host'?d.sc.guest:d.sc.host;
+            // Turn info
+            const badge=document.getElementById('mov-badge');
+            const dice=document.getElementById('dice');
             
-            let m = d.movs-1; let t = d.turn; if(m===0) t=t==='host'?'guest':'host';
-            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t});
+            if(d.turn===S.role && d.movs>0) {
+                badge.style.opacity=1; document.getElementById('mov-count').innerText=d.movs;
+                dice.innerText=d.dice; dice.style.borderColor='#00f3ff';
+            } else {
+                badge.style.opacity=0; dice.innerText=d.dice||"?"; dice.style.borderColor='#555';
+            }
+
+            render3D(); // Actualizar tablero
+
+            // CPU LOGIC
+            if(S.cpu && d.turn==='guest') {
+                if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3}),1000);
+                else if(d.movs>0) setTimeout(cpuMove,1000);
+            }
+        }
+
+        function clickPoint(id) {
+            const d=S.data;
+            if(d.turn!==S.role || d.movs<=0) return toast("ERROR","LANZA EL DADO");
+            
+            if(selPt===null) {
+                selPt=id; highlight(id,true);
+            } else {
+                if(selPt===id) { highlight(id,false); selPt=null; } // Cancel
+                else { tryLine(selPt,id); highlight(selPt,false); selPt=null; }
+            }
+        }
+
+        function tryLine(p1,p2) {
+            const d=S.data;
+            const pos1=pts[p1].position; const pos2=pts[p2].position;
+            
+            if(pos1.distanceTo(pos2)>0.26) return toast("ERROR","MUY LEJOS");
+            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("ERROR","YA EXISTE");
+
+            const nl=[...d.lines, {s:p1,e:p2,own:S.role}];
+            // TRIANGLE CHECK (CONQUEST)
+            const nt=checkTri(p1,p2,S.role,nl);
+            const sc={...d.sc}; 
+            if(nt.length) {
+                sc[S.role]+=nt.length;
+                toast("CONQUISTA", "¡Zona capturada!");
+            }
+
+            let m=d.movs-1; let t=d.turn; let di=d.dice;
+            if(m===0) { t=t==='host'?'guest':'host'; di=null; }
+            
+            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di});
         }
 
         function checkTri(p1,p2,o,ls) {
             const f=[];
             for(let p3=0; p3<16; p3++) {
                 if(p3!==p1 && p3!==p2) {
+                    // Revisa si existen las lineas conectando al 3er punto, SIN IMPORTAR QUIEN LAS PUSO
                     const l1=ls.some(l=>(l.s===p1&&l.e===p3)||(l.s===p3&&l.e===p1));
                     const l2=ls.some(l=>(l.s===p2&&l.e===p3)||(l.s===p3&&l.e===p2));
-                    if(l1&&l2) {
+                    
+                    if(l1 && l2) {
+                        // Verifica que el triangulo no haya sido reclamado antes
                         const v=[p1,p2,p3].sort();
-                        if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) 
-                            f.push({p1:v[0],p2:v[1],p3:v[2],own:o});
+                        const exists=S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v));
+                        if(!exists) f.push({p1:v[0],p2:v[1],p3:v[2],own:o});
                     }
                 }
             } return f;
         }
 
-        function cpuRoll() { update({dice:3,movs:3}); }
         function cpuMove() {
-            let m=null;
-            // Simple AI
+            let m=null; // Busca espacio libre
             for(let i=0;i<16;i++) for(let j=i+1;j<16;j++) {
-                if(pts[i].position.distanceTo(pts[j].position)<0.26 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) 
-                { m={s:i,e:j}; break; }
+                 if(pts[i].position.distanceTo(pts[j].position)<0.26 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) { m={s:i,e:j}; break; }
             }
             if(m) {
                 const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}];
                 const nt=checkTri(m.s,m.e,'guest',nl);
                 const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
-                let mo=S.data.movs-1; let t=S.data.turn; if(mo===0) t='host';
-                update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t});
-            } else update({movs:0, turn:'host'});
+                let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice;
+                if(mo===0) { t='host'; di=null; }
+                update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di});
+            } else update({movs:0, turn:'host', dice:null});
         }
 
-        // --- 3D & AR ---
-        let scene, cam, ren, group, ray, reticle, arHit;
-        let pts=[], prismMesh, selPt=null;
+        // --- 5. 3D/AR ENGINE ---
+        let scene, cam, ren, group, ray, reticle, arHit, controls, selPt=null, pts=[];
+        let placed=false;
 
         function init3D() {
             if(scene) return;
-            scene = new THREE.Scene();
-            cam = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
-            ren = new THREE.WebGLRenderer({antialias:true, alpha:true});
-            ren.setSize(window.innerWidth, window.innerHeight);
-            ren.xr.enabled = true;
-            
-            const arBtn = ARButton.createButton(ren, { requiredFeatures:['hit-test'], optionalFeatures:['dom-overlay'], domOverlay:{root:document.body} });
-            document.getElementById('ar-btn-holder').appendChild(arBtn);
-            arBtn.addEventListener('click', ()=>{ 
-                group.visible=false; 
-                document.getElementById('bg-canvas').style.display='none'; // Asegurar fondo transparente
-                scene.background = null; 
-            });
-            
+            scene=new THREE.Scene();
+            cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.01,20);
+            ren=new THREE.WebGLRenderer({antialias:true, alpha:true});
+            ren.setSize(innerWidth,innerHeight); ren.xr.enabled=true;
             document.body.appendChild(ren.domElement);
+
+            const btn=ARButton.createButton(ren,{requiredFeatures:['hit-test'], optionalFeatures:['dom-overlay'], domOverlay:{root:document.body}});
+            document.getElementById('ar-btn-holder').appendChild(btn);
             
-            scene.add(new THREE.HemisphereLight(0xffffff, 0x222222, 3));
-            group = new THREE.Group(); scene.add(group);
+            btn.addEventListener('click', ()=>{
+                placed=false; group.visible=false;
+                document.getElementById('bg-canvas').style.display='none';
+                document.getElementById('btn-3d').style.display='none';
+            });
+
+            scene.add(new THREE.HemisphereLight(0xffffff,0x404040,3));
+            group=new THREE.Group(); scene.add(group);
+
+            // PUNTOS + HITBOX
+            const geo=new THREE.SphereGeometry(0.03,16,16);
+            const mat=new THREE.MeshStandardMaterial({color:0x333333, emissive:0x00f3ff, emissiveIntensity:0.2});
+            const hitGeo=new THREE.SphereGeometry(0.09); // Grande invisible
+            const hitMat=new THREE.MeshBasicMaterial({visible:false});
             
-            // Board nodes
-            const geo = new THREE.OctahedronGeometry(0.03,0); // Nodos triangulares tambien
-            const mat = new THREE.MeshStandardMaterial({color:0x222222, emissive:0x00f3ff, emissiveIntensity:0.5, flatShading:true});
-            const hitGeo = new THREE.SphereGeometry(0.07);
-            
-            for(let z=0; z<4; z++) for(let x=0; x<4; x++) {
-                const m = new THREE.Mesh(geo, mat.clone());
-                m.position.set((x-1.5)*0.25, 0, (z-1.5)*0.25);
-                m.userData.id = pts.length;
-                const h = new THREE.Mesh(hitGeo, new THREE.MeshBasicMaterial({visible:false}));
-                m.add(h); group.add(m); pts.push(m);
+            for(let z=0;z<4;z++) for(let x=0;x<4;x++) {
+                const m=new THREE.Mesh(geo,mat.clone());
+                m.position.set((x-1.5)*0.25,0,(z-1.5)*0.25);
+                m.userData.id=pts.length;
+                const h=new THREE.Mesh(hitGeo,hitMat); m.add(h);
+                group.add(m); pts.push(m);
             }
 
-            // PRISM (DICE REPLACEMENT)
-            const pGeo = new THREE.OctahedronGeometry(0.15, 0); // EL DADO ES UN OCTAEDRO
-            const pMat = new THREE.MeshStandardMaterial({
-                color: 0x000000, emissive: 0x00f3ff, emissiveIntensity: 0.8,
-                wireframe: true
-            });
-            const pCoreMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
-            prismMesh = new THREE.Mesh(pGeo, pMat);
-            const pCore = new THREE.Mesh(new THREE.OctahedronGeometry(0.05,0), pCoreMat);
-            prismMesh.add(pCore);
-            prismMesh.position.set(0, 0.4, 0); // Floating above board
-            group.add(prismMesh);
+            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color:0x00f3ff}));
+            reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
 
-            ray = new THREE.Raycaster();
-            reticle = new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color:0x00f3ff}));
-            reticle.visible=false; scene.add(reticle);
-            
+            ray=new THREE.Raycaster();
             ren.setAnimationLoop(loop);
-            window.addEventListener('pointerdown', click);
+            window.addEventListener('pointerdown', onTouch);
             
-            if(!navigator.xr) window.recenter();
+            controls=new OrbitControls(cam,ren.domElement);
+            window.recenter();
         }
 
         window.recenter = () => {
-            group.visible=true; group.position.set(0,0,0); 
-            cam.position.set(0, 1.2, 1); cam.lookAt(0,0,0);
-            document.getElementById('ar-hint').style.display='none';
-            document.getElementById('bg-canvas').style.display='block'; // Mostrar fondo en modo 3D
-        };
+            group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0);
+            cam.position.set(0,1.5,1.2); cam.lookAt(0,0,0);
+            document.getElementById('bg-canvas').style.display='block';
+        }
+
+        function onTouch(e) {
+            if(e.target.closest('.interactive') || e.target.closest('#ar-btn-holder')) return;
+            const m=new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
+            ray.setFromCamera(m,cam);
+            const hits=ray.intersectObjects(group.children,true);
+            const h=hits.find(x=>x.object.parent && x.object.parent.userData.id!==undefined);
+            if(h) clickPoint(h.object.parent.userData.id);
+        }
+
+        function highlight(id,on) {
+            const m=pts[id];
+            if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); m.material.emissiveIntensity=1; }
+            else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); m.material.emissiveIntensity=0.2; }
+        }
 
         function render3D() {
             if(!S.data || !group) return;
-            // Clean lines/tris
-            for(let i=group.children.length-1; i>=0; i--) {
-                const c=group.children[i];
-                if(c.userData.type) group.remove(c);
-            }
+            // Limpiar viejos
+            for(let i=group.children.length-1; i>=0; i--) { if(group.children[i].userData.temp) group.remove(group.children[i]); }
             
-            S.data.lines.forEach(l => {
-                const col = l.own==='host'?S.data.p1.col:S.data.p2.col;
+            // DIBUJAR LINEAS (Color del perfil)
+            S.data.lines.forEach(l=>{
+                const prof = l.own==='host' ? S.data.p1 : S.data.p2;
+                const col = prof ? prof.c : '#ffffff';
                 const p1=pts[l.s].position; const p2=pts[l.e].position;
-                const g=new THREE.CylinderGeometry(0.005,0.005,p1.distanceTo(p2),4);
+                const g=new THREE.CylinderGeometry(0.008,0.008,p1.distanceTo(p2),6);
                 const m=new THREE.MeshBasicMaterial({color:col});
-                const o=new THREE.Mesh(g,m);
-                o.position.copy(p1).lerp(p2,0.5); o.lookAt(p2); o.rotateX(Math.PI/2);
-                o.userData.type='line'; group.add(o);
+                const mesh=new THREE.Mesh(g,m);
+                mesh.position.copy(p1).lerp(p2,0.5); mesh.lookAt(p2); mesh.rotateX(Math.PI/2);
+                mesh.userData.temp=true; group.add(mesh);
             });
 
-            S.data.tris.forEach(t => {
-                const col = t.own==='host'?S.data.p1.col:S.data.p2.col;
-                const ic = t.own==='host'?S.data.p1.ico:S.data.p2.ico;
+            // DIBUJAR TRIANGULOS + ICONOS
+            S.data.tris.forEach(t=>{
+                const prof = t.own==='host' ? S.data.p1 : S.data.p2;
+                const col = prof ? prof.c : '#ffffff';
+                const ico = prof ? prof.i : 'gem';
                 
-                // Triangle Mesh
-                const v = new Float32Array([
+                // Mesh Transparente
+                const v=new Float32Array([
                     pts[t.p1].position.x, pts[t.p1].position.y, pts[t.p1].position.z,
                     pts[t.p2].position.x, pts[t.p2].position.y, pts[t.p2].position.z,
                     pts[t.p3].position.x, pts[t.p3].position.y, pts[t.p3].position.z
                 ]);
                 const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(v,3));
-                const m=new THREE.MeshBasicMaterial({color:col, opacity:0.3, transparent:true, side:THREE.DoubleSide});
-                const tm=new THREE.Mesh(g,m); tm.userData.type='tri';
-                
-                // Icon Marker
-                const c=new THREE.Vector3().add(pts[t.p1].position).add(pts[t.p2].position).add(pts[t.p3].position).divideScalar(3);
+                const m=new THREE.MeshBasicMaterial({color:col, opacity:0.4, transparent:true, side:THREE.DoubleSide, depthWrite:false});
+                const mesh=new THREE.Mesh(g,m); mesh.userData.temp=true;
+
+                // Icono Geometria
                 let ig;
-                if(ic==='star') ig=new THREE.OctahedronGeometry(0.04,0);
-                else if(ic==='atom') ig=new THREE.IcosahedronGeometry(0.04,0);
-                else ig=new THREE.ConeGeometry(0.03,0.06,3); // Default Gem/Bolt
-                
-                const im=new THREE.Mesh(ig, new THREE.MeshBasicMaterial({color:col, wireframe:true}));
+                if(ico==='skull') ig=new THREE.BoxGeometry(0.05,0.05,0.05);
+                else if(ico==='star') ig=new THREE.OctahedronGeometry(0.05,0);
+                else if(ico==='bolt') ig=new THREE.ConeGeometry(0.03,0.07,4);
+                else ig=new THREE.IcosahedronGeometry(0.04,0); // Gem
+
+                const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:col, wireframe:true}));
+                const c=new THREE.Vector3().add(pts[t.p1].position).add(pts[t.p2].position).add(pts[t.p3].position).divideScalar(3);
                 im.position.copy(c); im.position.y+=0.05;
-                im.userData = { float:true, y:im.position.y, sp:Math.random()*0.002 };
-                tm.add(im); group.add(tm);
+                mesh.add(im); group.add(mesh);
             });
         }
 
-        function click(e) {
-            if(e.target.closest('.interactive')) return;
-            const m = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
-            ray.setFromCamera(m, cam);
-            const hits = ray.intersectObjects(group.children, true);
-            const pt = hits.find(h=>h.object.parent && h.object.parent.userData.id!==undefined);
-            if(pt) handlePt(pt.object.parent);
-        }
-
-        function handlePt(obj) {
-            if(selPt===obj) { selPt.material.emissive.setHex(0x00f3ff); selPt=null; }
-            else if(!selPt) { selPt=obj; selPt.material.emissive.setHex(0xffffff); }
-            else { move(selPt.userData.id, obj.userData.id); selPt.material.emissive.setHex(0x00f3ff); selPt=null; }
-        }
-
-        function loop(t, frame) {
-            // ANIMATIONS
-            if(prismMesh) {
-                prismMesh.rotation.y += 0.01;
-                prismMesh.rotation.z += 0.005;
-                if(prismMesh.userData.spinning) {
-                    prismMesh.rotation.y += 0.5; prismMesh.rotation.x += 0.2;
+        function loop(t,frame) {
+            if(controls) controls.update();
+            if(ren.xr.isPresenting) {
+                const s=ren.xr.getSession();
+                if(!placed) {
+                    if(frame) {
+                        s.requestReferenceSpace('viewer').then(r=>s.requestHitTestSource({space:r}).then(h=>arHit=h));
+                        if(arHit) {
+                            const h=frame.getHitTestResults(arHit);
+                            if(h.length) {
+                                reticle.visible=true; reticle.matrix.fromArray(h[0].getPose(ren.xr.getReferenceSpace()).transform.matrix);
+                                document.getElementById('ar-hint').style.display='flex';
+                            } else reticle.visible=false;
+                        }
+                    }
+                    const c=ren.xr.getController(0);
+                    c.addEventListener('select',()=>{
+                        if(reticle.visible){
+                            group.position.setFromMatrixPosition(reticle.matrix);
+                            group.visible=true; placed=true; reticle.visible=false;
+                            document.getElementById('ar-hint').style.display='none';
+                        }
+                    },{once:true});
                 }
             }
-            group.children.forEach(c => {
-                if(c.userData.type==='tri' && c.children[0].userData.float) {
-                    c.children[0].rotation.y += 0.02;
-                }
-            });
-
-            // AR HIT TEST
-            if(frame && ren.xr.isPresenting && !group.visible) {
-                const s = ren.xr.getSession();
-                s.requestReferenceSpace('viewer').then(r=>s.requestHitTestSource({space:r}).then(h=>arHit=h));
-                if(arHit) {
-                    const h = frame.getHitTestResults(arHit);
-                    if(h.length) {
-                        reticle.visible=true; reticle.matrix.fromArray(h[0].getPose(ren.xr.getReferenceSpace()).transform.matrix);
-                        document.getElementById('ar-hint').style.display='flex';
-                    } else { reticle.visible=false; document.getElementById('ar-hint').style.display='none'; }
-                }
-            }
-            
-            // AR PLACE
-            if(ren.xr.isPresenting && reticle.visible && !group.visible) {
-               const ctrl = ren.xr.getController(0);
-               ctrl.addEventListener('select', () => {
-                   if(reticle.visible) {
-                       group.position.setFromMatrixPosition(reticle.matrix);
-                       group.visible=true; reticle.visible=false;
-                       document.getElementById('ar-hint').style.display='none';
-                   }
-               }, {once:true});
-            }
-
-            ren.render(scene, cam);
+            ren.render(scene,cam);
         }
-
-        // Toast Helper
-        window.toast = (t,m) => {
-            const el = document.getElementById('toast');
-            document.getElementById('t-tit').innerText=t; document.getElementById('t-msg').innerText=m;
-            el.classList.remove('opacity-0','translate-y-10');
-            setTimeout(()=>el.classList.add('opacity-0','translate-y-10'),3000);
-        };
 
         window.exit = () => location.reload();
-        window.reset = () => location.reload();
-
-        // INIT BACKGROUND
-        function initBg() {
-            const c=document.getElementById('bg-canvas'); const x=c.getContext('2d');
-            let w=c.width=window.innerWidth; let h=c.height=window.innerHeight;
-            const tris=[]; 
-            for(let i=0;i<20;i++) tris.push({x:Math.random()*w,y:Math.random()*h,s:Math.random()*20+10, r:0, v:Math.random()*.5});
-            function bgLoop() {
-                x.fillStyle='#050b14'; x.fillRect(0,0,w,h);
-                tris.forEach(t=>{
-                    t.y-=t.v; t.r+=0.01; if(t.y<0) t.y=h;
-                    x.save(); x.translate(t.x,t.y); x.rotate(t.r);
-                    x.beginPath(); x.moveTo(0,-t.s); x.lineTo(t.s,t.s); x.lineTo(-t.s,t.s); x.closePath();
-                    x.strokeStyle='rgba(0,243,255,0.1)'; x.stroke();
-                    x.restore();
-                });
-                requestAnimationFrame(bgLoop);
-            } bgLoop();
+        window.toast = (t,m) => {
+            const el=document.getElementById('toast'); document.getElementById('t-tit').innerText=t; document.getElementById('t-msg').innerText=m;
+            el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3000);
         }
     </script>
 </body>
 </html>
+
