@@ -3,669 +3,724 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | Conecta & Conquista</title>
+    <title>3 LINE-AR | Ultimate Gameplay</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = { theme: { extend: { colors: { cyber: '#00e5ff', neon: '#ff0055' } } } }
+        tailwind.config = { theme: { extend: { colors: { cyber: '#00e5ff', neon: '#ff0055', gold: '#ffd700' } } } }
     </script>
-    <!-- Fix for Tailwind CDN warning: In production use build step, but for this standalone file, we suppress via CSS if needed or ignore -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        /* --- ESTÉTICA --- */
-        body { margin: 0; overflow: hidden; font-family: 'Rajdhani', sans-serif; background-color: #000000; color: white; }
+        body { margin: 0; overflow: hidden; font-family: 'Rajdhani', sans-serif; background-color: #050505; color: white; user-select: none; touch-action: none; }
         .font-orbitron { font-family: 'Orbitron', sans-serif; }
         
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         .interactive { pointer-events: auto; }
         
-        /* FONDO */
-        #bg-canvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
-            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1)); transition: filter 1s ease;
-        }
-
-        /* PANELES */
+        /* Efecto Cristal */
         .glass {
-            background: rgba(5, 5, 8, 0.95); backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            background: rgba(10, 10, 15, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
-        .glass-pattern::before {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 20L40 0H0L20 20z' fill='%23ffffff' fill-opacity='0.03'/%3E%3C/svg%3E");
-            background-size: 20px 20px; opacity: 0.5; pointer-events: none; z-index: -1;
-        }
-        .neon-title { color: #fff; text-shadow: 0 0 15px currentColor; transition: color 1s, text-shadow 1s; }
         
-        /* BOTONES */
+        /* Botones Cyberpunk */
         .btn-cyber {
-            position: relative; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(4px); transition: all 0.2s ease; overflow: hidden;
-            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-            font-family: 'Orbitron', sans-serif; font-weight: bold; padding: 1rem; border-radius: 0.25rem;
-            color: white; text-transform: uppercase; letter-spacing: 1px; cursor: pointer;
-            touch-action: manipulation; /* Mejora táctil */
+            background: linear-gradient(45deg, rgba(0, 229, 255, 0.1), transparent);
+            border: 1px solid #00e5ff; color: #00e5ff;
+            text-transform: uppercase; font-family: 'Orbitron', sans-serif; letter-spacing: 2px;
+            transition: all 0.3s; position: relative; overflow: hidden;
         }
-        .btn-cyber:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); box-shadow: 0 0 20px currentColor; border-color: white; }
-        .btn-cyber:active:not(:disabled) { transform: scale(0.98); }
-        .btn-cyber:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .btn-cyber:active { transform: scale(0.95); background: #00e5ff; color: black; }
+        .btn-cyber.disabled { filter: grayscale(1); opacity: 0.5; pointer-events: none; }
 
-        .btn-google-cyber { border-color: rgba(255,255,255,0.3); }
-        .btn-facebook-cyber { border-color: rgba(24, 119, 242, 0.5); color: #1877F2; }
+        /* Dado Animado */
+        .dice-container { perspective: 1000px; width: 60px; height: 60px; }
+        .dice { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 1s; }
+        .dice-face { position: absolute; width: 60px; height: 60px; background: rgba(0,0,0,0.9); border: 2px solid #00e5ff; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; color: #00e5ff; box-shadow: 0 0 10px #00e5ff; }
+        .front  { transform: rotateY(0deg) translateZ(30px); }
+        .back   { transform: rotateY(180deg) translateZ(30px); }
+        .right  { transform: rotateY(90deg) translateZ(30px); }
+        .left   { transform: rotateY(-90deg) translateZ(30px); }
+        .top    { transform: rotateX(90deg) translateZ(30px); }
+        .bottom { transform: rotateX(-90deg) translateZ(30px); }
 
-        /* UTILIDADES */
-        .fade-in { animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .scanline { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: rgba(255, 255, 255, 0.05); opacity: 0.1; animation: scan 8s linear infinite; pointer-events: none; z-index: 999; }
-        @keyframes scan { 0% { top: -10%; } 100% { top: 110%; } }
-        .color-btn { transition: all 0.3s; }
-        .color-btn.selected { border-color: white; transform: scale(1.25); box-shadow: 0 0 25px currentColor; z-index: 2; }
-        
-        /* AR & Scroll */
-        #ar-button-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 20; }
-        #ar-instructions {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: white; font-family: 'Orbitron', sans-serif; text-align: center;
-            background: rgba(0,0,0,0.6); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
-            pointer-events: none; display: none; z-index: 50;
-        }
-        .scrollable-card { max-height: 85vh; overflow-y: auto; scrollbar-width: none; } /* Hide scrollbar for clean look */
-        
-        /* LOGGER EN PANTALLA (DEBUG) */
-        #debug-console {
-            position: fixed; bottom: 5px; left: 5px; width: 200px; max-height: 100px; 
-            overflow-y: auto; background: rgba(0,0,0,0.8); border: 1px solid #333; 
-            color: #ff5555; font-family: monospace; font-size: 8px; z-index: 9999;
-            pointer-events: none; display: none; /* Se activa con errores */
-        }
+        .animate-spin-dice { animation: spinDice 0.5s infinite linear; }
+        @keyframes spinDice { 0% { transform: rotateX(0) rotateY(0); } 100% { transform: rotateX(360deg) rotateY(360deg); } }
+
+        #debug-console { position: fixed; bottom: 5px; left: 5px; color: #555; font-size: 8px; pointer-events: none; z-index: 100; font-family: monospace; }
     </style>
     
+    <!-- THREE.JS -->
     <script type="importmap">
         { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
     </script>
 </head>
 <body>
 
-    <canvas id="bg-canvas"></canvas>
-    <div class="scanline"></div>
-    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V5.5.0 STABLE</div>
     <div id="debug-console"></div>
 
-    <div id="ui-layer" class="flex flex-col justify-center items-center p-4 overflow-hidden min-h-screen bg-black/40">
+    <!-- UI PRINCIPAL -->
+    <div id="ui-layer" class="flex flex-col items-center justify-center h-full w-full p-4">
         
-        <!-- 1. LOGIN SCREEN -->
-        <div id="screen-login" class="interactive glass glass-pattern p-6 md:p-10 rounded-lg max-w-md w-full text-center fade-in z-50 relative border-t-4 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)] flex flex-col">
-            <div class="relative z-10">
-                <div class="mb-8 flex justify-center relative">
-                    <div class="absolute inset-0 bg-cyan-500 blur-[90px] opacity-20 rounded-full animate-pulse"></div>
-                    <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
-                         onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';"
-                         class="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover shadow-[0_0_40px_rgba(6,182,212,0.3)] border-2 border-cyan-500/30 relative z-10 mx-auto bg-black">
-                     <div id="fallback-logo" class="hidden w-32 h-32 bg-black/80 rounded-xl border-2 border-cyan-500 flex items-center justify-center mx-auto">
-                        <i class="fas fa-cube text-5xl text-cyan-400"></i>
-                    </div>
-                </div>
-
-                <h2 class="text-cyan-400 text-xl md:text-2xl font-black font-orbitron tracking-[0.2em] uppercase mb-6 neon-title">PARA GANAR</h2>
-                
-                <div class="space-y-3 px-2">
-                    <button onclick="window.handleLogin('google')" id="btn-google" class="w-full btn-cyber btn-google-cyber group text-xs md:text-sm py-3">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5 mr-3"> INICIAR CON GOOGLE
-                    </button>
-                    <!-- Facebook eliminado por redundancia y errores de API comunes en demos, pero se puede reactivar -->
-                </div>
-
-                <div class="mt-6 flex items-center justify-center gap-2 text-[10px] text-cyan-700/80 font-orbitron uppercase tracking-widest">
-                    <span class="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
-                    Enlace Seguro Establecido
-                </div>
-                
-                <div id="login-error" class="hidden mt-4 p-3 bg-red-900/80 border border-red-500 rounded text-white text-xs text-center font-mono"></div>
+        <!-- 1. LOGIN -->
+        <div id="screen-login" class="interactive glass p-8 rounded-2xl max-w-xs w-full text-center flex flex-col gap-6">
+            <div class="relative mx-auto">
+                <div class="absolute inset-0 bg-cyan-500 blur-xl opacity-20"></div>
+                <i class="fas fa-cube text-5xl text-cyan-400 relative z-10"></i>
             </div>
+            <div>
+                <h1 class="text-3xl font-black font-orbitron text-white tracking-widest">3 LINE-AR</h1>
+                <p class="text-cyan-500/60 text-xs font-mono tracking-[0.3em] mt-1">CONQUISTA 3D</p>
+            </div>
+            <button onclick="window.handleLogin()" id="btn-login" class="btn-cyber py-4 rounded w-full font-bold">
+                <i class="fab fa-google mr-2"></i> CONECTAR
+            </button>
+            <p id="login-msg" class="text-[10px] text-gray-500 h-4"></p>
         </div>
 
-        <!-- 2. PANTALLA DE VERIFICACIÓN (Corrección de error de bloqueo) -->
-        <div id="screen-permissions" class="interactive glass glass-pattern p-6 rounded-lg max-w-md w-full text-left fade-in hidden z-50 relative border-t-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.1)] scrollable-card">
-            <div class="mb-4 flex justify-center">
-                <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" class="w-20 h-20 rounded-xl object-cover border border-yellow-500/40 relative z-10 mx-auto bg-black">
-            </div>
-
-            <h2 class="text-lg font-orbitron font-bold text-yellow-400 mb-4 flex items-center justify-center gap-2 uppercase tracking-wider border-b border-white/10 pb-3">
-                <i class="fas fa-check-circle"></i> Activación
-            </h2>
-            
-            <div class="text-center mb-4 text-xs text-gray-300 font-mono">
-                Hola, <span id="verify-username" class="text-cyan-400 font-bold">...</span>
-            </div>
-
-            <div class="space-y-2 mb-4">
-                <div class="flex items-center justify-between bg-black/30 p-3 rounded border border-white/5">
-                    <div class="flex items-center gap-2"><i class="fas fa-network-wired text-gray-500"></i><span class="text-xs font-bold text-gray-200">Estado Red</span></div>
-                    <div id="check-db" class="text-[10px] font-mono text-yellow-500 flex items-center font-bold uppercase"><span class="status-dot status-pending"></span> TEST</div>
+        <!-- 2. MENU -->
+        <div id="screen-menu" class="interactive glass p-6 rounded-2xl max-w-xs w-full hidden flex-col gap-4">
+            <div class="flex justify-between items-center border-b border-white/10 pb-4">
+                <div class="text-left">
+                    <div class="text-[10px] text-gray-400 uppercase tracking-widest">Agente</div>
+                    <div id="user-name" class="text-lg font-bold font-orbitron text-white truncate w-32">...</div>
                 </div>
+                <button onclick="window.logout()" class="w-8 h-8 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition flex items-center justify-center"><i class="fas fa-power-off text-xs"></i></button>
             </div>
 
-            <div id="perm-error" class="hidden mb-4 p-3 bg-red-900/30 border border-red-500/30 rounded text-red-200 text-[10px] font-mono text-center">
-                <i class="fas fa-exclamation-triangle mb-1"></i><br>
-                <span id="perm-error-msg">...</span>
-            </div>
+            <button onclick="window.startQuickMatch()" class="btn-cyber py-6 rounded-xl flex flex-col items-center gap-2">
+                <i class="fas fa-globe text-2xl mb-1"></i>
+                <span class="text-sm font-bold">MULTIPLAYER ONLINE</span>
+                <span class="text-[9px] opacity-60 font-mono">PARTIDA RÁPIDA</span>
+            </button>
 
-            <div class="mb-4 space-y-2 border-t border-white/10 pt-3">
-                <label class="flex items-start gap-2 cursor-pointer group">
-                    <input type="checkbox" id="check-terms" class="cyber-check mt-1" onchange="window.checkPermissions()">
-                    <span class="text-[11px] text-gray-400 group-hover:text-gray-200 font-mono">Acepto los <a href="#" onclick="window.openTerms(event)" class="text-yellow-500 underline">Términos</a>.</span>
-                </label>
-                <label class="flex items-start gap-2 cursor-pointer group">
-                    <input type="checkbox" id="check-storage" class="cyber-check mt-1" onchange="window.checkPermissions()">
-                    <span class="text-[11px] text-gray-400 group-hover:text-gray-200 font-mono">Permito guardado local.</span>
-                </label>
-            </div>
-
-            <button id="btn-authorize" onclick="window.completeSetup()" class="w-full btn-cyber border-white/10 text-gray-400 hover:text-white hover:bg-white/5 py-3 text-xs" disabled>
-                <i class="fas fa-lock mr-2"></i> CONFIRMAR
+            <button onclick="window.startSoloGame()" class="btn-cyber py-4 rounded-xl border-purple-500 text-purple-400 hover:bg-purple-500/10">
+                <i class="fas fa-microchip mr-2"></i> VS CPU (OFFLINE)
             </button>
         </div>
 
-        <!-- MODAL LEGAL -->
-        <div id="modal-terms" class="fixed inset-0 bg-black/90 z-[60] hidden flex justify-center items-center p-4 fade-in">
-            <div class="glass max-w-2xl w-full rounded-lg border border-yellow-500/30 p-6 relative flex flex-col max-h-[85vh]">
-                <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3">
-                    <h3 class="text-lg font-orbitron font-bold text-yellow-400">LEGAL</h3>
-                    <button onclick="window.closeTerms()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-                </div>
-                <div class="legal-modal-content pr-2 text-gray-300 text-[11px] font-mono leading-relaxed space-y-3 flex-1 overflow-y-auto">
-                    <p>1. ACEPTACIÓN: Al usar 3 LINE-AR, aceptas estos términos.</p>
-                    <p>2. DATOS: Usamos Firebase. Guardamos tu progreso. No vendemos datos.</p>
-                    <p>3. BLOQUEADORES: Si usas AdBlock, la sincronización multijugador fallará. Recomendamos desactivarlo para este sitio.</p>
-                </div>
-                <button onclick="window.closeTerms()" class="mt-4 w-full btn-cyber border-yellow-500 text-yellow-400 hover:bg-yellow-500/10 py-2 text-xs">ENTENDIDO</button>
-            </div>
+        <!-- 3. LOBBY -->
+        <div id="screen-lobby" class="interactive glass p-8 rounded-2xl max-w-xs w-full text-center hidden">
+            <div class="w-12 h-12 border-4 border-t-cyan-500 border-white/10 rounded-full animate-spin mx-auto mb-6"></div>
+            <h2 class="text-xl font-orbitron text-white mb-2">BUSCANDO</h2>
+            <p id="lobby-status" class="text-xs text-gray-400 font-mono">Escaneando red...</p>
+            <button onclick="window.location.reload()" class="mt-6 text-xs text-red-400 underline">CANCELAR</button>
         </div>
 
-        <!-- 3. DASHBOARD -->
-        <div id="screen-dashboard" class="interactive glass glass-pattern p-6 rounded-xl border-r-4 border-purple-500 max-w-md w-full text-center fade-in hidden z-50">
-            <div class="flex items-center justify-between mb-8 border-b border-white/10 pb-4 bg-black/20 p-3 rounded-lg">
-                <div class="flex items-center gap-4">
-                    <img id="user-avatar" src="" referrerpolicy="no-referrer" class="w-12 h-12 rounded-lg object-cover border border-purple-500 hidden">
-                    <div id="user-avatar-fallback" class="w-12 h-12 rounded-lg bg-purple-900/50 border border-purple-500 flex items-center justify-center text-white font-orbitron font-bold text-lg">?</div>
-                    <div class="text-left">
-                        <p class="text-[9px] text-purple-400 uppercase font-bold tracking-wider">Agente</p>
-                        <span id="user-name" class="font-bold text-white font-orbitron text-sm truncate max-w-[140px] block">...</span>
+        <!-- 4. HUD JUEGO -->
+        <div id="game-hud" class="absolute inset-0 hidden flex-col pointer-events-none justify-between p-4 z-50">
+            <!-- Header: Puntos -->
+            <div class="glass pointer-events-auto p-3 rounded-xl flex justify-between items-center border-t-2 border-cyan-500/50 shadow-lg bg-black/90">
+                <div class="flex flex-col items-center w-16">
+                    <span class="text-[9px] text-cyan-400 font-bold">TÚ</span>
+                    <span id="score-p1" class="text-2xl font-orbitron text-white">0</span>
+                </div>
+                
+                <!-- DADO CENTRAL -->
+                <div class="flex flex-col items-center -mt-8">
+                    <div id="dice-wrap" class="dice-container cursor-pointer scale-75 md:scale-100 transition hover:scale-110" onclick="window.rollDice()">
+                        <div id="dice-cube" class="dice">
+                            <div class="dice-face front">1</div>
+                            <div class="dice-face back">6</div>
+                            <div class="dice-face right">3</div>
+                            <div class="dice-face left">4</div>
+                            <div class="dice-face top">5</div>
+                            <div class="dice-face bottom">2</div>
+                        </div>
+                    </div>
+                    <div id="moves-badge" class="mt-2 bg-black/80 px-3 py-1 rounded text-[10px] font-bold font-orbitron text-cyan-400 border border-cyan-500/30 hidden">
+                        MOVS: <span id="moves-count" class="text-white text-lg">0</span>
                     </div>
                 </div>
-                <button onclick="window.logout()" class="text-[10px] text-gray-400 border border-white/20 px-3 py-1 rounded hover:bg-white/10 font-orbitron tracking-wider hover:text-white transition">SALIR</button>
+
+                <div class="flex flex-col items-center w-16">
+                    <span class="text-[9px] text-red-400 font-bold">RIVAL</span>
+                    <span id="score-p2" class="text-2xl font-orbitron text-white">0</span>
+                </div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="window.showCreateRoom()" class="group bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10 hover:border-purple-400 text-white py-12 rounded-lg transition-all">
-                    <i class="fas fa-plus-circle text-3xl mb-4 text-purple-400 group-hover:scale-110 transition"></i><span class="block font-orbitron text-xs font-bold tracking-[0.2em]">CREAR</span>
-                </button>
-                <button onclick="window.showJoinRoom()" class="group bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10 hover:border-purple-400 text-white py-12 rounded-lg transition-all">
-                    <i class="fas fa-satellite-dish text-3xl mb-4 text-purple-400 group-hover:scale-110 transition"></i><span class="block font-orbitron text-xs font-bold tracking-[0.2em]">UNIRSE</span>
-                </button>
+
+            <!-- Mensajes -->
+            <div id="game-toast" class="self-center bg-black/80 border border-white/20 px-6 py-4 rounded-lg text-center opacity-0 transition-all duration-500 transform translate-y-10 backdrop-blur-md">
+                <h3 id="toast-title" class="text-cyan-400 font-bold font-orbitron text-lg">TITULO</h3>
+                <p id="toast-desc" class="text-white text-xs font-mono mt-1">Descripción</p>
+            </div>
+
+            <!-- Controles Inferiores -->
+            <div class="pointer-events-auto flex justify-center pb-6 gap-4">
+                <button onclick="window.exitGame()" class="w-12 h-12 rounded-full bg-red-500/20 text-red-500 border border-red-500/50 flex items-center justify-center hover:bg-red-500 hover:text-white backdrop-blur"><i class="fas fa-times"></i></button>
+                <!-- Botón oculto de DEBUG para forzar modo 3D si AR falla -->
+                <button onclick="window.force3DMode()" class="w-12 h-12 rounded-full bg-gray-800 text-white border border-white/20 flex items-center justify-center text-xs font-mono">3D</button>
             </div>
         </div>
 
-        <!-- 4. SETUP & GAME SCREENS -->
-        <div id="screen-setup" class="interactive glass glass-pattern p-8 rounded-xl border-l-4 border-green-500 max-w-md w-full text-center fade-in hidden z-50">
-            <div class="flex justify-between items-center mb-8">
-                <button onclick="window.goBackToDashboard()" class="text-gray-400 hover:text-white text-xs font-orbitron flex items-center gap-2"><i class="fas fa-chevron-left"></i> ATRÁS</button>
-                <h2 class="text-lg text-white font-orbitron font-bold text-green-400 tracking-widest" id="setup-title">CONFIGURAR</h2>
-            </div>
-            <div class="flex justify-center gap-4 mb-10 flex-wrap" id="color-picker"></div>
-            <div id="join-inputs" class="hidden mb-8 text-left">
-                <input type="text" id="room-id-input" class="w-full bg-black/40 border border-gray-600 text-white font-orbitron text-2xl p-4 text-center uppercase rounded placeholder-gray-700 focus:border-green-500 outline-none" placeholder="XXXX">
-            </div>
-            <button onclick="window.confirmGameStart()" class="w-full btn-cyber border-green-500 text-green-400 hover:bg-green-500/10">INICIAR</button>
-        </div>
-
-        <div id="screen-waiting" class="interactive glass glass-pattern p-10 rounded-xl border-b-4 border-yellow-500 max-w-md w-full text-center fade-in hidden z-50">
-            <div class="relative w-24 h-24 mx-auto mb-8">
-                <div class="absolute inset-0 border-4 border-yellow-500/20 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-            <h2 class="text-2xl text-white font-orbitron mb-2 font-bold">ESPERANDO...</h2>
-            <div class="bg-black/60 p-6 border border-yellow-500/30 mb-4 flex items-center justify-between cursor-pointer hover:bg-black/80 transition rounded-lg" onclick="window.copyInvite()">
-                <span id="display-room-id" class="text-4xl font-orbitron text-yellow-400 tracking-[0.15em] w-full text-center font-black">...</span>
-                <i class="far fa-copy text-gray-500"></i>
-            </div>
-            <p id="copy-feedback" class="text-green-400 text-xs font-orbitron h-4"></p>
-        </div>
-
-        <div id="game-hud" class="absolute top-0 left-0 w-full p-2 hidden flex-col z-40 pointer-events-none h-full justify-between">
-            <div class="glass px-4 py-3 rounded-lg flex justify-between items-center mx-auto max-w-2xl w-full pointer-events-auto bg-black/90 border-b-2 border-white/10">
-                <div class="flex items-center gap-3"><div id="hud-p1-color" class="w-3 h-3 rotate-45 border border-white"></div><span id="score-p1" class="text-2xl font-orbitron text-white">0</span></div>
-                <div id="turn-indicator" class="px-4 py-1 bg-white/5 border border-white/10 text-[10px] font-orbitron text-gray-400 uppercase rounded">...</div>
-                <div class="flex items-center gap-3 text-right"><span id="score-p2" class="text-2xl font-orbitron text-white">0</span><div id="hud-p2-color" class="w-3 h-3 rotate-45 border border-white"></div></div>
-            </div>
-            <div class="flex justify-center items-center flex-1 pointer-events-none">
-                 <p id="game-msg" class="text-xl text-cyan-300 font-orbitron font-black drop-shadow-[0_0_15px_rgba(6,182,212,0.8)] bg-black/90 border-y-2 border-cyan-500 px-10 py-6 backdrop-blur hidden scale-110 uppercase tracking-widest"></p>
-            </div>
-            <div class="h-20 w-full pointer-events-none"></div>
-        </div>
-
-        <div id="ar-instructions">
-            <i class="fas fa-compress-arrows-alt text-4xl mb-3 animate-bounce text-cyan-400"></i>
-            <p class="text-sm uppercase tracking-wider font-bold">Apunta y toca</p>
+        <div id="ar-hint" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none hidden">
+            <i class="fas fa-compress-arrows-alt text-4xl text-cyan-400 animate-bounce mb-2"></i>
+            <p class="text-sm font-bold bg-black/50 px-3 py-1 rounded">TOCA PARA PONER EL JUEGO</p>
         </div>
     </div>
-    <div id="ar-button-container" class="interactive"></div>
 
+    <div id="ar-btn-place" class="interactive"></div>
+
+    <!-- LÓGICA -->
     <script type="module">
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, updateDoc, getDocs, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // LOGGER DE ERRORES EN PANTALLA (Debug Movil)
-        window.onerror = function(message, source, lineno, colno, error) {
-            const debug = document.getElementById('debug-console');
-            debug.style.display = 'block';
-            if (typeof message === 'string' && message.includes("ERR_BLOCKED_BY_CLIENT")) return; // Ignorar log de bloqueo en UI
-            debug.innerHTML += `> ${message} (L${lineno})<br>`;
-        };
-
-        // --- CONFIGURACIÓN ---
-        let firebaseConfig;
-        if (typeof __firebase_config !== 'undefined') firebaseConfig = JSON.parse(__firebase_config);
-        else firebaseConfig = { apiKey: "AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain: "ar-3lilne.firebaseapp.com", projectId: "ar-3lilne", storageBucket: "ar-3lilne.firebasestorage.app", messagingSenderId: "382966716480", appId: "1:382966716480:web:ee244825bb34bc35c667a5", measurementId: "G-HCRXFC2QBJ" };
-        
+        // CONFIG
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne';
 
-        // --- VARIABLES ---
-        let appState = { user: null, roomId: null, role: null, myColor: '#00e5ff', gameData: null, selectedColorIdx: 1, mode: 'menu' };
-        const PALETTE = ['#ff0055', '#00e5ff', '#00ff9d', '#ffea00', '#bd00ff', '#ffffff'];
-        let bgParticles = [], bgContext = null, bgWidth, bgHeight;
-        let targetColor = { r: 255, g: 200, b: 0 }, currentColor = { r: 255, g: 200, b: 0 };
-        let scene, camera, renderer, controller, gridGroup, reticle, gridPoints = [], raycaster = new THREE.Raycaster(), selectedStartPoint = null;
-        let arHitTestSource = null, arHitTestSourceRequested = false, isGridPlaced = false;
-        const SPACING = 0.15;
+        // ESTADO GLOBAL
+        let state = {
+            user: null,
+            roomId: null,
+            role: null, // 'host' | 'guest'
+            isCPU: false,
+            gameData: null,
+            localDice: 0,
+            movesLeft: 0
+        };
 
-        // --- FONDO ---
-        function initBackgroundNetwork() {
-            const canvas = document.getElementById('bg-canvas');
-            bgContext = canvas.getContext('2d');
-            function resize() { bgWidth = window.innerWidth; bgHeight = window.innerHeight; canvas.width = bgWidth; canvas.height = bgHeight; createParticles(); }
-            window.addEventListener('resize', resize); resize(); animateBackground();
-        }
+        // 3D GLOBALS
+        let scene, camera, renderer, controller;
+        let gridGroup, reticle, points = [], lines = [], triangles = [];
+        let raycaster = new THREE.Raycaster();
+        let selectedPoint = null;
+        let arHitSource = null, gridPlaced = false;
+        let isARSupported = false;
 
-        function createParticles() {
-            bgParticles = []; const count = Math.floor((bgWidth * bgHeight) / 6000); 
-            for (let i = 0; i < count; i++) {
-                const team = Math.random() > 0.5 ? 'cyan' : 'magenta';
-                const color = team === 'cyan' ? {r:0,g:229,b:255} : {r:255,g:0,b:85};
-                bgParticles.push({ x: Math.random() * bgWidth, y: Math.random() * bgHeight, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, size: Math.random() * 2 + 0.5, color: color });
-            }
-        }
-
-        function setBgPalette(hex) { targetColor = { r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16) }; }
-        function lerp(s, e, t) { return s * (1 - t) + e * t; }
-
-        function animateBackground() {
-            currentColor.r = lerp(currentColor.r, targetColor.r, 0.05); currentColor.g = lerp(currentColor.g, targetColor.g, 0.05); currentColor.b = lerp(currentColor.b, targetColor.b, 0.05);
-            bgContext.clearRect(0, 0, bgWidth, bgHeight); bgContext.fillStyle = '#000000'; bgContext.fillRect(0, 0, bgWidth, bgHeight);
-            for (let i = 0; i < bgParticles.length; i++) {
-                let p = bgParticles[i]; p.x += p.vx; p.y += p.vy;
-                if (p.x < 0 || p.x > bgWidth) p.vx *= -1; if (p.y < 0 || p.y > bgHeight) p.vy *= -1;
-                bgContext.beginPath(); 
-                const r = p.color.r * 0.5 + currentColor.r * 0.5; const g = p.color.g * 0.5 + currentColor.g * 0.5; const b = p.color.b * 0.5 + currentColor.b * 0.5;
-                bgContext.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`; bgContext.arc(p.x, p.y, p.size, 0, Math.PI * 2); bgContext.fill();
-                for (let j = i + 1; j < bgParticles.length; j++) {
-                    let p2 = bgParticles[j]; let d = Math.sqrt(Math.pow(p.x-p2.x,2) + Math.pow(p.y-p2.y,2));
-                    if (d < 180) { 
-                        bgContext.beginPath(); bgContext.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.3 * (1 - d/180)})`; bgContext.lineWidth = 1; bgContext.moveTo(p.x, p.y); bgContext.lineTo(p2.x, p2.y); bgContext.stroke();
-                    }
-                }
-            }
-            requestAnimationFrame(animateBackground);
-        }
-        initBackgroundNetwork();
-
-        // --- AUTH ---
-        setPersistence(auth, browserLocalPersistence).catch(console.error);
-        
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                appState.user = user;
-                // Check local storage first to bypass network block
-                const localAuth = localStorage.getItem('local_terms_accepted');
-                if(localAuth) {
-                    window.authorizeSystem();
-                    return;
-                }
-
-                try {
-                    const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
-                    // Timeout para evitar bloqueo infinito si AdBlock está activo
-                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), 2500));
-                    const snapshot = await Promise.race([getDoc(userRef), timeout]);
-                    
-                    if (snapshot.exists() && snapshot.data().termsAccepted) {
-                        window.authorizeSystem();
-                    } else {
-                        window.showVerificationScreen(user);
-                    }
-                } catch (e) {
-                    console.warn("Profile read error/timeout", e);
-                    // Si falla, asumimos que necesitamos verificación manual
-                    window.showVerificationScreen(user);
-                }
+        // --- INICIO & AUTH ---
+        setPersistence(auth, browserLocalPersistence).catch(()=>{});
+        onAuthStateChanged(auth, (u) => {
+            state.user = u;
+            if(u) {
+                document.getElementById('user-name').innerText = u.displayName || 'JUGADOR';
+                showScreen('screen-menu');
+                checkARSupport(); // Verificar si soportamos AR al entrar
             } else {
-                window.showLogin();
+                showScreen('screen-login');
             }
         });
 
-        // --- UI FUNCTIONS ---
-        window.hideAllScreens = () => {
-            ['screen-permissions', 'screen-login', 'screen-dashboard', 'screen-setup', 'screen-waiting', 'game-hud'].forEach(id => document.getElementById(id).classList.add('hidden'));
-        };
+        // --- UI HELPERS ---
+        function showScreen(id) {
+            const screens = ['screen-login', 'screen-menu', 'screen-lobby', 'game-hud'];
+            screens.forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
 
-        window.showLogin = () => {
-            window.hideAllScreens();
-            document.getElementById('screen-login').classList.remove('hidden');
-            setBgPalette('#06B6D4');
+        window.handleLogin = async () => {
+            const btn = document.getElementById('btn-login');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            try { await signInWithPopup(auth, new GoogleAuthProvider()); } 
+            catch(e) { console.error(e); btn.innerText = "REINTENTAR"; document.getElementById('login-msg').innerText="Error de red."; }
         };
+        window.logout = () => signOut(auth).then(()=>window.location.reload());
 
-        window.showVerificationScreen = (user) => {
-            window.hideAllScreens();
-            setBgPalette('#EAB308');
-            document.getElementById('screen-permissions').classList.remove('hidden');
-            document.getElementById('verify-username').innerText = user.displayName || "OPERADOR";
-            window.runSystemCheck();
-        };
+        // --- MATCHMAKING ---
+        window.startQuickMatch = async () => {
+            state.isCPU = false;
+            showScreen('screen-lobby');
+            try {
+                // Buscar sala disponible (Simulación simple)
+                const roomsRef = collection(db, 'artifacts', appId, 'rooms');
+                const snap = await getDocs(roomsRef);
+                let foundId = null;
+                
+                snap.forEach(d => {
+                    const data = d.data();
+                    if(data.status === 'waiting' && data.hostId !== state.user.uid) foundId = d.id;
+                });
 
-        window.showDashboard = (user) => {
-            appState.user = user;
-            window.hideAllScreens();
-            document.getElementById('screen-dashboard').classList.remove('hidden');
-            setBgPalette('#A855F7');
-            document.getElementById('user-name').innerText = user.displayName || "OPERADOR";
-            const img = document.getElementById('user-avatar');
-            const fallback = document.getElementById('user-avatar-fallback');
-            if(user.photoURL) {
-                img.src = user.photoURL; img.classList.remove('hidden'); fallback.classList.add('hidden');
-                img.onerror = () => { img.classList.add('hidden'); fallback.classList.remove('hidden'); fallback.innerText = (user.displayName||"U")[0]; };
-            } else {
-                img.classList.add('hidden'); fallback.classList.remove('hidden'); fallback.innerText = (user.displayName||"U")[0];
+                if(foundId) joinRoom(foundId.replace('room_', ''));
+                else createRoom();
+
+            } catch(e) {
+                console.error(e);
+                // Fallback a CPU si falla la red
+                if(confirm("Error de conexión. ¿Jugar Offline VS CPU?")) window.startSoloGame();
+                else showScreen('screen-menu');
             }
         };
 
-        window.handleLogin = async (providerName) => {
-            const btn = document.getElementById(`btn-${providerName}`);
-            const originalText = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = "CONECTANDO...";
-            
-            // Simple retry mechanism for failed popups
-            const attemptLogin = async () => {
-                let provider = providerName === 'google' ? new GoogleAuthProvider() : new FacebookAuthProvider();
-                try {
-                    await signInWithPopup(auth, provider);
-                } catch (error) {
-                    console.error("Auth Error:", error);
-                    btn.disabled = false; btn.innerHTML = originalText;
-                    let msg = "Error de conexión.";
-                    if (error.code === 'auth/popup-blocked') msg = "¡Popup Bloqueado! Habilítalo ↗️";
-                    else if (error.code === 'auth/popup-closed-by-user') msg = "Inicio cancelado.";
-                    else if (error.message.includes("INTERNAL ASSERTION")) msg = "Error interno. Intenta de nuevo.";
-                    else msg = `Error: ${error.code}`;
-                    
-                    const errBox = document.getElementById('login-error');
-                    errBox.innerText = msg; errBox.classList.remove('hidden');
-                    setTimeout(()=>errBox.classList.add('hidden'), 5000);
-                }
+        window.startSoloGame = () => {
+            state.isCPU = true;
+            state.role = 'host';
+            state.gameData = {
+                status: 'playing', currentPlayer: 'host',
+                lines: [], triangles: [], scores: { host: 0, guest: 0 },
+                diceVal: 0, movesLeft: 0,
+                hostName: "TÚ", guestName: "CPU"
             };
-            attemptLogin();
+            window.launchGame();
         };
 
-        window.logout = () => { signOut(auth).then(() => window.location.reload()); };
-
-        window.runSystemCheck = async () => {
-            const dbStatus = document.getElementById('check-db');
-            dbStatus.innerHTML = '<span class="status-dot status-pending animate-pulse"></span> TEST...';
+        async function createRoom() {
+            state.role = 'host';
+            const code = Math.random().toString(36).substring(2,6).toUpperCase();
+            state.roomId = code;
+            const ref = doc(db, 'artifacts', appId, 'rooms', `room_${code}`);
             
-            try {
-                const testRef = doc(db, 'artifacts', 'sys_check', 'ping', '1');
-                const timeout = new Promise((_, r) => setTimeout(()=>r(new Error("TIMEOUT")), 3000));
-                await Promise.race([getDoc(testRef).catch(e => { throw e; }), timeout]);
-                
-                dbStatus.innerHTML = '<span class="status-dot status-ok"></span> OK';
-                dbStatus.className = "text-[10px] font-mono text-green-400 flex items-center font-bold";
-            } catch (e) {
-                console.warn("System check failed:", e);
-                dbStatus.innerHTML = '<span class="status-dot status-warning"></span> LOCAL';
-                dbStatus.className = "text-[10px] font-mono text-yellow-500 flex items-center font-bold";
-                
-                const errDiv = document.getElementById('perm-error');
-                const errMsg = document.getElementById('perm-error-msg');
-                errDiv.classList.remove('hidden');
-                
-                if (e.message === "TIMEOUT" || e.code === "unavailable" || e.message.includes("ERR_BLOCKED")) {
-                    errMsg.innerHTML = "Red restringida o AdBlock detectado.<br>Puedes continuar, pero el multijugador podría fallar.";
-                } else {
-                    errMsg.innerText = "Error de conexión. Modo Local activado.";
+            await setDoc(ref, {
+                hostId: state.user.uid, hostName: state.user.displayName,
+                status: 'waiting', currentPlayer: 'host',
+                lines: [], triangles: [], scores: { host: 0, guest: 0 },
+                diceVal: 0, movesLeft: 0,
+                createdAt: new Date().toISOString()
+            });
+            subscribeRoom(code);
+        }
+
+        async function joinRoom(code) {
+            state.role = 'guest';
+            state.roomId = code;
+            const ref = doc(db, 'artifacts', appId, 'rooms', `room_${code}`);
+            await updateDoc(ref, { guestId: state.user.uid, guestName: state.user.displayName, status: 'playing' });
+            subscribeRoom(code);
+        }
+
+        function subscribeRoom(code) {
+            onSnapshot(doc(db, 'artifacts', appId, 'rooms', `room_${code}`), (snap) => {
+                if(!snap.exists()) return;
+                const d = snap.data();
+                state.gameData = d;
+                if(d.status === 'playing' && document.getElementById('game-hud').classList.contains('hidden')) {
+                    window.launchGame();
                 }
-            }
+                if(d.status === 'playing') updateGameState();
+            });
+        }
+
+        // --- GAME LOGIC ---
+        window.launchGame = () => {
+            showScreen('game-hud');
+            init3D();
+            updateGameState();
         };
 
-        window.checkPermissions = () => {
-            const t = document.getElementById('check-terms').checked;
-            const s = document.getElementById('check-storage').checked;
-            const btn = document.getElementById('btn-authorize');
-            if(t && s) {
-                btn.disabled = false; btn.innerHTML = `<i class="fas fa-check-circle mr-2"></i> CONFIRMAR`;
-                btn.className = "w-full btn-cyber border-green-500 text-green-400 hover:bg-green-500/10";
+        window.rollDice = () => {
+            const d = state.gameData;
+            // Solo si es mi turno y NO tengo movimientos pendientes
+            if(d.currentPlayer !== state.role) return showToast("NO ES TU TURNO", "Espera al rival");
+            if(d.movesLeft > 0) return showToast("TIENES MOVIMIENTOS", `Te quedan ${d.movesLeft} acciones`);
+
+            // Animación dado
+            const diceEl = document.getElementById('dice-cube');
+            diceEl.classList.add('animate-spin-dice');
+            
+            setTimeout(() => {
+                diceEl.classList.remove('animate-spin-dice');
+                const val = Math.floor(Math.random() * 6) + 1;
+                setDiceFace(val);
+                
+                // Actualizar estado
+                if(state.isCPU) {
+                    state.gameData.diceVal = val;
+                    state.gameData.movesLeft = val;
+                    updateGameState();
+                } else {
+                    updateDoc(doc(db, 'artifacts', appId, 'rooms', `room_${state.roomId}`), { diceVal: val, movesLeft: val });
+                }
+                showToast(`¡SACASTE UN ${val}!`, `Tienes ${val} líneas para poner`);
+            }, 600);
+        };
+
+        function setDiceFace(val) {
+            const dice = document.getElementById('dice-cube');
+            const rots = { 1:[0,0], 2:[-90,0], 3:[0,-90], 4:[0,90], 5:[90,0], 6:[180,0] };
+            dice.style.transform = `rotateX(${rots[val][0]}deg) rotateY(${rots[val][1]}deg)`;
+        }
+
+        function updateGameState() {
+            const d = state.gameData;
+            
+            // UI Update
+            document.getElementById('score-p1').innerText = state.role==='host' ? d.scores.host : d.scores.guest;
+            document.getElementById('score-p2').innerText = state.role==='host' ? d.scores.guest : d.scores.host;
+            
+            // Dice UI
+            const movesBadge = document.getElementById('moves-badge');
+            if(d.currentPlayer === state.role && d.movesLeft > 0) {
+                movesBadge.classList.remove('hidden');
+                document.getElementById('moves-count').innerText = d.movesLeft;
+                setDiceFace(d.diceVal || 1);
             } else {
-                btn.disabled = true; btn.innerHTML = `<i class="fas fa-lock mr-2"></i> CONFIRMAR`;
-                btn.className = "w-full btn-cyber border-white/10 text-gray-400 hover:text-white";
-            }
-        };
-
-        // *** FUNCIÓN CORREGIDA CRUCIAL ***
-        window.completeSetup = async () => {
-            const btn = document.getElementById('btn-authorize');
-            btn.innerHTML = '<i class="fas fa-sync fa-spin mr-2"></i> GUARDANDO...'; 
-            btn.disabled = true;
-
-            // Intentamos guardar en Firebase
-            try {
-                const userRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
-                await setDoc(userRef, { termsAccepted: true, date: new Date().toISOString() }, { merge: true });
-            } catch(e) {
-                // Si falla (ej. AdBlock), NO bloqueamos al usuario. Guardamos localmente.
-                console.warn("Guardado remoto falló, usando local storage:", e);
-                localStorage.setItem('local_terms_accepted', 'true');
+                movesBadge.classList.add('hidden');
             }
 
-            // Avanzamos SIEMPRE
-            setTimeout(() => window.authorizeSystem(), 500); 
-        };
+            // Renderizar Tablero (Líneas)
+            // 1. Limpiar líneas que ya no existen o duplicadas visualmente
+            // (Simplificación: Borramos todas las líneas visuales y repintamos las del estado para asegurar sync perfecto)
+            if(gridGroup) {
+                const visuals = gridGroup.children.filter(c => c.userData.isLine || c.userData.isTriangle);
+                visuals.forEach(v => gridGroup.remove(v));
 
-        window.authorizeSystem = () => { 
-            window.hideAllScreens(); 
-            window.showDashboard(auth.currentUser); 
-        };
-
-        window.openTerms = (e) => { e.preventDefault(); document.getElementById('modal-terms').classList.remove('hidden'); };
-        window.closeTerms = () => { document.getElementById('modal-terms').classList.add('hidden'); };
-
-        // --- GAME SETUP ---
-        window.showCreateRoom = () => { appState.role='host'; appState.mode='setup'; window.setupColorPicker(); document.getElementById('setup-title').innerText="CREAR"; document.getElementById('join-inputs').classList.add('hidden'); window.hideAllScreens(); document.getElementById('screen-setup').classList.remove('hidden'); setBgPalette('#22C55E'); };
-        window.showJoinRoom = () => { appState.role='guest'; appState.mode='setup'; window.setupColorPicker(); document.getElementById('setup-title').innerText="UNIRSE"; document.getElementById('join-inputs').classList.remove('hidden'); window.hideAllScreens(); document.getElementById('screen-setup').classList.remove('hidden'); setBgPalette('#22C55E'); };
-        window.goBackToDashboard = () => window.showDashboard(appState.user);
-
-        window.setupColorPicker = () => {
-            const c = document.getElementById('color-picker'); c.innerHTML = '';
-            PALETTE.forEach((col, idx) => {
-                const b = document.createElement('div');
-                b.className = `w-12 h-12 rounded-full cursor-pointer border-2 border-transparent ${idx===appState.selectedColorIdx ? 'border-white scale-110' : ''}`;
-                b.style.backgroundColor = col; b.style.boxShadow = `0 0 15px ${col}66`;
-                b.onclick = () => { appState.selectedColorIdx = idx; appState.myColor = col; window.setupColorPicker(); };
-                c.appendChild(b);
-            });
-        };
-
-        window.confirmGameStart = async () => {
-            const btn = document.querySelector('#screen-setup button');
-            const txt = btn.innerText; btn.innerHTML = '<i class="fas fa-cog animate-spin"></i>'; btn.disabled = true;
-            try {
-                if(appState.role === 'host') {
-                    const rid = Math.random().toString(36).substring(2,6).toUpperCase();
-                    const ref = doc(db, 'artifacts', appId, 'rooms', `room_${rid}`);
-                    await setDoc(ref, { hostId: appState.user.uid, hostName: appState.user.displayName, hostColor: appState.myColor, status: 'waiting', currentPlayer: 'host', lines: [], scores: {host:0, guest:0}, createdAt: new Date().toISOString() });
-                    appState.roomId = rid; window.showWaitingScreen(); window.initGameListener(rid);
-                } else {
-                    const rid = document.getElementById('room-id-input').value.trim().toUpperCase();
-                    if(rid.length < 2) throw new Error("ID Inválido");
-                    const ref = doc(db, 'artifacts', appId, 'rooms', `room_${rid}`);
-                    await updateDoc(ref, { guestId: appState.user.uid, guestName: appState.user.displayName, guestColor: appState.myColor, status: 'playing' });
-                    appState.roomId = rid; window.initGameListener(rid);
-                }
-            } catch(e) {
-                alert("Error de conexión: " + e.message); btn.innerText = txt; btn.disabled = false;
+                // Render Líneas
+                d.lines.forEach(l => drawLine3D(l.start, l.end, l.owner));
+                // Render Triángulos
+                d.triangles.forEach(t => drawTriangle3D(t.p1, t.p2, t.p3, t.owner));
             }
-        };
 
-        window.showWaitingScreen = () => { window.hideAllScreens(); document.getElementById('screen-waiting').classList.remove('hidden'); document.getElementById('display-room-id').innerText = appState.roomId; setBgPalette('#EAB308'); };
-        window.copyInvite = () => { navigator.clipboard.writeText(window.location.origin + window.location.pathname + '?room=' + appState.roomId); document.getElementById('copy-feedback').innerText = "¡COPIADO!"; };
+            // CPU Turn
+            if(state.isCPU && d.currentPlayer === 'guest' && d.movesLeft === 0) {
+                // CPU Rolls dice logic simulada
+                setTimeout(() => {
+                    const cpuRoll = Math.floor(Math.random() * 3) + 1; // CPU saca entre 1 y 3 para no tardar
+                    state.gameData.diceVal = cpuRoll;
+                    state.gameData.movesLeft = cpuRoll;
+                    showToast("CPU JUEGA", `Sacó un ${cpuRoll}`);
+                    setTimeout(playCPUTurn, 1000);
+                }, 1500);
+            } else if(state.isCPU && d.currentPlayer === 'guest' && d.movesLeft > 0) {
+                setTimeout(playCPUTurn, 1000);
+            }
+        }
 
-        window.initGameListener = (rid) => {
-            if(!scene) init3D();
-            // Robust listener with error handling
-            onSnapshot(doc(db, 'artifacts', appId, 'rooms', `room_${rid}`), 
-                (snap) => {
-                    if(!snap.exists()) return;
-                    const d = snap.data(); appState.gameData = d;
-                    if(d.status === 'playing' && document.getElementById('game-hud').classList.contains('hidden')) {
-                        window.startGameUI();
+        // --- LÓGICA DE JUEGO CENTRAL ---
+        function attemptMove(p1, p2) {
+            const d = state.gameData;
+            if(d.currentPlayer !== state.role) return showToast("ESPERA TU TURNO");
+            if(d.movesLeft <= 0) return showToast("LANZA EL DADO", "Toca el dado arriba");
+
+            // Validar Distancia (Solo adyacentes en grid 4x4)
+            // Distancia ideal ~0.15. Permitimos un margen de error del 20%
+            const dist = points[p1].position.distanceTo(points[p2].position);
+            if(dist > 0.15 * 1.2) return showToast("MUY LEJOS", "Solo puntos vecinos");
+
+            // Validar Existencia
+            const exists = d.lines.some(l => (l.start===p1 && l.end===p2) || (l.start===p2 && l.end===p1));
+            if(exists) return showToast("YA EXISTE", "Esa línea ya está ocupada");
+
+            // MOVIMIENTO VÁLIDO
+            const newLine = { start: p1, end: p2, owner: state.role };
+            const newLines = [...d.lines, newLine];
+            
+            // Detectar Triángulos
+            const newTriangles = detectTriangles(p1, p2, state.role, newLines);
+            const pointsGained = newTriangles.length;
+            const allTriangles = [...d.triangles, ...newTriangles];
+            
+            // Scores
+            const newScores = { ...d.scores };
+            if(pointsGained > 0) {
+                newScores[state.role] += pointsGained;
+                showToast("¡TRIÁNGULO!", `+${pointsGained} Puntos`);
+            }
+
+            // Actualizar Movimientos
+            let moves = d.movesLeft - 1;
+            let nextPlayer = d.currentPlayer;
+            
+            if(moves === 0) {
+                nextPlayer = d.currentPlayer === 'host' ? 'guest' : 'host';
+                showToast("FIN DE TURNO", "Cambio de jugador");
+            }
+
+            const updateData = {
+                lines: newLines,
+                triangles: allTriangles,
+                scores: newScores,
+                movesLeft: moves,
+                currentPlayer: nextPlayer
+            };
+
+            if(state.isCPU) {
+                state.gameData = { ...state.gameData, ...updateData };
+                updateGameState();
+            } else {
+                updateDoc(doc(db, 'artifacts', appId, 'rooms', `room_${state.roomId}`), updateData);
+            }
+        }
+
+        function detectTriangles(pA, pB, owner, currentLines) {
+            // Buscamos un punto pC que tenga conexión con pA y con pB
+            const found = [];
+            // Iteramos todos los puntos posibles (0 a 15)
+            for(let pC = 0; pC < 16; pC++) {
+                if(pC === pA || pC === pB) continue;
+                
+                const hasAC = currentLines.some(l => (l.start===pA && l.end===pC) || (l.start===pC && l.end===pA));
+                const hasBC = currentLines.some(l => (l.start===pB && l.end===pC) || (l.start===pC && l.end===pB));
+                
+                // Verificar si ese triángulo YA existe en el historial para no duplicar puntos
+                // (Simplificación: Asumimos que si las líneas existen y acabamos de cerrar, es nuevo)
+                if(hasAC && hasBC) {
+                    // Validar si este triángulo específico ya estaba (opcional, pero bueno para robustez)
+                    const triExists = state.gameData.triangles.some(t => 
+                        [t.p1, t.p2, t.p3].includes(pA) && [t.p1, t.p2, t.p3].includes(pB) && [t.p1, t.p2, t.p3].includes(pC)
+                    );
+                    if(!triExists) {
+                        found.push({ p1: pA, p2: pB, p3: pC, owner: owner });
                     }
-                    if(d.status === 'playing') window.updateGameVisuals(d);
-                },
-                (error) => {
-                    console.error("Firestore listener error:", error);
-                    window.showToast("⚠️ DESCONECTADO");
-                }
-            );
-        };
-
-        window.startGameUI = () => {
-            window.hideAllScreens();
-            document.getElementById('game-hud').classList.remove('hidden');
-            document.getElementById('game-hud').style.display = 'flex';
-            setBgPalette('#000000');
-            const d = appState.gameData;
-            document.getElementById('hud-p1-color').style.backgroundColor = d.hostColor; document.getElementById('hud-p1-name').innerText = (d.hostName||"HOST").split(' ')[0];
-            document.getElementById('hud-p2-color').style.backgroundColor = d.guestColor; document.getElementById('hud-p2-name').innerText = (d.guestName||"GUEST").split(' ')[0];
-            if('xr' in navigator) { document.getElementById('ar-instructions').style.display = 'block'; setTimeout(()=>document.getElementById('ar-instructions').style.display='none',6000); }
-        };
-
-        window.updateGameVisuals = (d) => {
-            document.getElementById('score-p1').innerText = d.scores.host; document.getElementById('score-p2').innerText = d.scores.guest;
-            const isMyTurn = d.currentPlayer === appState.role;
-            const turnEl = document.getElementById('turn-indicator');
-            if(isMyTurn) { turnEl.innerText = "TU TURNO"; turnEl.className = "px-4 py-1 bg-green-900 text-green-400 border border-green-500 rounded animate-pulse font-bold"; } 
-            else { turnEl.innerText = "ESPERANDO..."; turnEl.className = "px-4 py-1 bg-gray-800 text-gray-400 border border-gray-600 rounded"; }
-            
-            const toRemove = []; gridGroup.children.forEach(c => { if(c.userData.isLine || c.userData.isTri) toRemove.push(c); }); toRemove.forEach(c => gridGroup.remove(c));
-            d.lines.forEach(l => {
-                const p1 = gridPoints[l.start].position; const p2 = gridPoints[l.end].position;
-                const color = l.owner === 'host' ? d.hostColor : d.guestColor;
-                const geo = new THREE.CylinderGeometry(0.005, 0.005, p1.distanceTo(p2), 6);
-                const mat = new THREE.MeshBasicMaterial({ color: color });
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.copy(p1.clone().lerp(p2, 0.5)); mesh.lookAt(p2); mesh.rotateX(Math.PI/2); mesh.userData.isLine = true;
-                const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, p1.distanceTo(p2), 6), new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.3 }));
-                mesh.add(glow); gridGroup.add(mesh);
-            });
-        };
-
-        // --- 3D & AR ---
-        function init3D() {
-            scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
-            const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1); scene.add(light);
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); renderer.setPixelRatio(window.devicePixelRatio); renderer.setSize(window.innerWidth, window.innerHeight); renderer.xr.enabled = true; document.body.appendChild(renderer.domElement);
-            reticle = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ color: 0x00ff00 })); reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
-            
-            const arBtn = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
-            arBtn.style.cssText = 'background:rgba(0,0,0,0.8); border:2px solid #00e5ff; color:#00e5ff; font-family:Orbitron; font-weight:900; padding:15px 30px; border-radius:8px; box-shadow:0 0 20px rgba(0,229,255,0.4); letter-spacing:2px;';
-            document.getElementById('ar-button-container').appendChild(arBtn);
-            
-            gridGroup = new THREE.Group(); gridGroup.visible = false; scene.add(gridGroup); createGrid();
-            controller = renderer.xr.getController(0); controller.addEventListener('select', onSelect); scene.add(controller);
-            window.addEventListener('click', onClickPC); window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
-            new OrbitControls(camera, renderer.domElement).target.set(0,0,-1); renderer.setAnimationLoop(render);
-        }
-
-        function createGrid() {
-            const geo = new THREE.SphereGeometry(0.025, 16, 16); const mat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.1, metalness: 0.8 });
-            let idx = 0;
-            for(let r=0; r<4; r++) {
-                for(let c=0; c<4; c++) {
-                    const m = new THREE.Mesh(geo, mat.clone());
-                    const xo = (r%2)*(SPACING/2); m.position.set(c*SPACING + xo - (3.5*SPACING)/2, 0.05, r*(SPACING*0.866) - (3*SPACING*0.866)/2);
-                    m.userData = { id: idx++, isDot: true }; gridGroup.add(m); gridPoints.push(m);
                 }
             }
-            const base = new THREE.Mesh(new THREE.CircleGeometry(0.35, 32), new THREE.MeshBasicMaterial({ color: 0x00e5ff, opacity: 0.1, transparent: true, side: THREE.DoubleSide })); base.rotation.x = -Math.PI/2; gridGroup.add(base);
+            return found;
         }
+
+        function playCPUTurn() {
+            const d = state.gameData;
+            // Buscar movimiento aleatorio válido
+            let s, e, valid = false, tries = 0;
+            while(!valid && tries < 50) {
+                s = Math.floor(Math.random() * 16);
+                // Buscar vecino
+                for(let i=0; i<16; i++) {
+                    if(i===s) continue;
+                    if(points[s].position.distanceTo(points[i].position) < 0.15 * 1.2) {
+                        // Checar si existe línea
+                        const exists = d.lines.some(l => (l.start===s && l.end===i) || (l.start===i && l.end===s));
+                        if(!exists) { e = i; valid = true; break; }
+                    }
+                }
+                tries++;
+            }
+            
+            if(valid) {
+                // Lógica espejo de attemptMove pero para CPU
+                const newLine = { start: s, end: e, owner: 'guest' };
+                const newLines = [...d.lines, newLine];
+                const newTriangles = detectTriangles(s, e, 'guest', newLines);
+                
+                const newScores = { ...d.scores };
+                if(newTriangles.length > 0) newScores.guest += newTriangles.length;
+
+                let moves = d.movesLeft - 1;
+                let nextPlayer = 'guest';
+                if(moves === 0) nextPlayer = 'host';
+
+                state.gameData = {
+                    ...state.gameData,
+                    lines: newLines, triangles: [...d.triangles, ...newTriangles],
+                    scores: newScores, movesLeft: moves, currentPlayer: nextPlayer
+                };
+                updateGameState();
+            } else {
+                // Si no hay movimientos, pasar turno (stuck prevention)
+                state.gameData.movesLeft = 0;
+                state.gameData.currentPlayer = 'host';
+                updateGameState();
+            }
+        }
+
+        // --- 3D & VISUALS ---
+        async function checkARSupport() {
+            if('xr' in navigator) {
+                isARSupported = await navigator.xr.isSessionSupported('immersive-ar');
+            }
+        }
+
+        function init3D() {
+            if(scene) return; // Ya iniciado
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
+            
+            const light = new THREE.HemisphereLight(0xffffff, 0x222222, 1.5);
+            scene.add(light);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(5, 10, 7);
+            scene.add(dirLight);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.xr.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            // CONTENEDOR DEL JUEGO
+            gridGroup = new THREE.Group();
+            scene.add(gridGroup);
+
+            // PUNTOS
+            const sphereGeo = new THREE.SphereGeometry(0.015, 16, 16);
+            // HITBOX INVISIBLE GRANDE PARA FACILITAR TOQUE
+            const hitGeo = new THREE.SphereGeometry(0.045, 8, 8); 
+            const mat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.3, metalness: 0.8 });
+            
+            for(let z=0; z<4; z++) {
+                for(let x=0; x<4; x++) {
+                    const p = new THREE.Mesh(sphereGeo, mat.clone());
+                    p.position.set((x-1.5)*0.15, 0, (z-1.5)*0.15);
+                    p.userData = { id: points.length };
+                    
+                    // Hitbox invisible hijo
+                    const hit = new THREE.Mesh(hitGeo, new THREE.MeshBasicMaterial({ visible: false }));
+                    p.add(hit);
+                    
+                    gridGroup.add(p);
+                    points.push(p);
+                }
+            }
+
+            // LÓGICA AR vs 3D
+            if(isARSupported) {
+                const arBtn = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+                document.getElementById('ar-btn-place').appendChild(arBtn);
+                gridGroup.visible = false; // Oculto hasta colocar
+                
+                reticle = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.11, 32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ color: 0x00e5ff }));
+                reticle.visible = false; reticle.matrixAutoUpdate = false;
+                scene.add(reticle);
+
+                controller = renderer.xr.getController(0);
+                controller.addEventListener('select', onARSelect);
+                scene.add(controller);
+            } else {
+                // MODO 3D AUTOMÁTICO
+                window.force3DMode();
+            }
+
+            renderer.setAnimationLoop(render);
+        }
+
+        window.force3DMode = () => {
+            gridGroup.visible = true;
+            gridPlaced = true;
+            camera.position.set(0, 0.8, 0.8);
+            camera.lookAt(0, 0, 0);
+            new OrbitControls(camera, renderer.domElement);
+            // Input Mouse
+            window.addEventListener('pointerdown', on3DClick);
+            document.getElementById('ar-hint').style.display = 'none';
+        };
 
         function render(t, frame) {
-            if(frame) {
-                const refSpace = renderer.xr.getReferenceSpace(); const session = renderer.xr.getSession();
-                if(!arHitTestSourceRequested) { session.requestReferenceSpace('viewer').then(ref => { session.requestHitTestSource({ space: ref }).then(src => arHitTestSource = src); }); arHitTestSourceRequested = true; }
-                if(arHitTestSource && !isGridPlaced) { const hit = frame.getHitTestResults(arHitTestSource); if(hit.length > 0) { reticle.visible = true; reticle.matrix.fromArray(hit[0].getPose(refSpace).transform.matrix); } else reticle.visible = false; }
-            } renderer.render(scene, camera);
+            if(frame && isARSupported) {
+                const session = renderer.xr.getSession();
+                if(!arHitSource && session) session.requestReferenceSpace('viewer').then(ref => session.requestHitTestSource({ space: ref }).then(s => arHitSource = s));
+                
+                if(arHitSource && !gridPlaced) {
+                    const hit = frame.getHitTestResults(arHitSource);
+                    if(hit.length > 0) {
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(hit[0].getPose(renderer.xr.getReferenceSpace()).transform.matrix);
+                        document.getElementById('ar-hint').classList.remove('hidden');
+                    } else {
+                        reticle.visible = false;
+                    }
+                }
+            }
+            renderer.render(scene, camera);
         }
 
-        function onSelect() {
-            if(reticle.visible && !isGridPlaced) {
-                gridGroup.position.setFromMatrixPosition(reticle.matrix); gridGroup.visible = true; isGridPlaced = true; reticle.visible = false;
-                document.getElementById('ar-instructions').innerHTML = "¡JUEGO LISTO!";
+        function onARSelect() {
+            if(reticle.visible && !gridPlaced) {
+                gridGroup.position.setFromMatrixPosition(reticle.matrix);
+                gridGroup.visible = true;
+                gridPlaced = true;
+                reticle.visible = false;
+                document.getElementById('ar-hint').classList.add('hidden');
             } else {
-                const t = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
-                raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld); raycaster.ray.direction.set(0,0,-1).applyMatrix4(t);
-                const i = raycaster.intersectObjects(gridPoints); if(i.length>0) handleInput(i[0].object);
+                // Toque en AR para seleccionar punto
+                // Usamos el controller position para raycast
+                const tempMatrix = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
+                raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+                raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+                checkIntersection();
             }
         }
 
-        function onClickPC(e) {
+        function on3DClick(e) {
             if(e.target.closest('.interactive')) return;
-            if(!renderer.xr.isPresenting) {
-                if(!isGridPlaced) { gridGroup.visible = true; gridGroup.position.set(0,-0.2,-0.5); isGridPlaced = true; }
-                raycaster.setFromCamera(new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1), camera);
-                const i = raycaster.intersectObjects(gridPoints); if(i.length>0) handleInput(i[0].object);
+            const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
+            raycaster.setFromCamera(mouse, camera);
+            checkIntersection();
+        }
+
+        function checkIntersection() {
+            // Intersectamos con los puntos (y sus hitboxes hijos implícitamente si se configura recursive, pero points contiene los meshes padre)
+            // Truco: Raycast contra los hitboxes que son más grandes
+            const hitboxes = [];
+            points.forEach(p => hitboxes.push(p.children[0])); // El hijo 0 es el hitbox
+            
+            const intersects = raycaster.intersectObjects(hitboxes);
+            if(intersects.length > 0) {
+                const parentPoint = intersects[0].object.parent;
+                handlePointClick(parentPoint);
             }
         }
 
-        function handleInput(obj) {
-            const d = appState.gameData; if(!d || d.status !== 'playing') return;
-            if(d.currentPlayer !== appState.role) { window.showToast("ESPERA TU TURNO"); return; }
-            if(!selectedStartPoint) { selectedStartPoint = obj; obj.material.emissive.set(0xffffff); obj.scale.set(1.5,1.5,1.5); }
-            else {
-                if(selectedStartPoint === obj) { resetSel(); return; }
-                const s = selectedStartPoint.userData.id; const e = obj.userData.id;
-                const exists = d.lines.some(l => (l.start===s && l.end===e) || (l.start===e && l.end===s));
-                if(exists) { window.showToast("YA EXISTE"); resetSel(); return; }
-                if(selectedStartPoint.position.distanceTo(obj.position) > SPACING*1.2) { window.showToast("MUY LEJOS"); resetSel(); return; }
-                submitMove(s, e); resetSel();
+        function handlePointClick(obj) {
+            if(!state.gameData || state.gameData.status !== 'playing') return;
+            
+            if(!selectedPoint) {
+                selectedPoint = obj;
+                obj.material.emissive.set(0x00ffff);
+                obj.scale.set(1.3, 1.3, 1.3);
+            } else {
+                if(selectedPoint === obj) {
+                    resetSel(); // Cancelar
+                } else {
+                    attemptMove(selectedPoint.userData.id, obj.userData.id);
+                    resetSel();
+                }
             }
         }
-        function resetSel() { if(selectedStartPoint) { selectedStartPoint.material.emissive.set(0x000000); selectedStartPoint.scale.set(1,1,1); } selectedStartPoint = null; }
-        
-        async function submitMove(s, e) {
-            try {
-                const d = appState.gameData; const newLine = { start: s, end: e, owner: appState.role }; const newLines = [...d.lines, newLine]; let next = d.currentPlayer === 'host' ? 'guest' : 'host';
-                await updateDoc(doc(db, 'artifacts', appId, 'rooms', `room_${appState.roomId}`), { lines: newLines, currentPlayer: next });
-            } catch(e) {
-                window.showToast("ERROR RED");
-                console.error(e);
-            }
+        function resetSel() { if(selectedPoint) { selectedPoint.material.emissive.set(0x000000); selectedPoint.scale.set(1,1,1); } selectedPoint = null; }
+
+        // --- DRAWING HELPERS ---
+        function drawLine3D(id1, id2, owner) {
+            const p1 = points[id1].position;
+            const p2 = points[id2].position;
+            const color = owner === 'host' ? 0x00e5ff : 0xff0055;
+            
+            const dist = p1.distanceTo(p2);
+            const geo = new THREE.CylinderGeometry(0.008, 0.008, dist, 6);
+            const mat = new THREE.MeshBasicMaterial({ color: color });
+            const mesh = new THREE.Mesh(geo, mat);
+            
+            mesh.position.copy(p1).lerp(p2, 0.5);
+            mesh.lookAt(p2);
+            mesh.rotateX(Math.PI/2);
+            mesh.userData.isLine = true;
+            gridGroup.add(mesh);
         }
 
-        window.showToast = (m) => { const el=document.getElementById('game-msg'); el.innerText=m; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000); };
+        function drawTriangle3D(id1, id2, id3, owner) {
+            const p1 = points[id1].position;
+            const p2 = points[id2].position;
+            const p3 = points[id3].position;
+            const color = owner === 'host' ? 0x00e5ff : 0xff0055;
+
+            const geo = new THREE.BufferGeometry();
+            const vertices = new Float32Array([
+                p1.x, p1.y, p1.z,
+                p2.x, p2.y, p2.z,
+                p3.x, p3.y, p3.z
+            ]);
+            geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+            // Material transparente doble cara
+            const mat = new THREE.MeshBasicMaterial({ 
+                color: color, 
+                opacity: 0.3, 
+                transparent: true, 
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.userData.isTriangle = true;
+            gridGroup.add(mesh);
+        }
+
+        function showToast(title, desc) {
+            const t = document.getElementById('game-toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-desc').innerText = desc || "";
+            t.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-10'), 2000);
+        }
+
+        window.exitGame = () => {
+            if(confirm("¿Salir?")) window.location.reload();
+        };
+
     </script>
 </body>
 </html>
