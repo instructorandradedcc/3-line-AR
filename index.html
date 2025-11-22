@@ -6,7 +6,6 @@
     <title>3 LINE-AR | Conecta & Conquista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Configuración Tailwind
         tailwind.config = { theme: { extend: { colors: { cyber: '#00e5ff', neon: '#ff0055' } } } }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -34,7 +33,6 @@
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
         }
 
-        /* Títulos y Textos */
         .neon-title { color: #fff; text-shadow: 0 0 15px currentColor; transition: color 1s, text-shadow 1s; }
         
         /* Botones */
@@ -65,7 +63,7 @@
         .fade-in { animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         
-        /* Indicadores de Estado */
+        /* Indicadores */
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
         .status-pending { background: #fbbf24; box-shadow: 0 0 5px #fbbf24; }
         .status-ok { background: #34d399; box-shadow: 0 0 5px #34d399; }
@@ -76,7 +74,6 @@
 
         .color-btn { transition: all 0.3s; }
         .color-btn.selected { border-color: white; transform: scale(1.25); box-shadow: 0 0 25px currentColor; z-index: 2; }
-        #ar-button-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 20; }
         
         #ar-instructions {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -103,117 +100,11 @@
 
     <canvas id="bg-canvas"></canvas>
     <div class="scanline"></div>
-    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V4.4.0 LEGAL-CORE</div>
+    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V5.1.0 VISUAL-UPGRADE</div>
 
     <div id="ui-layer" class="flex flex-col justify-center items-center p-4 overflow-y-auto min-h-screen bg-black/40">
         
-        <!-- 0. PANTALLA DE VERIFICACIÓN -->
-        <div id="screen-permissions" class="interactive glass p-8 rounded-lg max-w-md w-full text-left fade-in z-50 relative border-t-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
-            
-            <!-- LOGO -->
-            <div class="mb-6 flex justify-center">
-                <div class="relative">
-                    <div class="absolute inset-0 bg-yellow-500 blur-[60px] opacity-20 rounded-full"></div>
-                    <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
-                         onerror="this.style.display='none'; document.getElementById('fallback-logo-check').style.display='flex';"
-                         class="w-24 h-24 rounded-xl object-cover shadow-[0_0_20px_rgba(234,179,8,0.3)] border border-yellow-500/40 relative z-10 mx-auto bg-black">
-                     <div id="fallback-logo-check" class="hidden w-24 h-24 bg-black/80 rounded-xl border border-yellow-500 flex items-center justify-center mx-auto">
-                        <i class="fas fa-shield-alt text-4xl text-yellow-400"></i>
-                    </div>
-                </div>
-            </div>
-
-            <h2 class="text-xl font-orbitron font-bold text-yellow-400 mb-4 flex items-center justify-center gap-3 uppercase tracking-wider border-b border-white/10 pb-4">
-                <i class="fas fa-check-circle"></i> Verificación de Sistema
-            </h2>
-            
-            <div class="space-y-3 mb-6">
-                <div class="flex items-center justify-between bg-black/30 p-3 rounded border border-white/5">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-network-wired text-gray-500"></i>
-                        <div class="text-sm font-bold text-gray-200 font-orbitron tracking-wide">Conexión</div>
-                    </div>
-                    <div id="check-db" class="text-[10px] font-mono text-yellow-500 flex items-center font-bold uppercase">
-                        <span class="status-dot status-pending"></span> TESTEANDO...
-                    </div>
-                </div>
-            </div>
-
-            <div id="perm-error" class="hidden mb-6 p-4 bg-red-900/30 border border-red-500/30 rounded text-red-200 text-xs font-mono">
-                <div class="flex items-start gap-3">
-                    <i class="fas fa-exclamation-triangle text-red-500 mt-0.5"></i>
-                    <span id="perm-error-msg">...</span>
-                </div>
-                <button onclick="forceAuthorize()" class="mt-3 text-[10px] underline text-red-300 hover:text-white">
-                    Ignorar error y continuar (Riesgo)
-                </button>
-            </div>
-
-            <!-- Checkboxes de Consentimiento -->
-            <div class="mb-6 space-y-3 border-t border-white/10 pt-4">
-                <label class="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" id="check-terms" class="cyber-check" onchange="checkPermissions()">
-                    <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
-                        Acepto los <a href="#" onclick="openTerms(event)" class="text-yellow-500 hover:text-yellow-300 underline">Términos de Servicio</a> y Política de Privacidad.
-                    </span>
-                </label>
-                <label class="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" id="check-storage" class="cyber-check" onchange="checkPermissions()">
-                    <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
-                        Permito el uso de almacenamiento local para guardar mi progreso.
-                    </span>
-                </label>
-            </div>
-
-            <button id="btn-authorize" onclick="authorizeSystem()" class="w-full btn-cyber border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300" disabled>
-                <i class="fas fa-lock mr-2"></i> PENDIENTE APROBACIÓN
-            </button>
-            
-            <p class="text-[9px] text-gray-600 text-center mt-4 font-mono">v4.4.0 Secure Core</p>
-        </div>
-
-        <!-- MODAL DE TÉRMINOS LEGALES -->
-        <div id="modal-terms" class="fixed inset-0 bg-black/90 z-[60] hidden flex justify-center items-center p-4 fade-in">
-            <div class="glass max-w-2xl w-full rounded-lg border border-yellow-500/30 p-6 relative shadow-[0_0_50px_rgba(234,179,8,0.2)] flex flex-col max-h-[90vh]">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                    <h3 class="text-xl font-orbitron font-bold text-yellow-400"><i class="fas fa-file-contract mr-2"></i> PROTOCOLO LEGAL 3 LINE-AR</h3>
-                    <button onclick="closeTerms()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-2xl"></i></button>
-                </div>
-                
-                <div class="legal-modal-content pr-4 text-gray-300 text-xs font-mono leading-relaxed space-y-4">
-                    <p class="text-yellow-500 font-bold">1. INTRODUCCIÓN</p>
-                    <p>Bienvenido a 3 LINE-AR. Al acceder a nuestra plataforma de realidad aumentada ("el Servicio"), usted acepta estar vinculado por estos Términos de Servicio y todas las leyes aplicables. Si no está de acuerdo, no use el Servicio.</p>
-
-                    <p class="text-yellow-500 font-bold">2. PRIVACIDAD Y DATOS (GDPR/CCPA)</p>
-                    <p>Utilizamos Google Firebase para la autenticación y el almacenamiento de datos en tiempo real. Recopilamos:</p>
-                    <ul class="list-disc pl-5 space-y-1">
-                        <li>Identificadores básicos (UID, Email, Foto de Perfil) proporcionados por Google/Facebook.</li>
-                        <li>Datos de juego (Puntuaciones, Estado de Sala).</li>
-                        <li>No vendemos sus datos a terceros.</li>
-                    </ul>
-
-                    <p class="text-yellow-500 font-bold">3. CONDUCTA DEL USUARIO</p>
-                    <p>Usted acepta no usar el Servicio para fines ilegales o no autorizados. Está prohibido interferir con la seguridad del juego, usar cheats, o acosar a otros jugadores.</p>
-
-                    <p class="text-yellow-500 font-bold">4. MONETIZACIÓN Y COMPRAS FUTURAS</p>
-                    <p>3 LINE-AR se reserva el derecho de introducir funciones de pago, monedas virtuales o publicidad en el futuro. Cualquier transacción será definitiva y no reembolsable, salvo que la ley exija lo contrario. Los términos específicos de compra se presentarán en el momento de la transacción.</p>
-
-                    <p class="text-yellow-500 font-bold">5. PROPIEDAD INTELECTUAL</p>
-                    <p>Todo el código, diseño, gráficos y lógica de juego son propiedad exclusiva de 3 LINE-AR y sus desarrolladores. Se prohíbe la ingeniería inversa o la copia no autorizada.</p>
-
-                    <p class="text-yellow-500 font-bold">6. DESCARGO DE RESPONSABILIDAD AR</p>
-                    <p>Al usar funciones de Realidad Aumentada, preste atención a su entorno físico para evitar lesiones. 3 LINE-AR no se hace responsable de accidentes ocurridos durante el juego.</p>
-                    
-                    <p class="text-center mt-8 text-gray-500 border-t border-white/10 pt-4">Última actualización: Noviembre 2025</p>
-                </div>
-
-                <button onclick="closeTerms()" class="mt-6 w-full btn-cyber border-yellow-500 text-yellow-400 hover:bg-yellow-500/10">
-                    ENTENDIDO Y CERRAR
-                </button>
-            </div>
-        </div>
-
-        <!-- 1. LOGIN SCREEN -->
+        <!-- 1. LOGIN SCREEN (Ahora es el primero) -->
         <div id="screen-login" class="interactive glass p-8 md:p-10 rounded-lg max-w-md w-full text-center fade-in hidden z-50 relative border-t-4 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]">
             <div class="relative z-10">
                 <div class="mb-8 flex justify-center relative">
@@ -246,7 +137,88 @@
             </div>
         </div>
 
-        <!-- 2. DASHBOARD (Púrpura) -->
+        <!-- 2. PANTALLA DE VERIFICACIÓN (Después del Login, Solo 1 vez) -->
+        <div id="screen-permissions" class="interactive glass p-8 rounded-lg max-w-md w-full text-left fade-in hidden z-50 relative border-t-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+            
+            <div class="mb-6 flex justify-center">
+                <div class="relative">
+                    <div class="absolute inset-0 bg-yellow-500 blur-[60px] opacity-20 rounded-full"></div>
+                    <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
+                         class="w-24 h-24 rounded-xl object-cover shadow-[0_0_20px_rgba(234,179,8,0.3)] border border-yellow-500/40 relative z-10 mx-auto bg-black">
+                </div>
+            </div>
+
+            <h2 class="text-xl font-orbitron font-bold text-yellow-400 mb-4 flex items-center justify-center gap-3 uppercase tracking-wider border-b border-white/10 pb-4">
+                <i class="fas fa-check-circle"></i> Activación de Cuenta
+            </h2>
+            
+            <p class="text-gray-400 text-xs mb-6 font-mono leading-relaxed text-center">
+                Hola <span id="verify-username" class="text-white font-bold">Operador</span>. Para completar tu registro y habilitar funciones multijugador, necesitamos verificar tu conexión y permisos.
+            </p>
+
+            <div class="space-y-3 mb-6">
+                <div class="flex items-center justify-between bg-black/30 p-3 rounded border border-white/5">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-network-wired text-gray-500"></i>
+                        <div class="text-sm font-bold text-gray-200 font-orbitron tracking-wide">Base de Datos</div>
+                    </div>
+                    <div id="check-db" class="text-[10px] font-mono text-yellow-500 flex items-center font-bold uppercase">
+                        <span class="status-dot status-pending"></span> TESTEANDO...
+                    </div>
+                </div>
+            </div>
+
+            <div id="perm-error" class="hidden mb-6 p-4 bg-red-900/30 border border-red-500/30 rounded text-red-200 text-xs font-mono">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-exclamation-triangle text-red-500 mt-0.5"></i>
+                    <span id="perm-error-msg">...</span>
+                </div>
+                <button onclick="forceAuthorize()" class="mt-3 text-[10px] underline text-red-300 hover:text-white">
+                    Ignorar error y continuar
+                </button>
+            </div>
+
+            <!-- Checkboxes -->
+            <div class="mb-6 space-y-3 border-t border-white/10 pt-4">
+                <label class="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" id="check-terms" class="cyber-check" onchange="checkPermissions()">
+                    <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
+                        He leído y acepto los <a href="#" onclick="openTerms(event)" class="text-yellow-500 hover:text-yellow-300 underline">Términos de Servicio</a>.
+                    </span>
+                </label>
+                <label class="flex items-start gap-3 cursor-pointer group">
+                    <input type="checkbox" id="check-storage" class="cyber-check" onchange="checkPermissions()">
+                    <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
+                        Permito guardar mi progreso en la nube.
+                    </span>
+                </label>
+            </div>
+
+            <button id="btn-authorize" onclick="completeSetup()" class="w-full btn-cyber border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300" disabled>
+                <i class="fas fa-lock mr-2"></i> CONFIRMAR & ENTRAR
+            </button>
+        </div>
+
+        <!-- MODAL LEGAL -->
+        <div id="modal-terms" class="fixed inset-0 bg-black/90 z-[60] hidden flex justify-center items-center p-4 fade-in">
+            <div class="glass max-w-2xl w-full rounded-lg border border-yellow-500/30 p-6 relative shadow-[0_0_50px_rgba(234,179,8,0.2)] flex flex-col max-h-[90vh]">
+                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                    <h3 class="text-xl font-orbitron font-bold text-yellow-400"><i class="fas fa-file-contract mr-2"></i> PROTOCOLO LEGAL</h3>
+                    <button onclick="closeTerms()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-2xl"></i></button>
+                </div>
+                <div class="legal-modal-content pr-4 text-gray-300 text-xs font-mono leading-relaxed space-y-4">
+                    <p class="text-yellow-500 font-bold">1. ACEPTACIÓN</p>
+                    <p>Al usar 3 LINE-AR, aceptas estos términos y condiciones legales.</p>
+                    <p class="text-yellow-500 font-bold">2. DATOS Y NUBE</p>
+                    <p>Tus datos de juego se almacenan de forma segura en Google Cloud Firestore. Vinculamos tu progreso a tu cuenta para que no lo pierdas.</p>
+                    <p class="text-yellow-500 font-bold">3. COMPRAS (FUTURO)</p>
+                    <p>El juego puede incluir compras integradas en el futuro. Todas las transacciones serán finales.</p>
+                    <button onclick="closeTerms()" class="mt-6 w-full btn-cyber border-yellow-500 text-yellow-400 hover:bg-yellow-500/10">ENTENDIDO</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. DASHBOARD -->
         <div id="screen-dashboard" class="interactive glass p-6 rounded-xl border-r-4 border-purple-500 max-w-md w-full text-center fade-in hidden z-50">
             <div class="flex items-center justify-between mb-8 border-b border-white/10 pb-4 bg-black/20 p-3 rounded-lg">
                 <div class="flex items-center gap-4">
@@ -262,22 +234,17 @@
                 </div>
                 <button onclick="logout()" class="text-[10px] text-gray-400 border border-white/20 px-3 py-1 rounded hover:bg-white/10 font-orbitron tracking-wider hover:text-white transition">SALIR</button>
             </div>
-
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="showCreateRoom()" class="group bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10 hover:border-purple-400 text-white py-12 rounded-lg transition-all hover:shadow-[0_0_30px_rgba(168,85,247,0.15)] relative overflow-hidden">
-                    <div class="absolute inset-0 bg-purple-500/5 group-hover:bg-purple-500/10 transition"></div>
-                    <i class="fas fa-plus-circle text-3xl mb-4 text-purple-400 group-hover:scale-110 transition"></i>
-                    <span class="block font-orbitron text-xs font-bold tracking-[0.2em]">CREAR</span>
+                <button onclick="showCreateRoom()" class="group bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10 hover:border-purple-400 text-white py-12 rounded-lg transition-all hover:shadow-[0_0_30px_rgba(168,85,247,0.15)]">
+                    <i class="fas fa-plus-circle text-3xl mb-4 text-purple-400 group-hover:scale-110 transition"></i><span class="block font-orbitron text-xs font-bold tracking-[0.2em]">CREAR</span>
                 </button>
-                <button onclick="showJoinRoom()" class="group bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10 hover:border-purple-400 text-white py-12 rounded-lg transition-all hover:shadow-[0_0_30px_rgba(168,85,247,0.15)] relative overflow-hidden">
-                    <div class="absolute inset-0 bg-purple-500/5 group-hover:bg-purple-500/10 transition"></div>
-                    <i class="fas fa-satellite-dish text-3xl mb-4 text-purple-400 group-hover:scale-110 transition"></i>
-                    <span class="block font-orbitron text-xs font-bold tracking-[0.2em]">UNIRSE</span>
+                <button onclick="showJoinRoom()" class="group bg-gradient-to-br from-gray-900 to-gray-800 border border-white/10 hover:border-purple-400 text-white py-12 rounded-lg transition-all hover:shadow-[0_0_30px_rgba(168,85,247,0.15)]">
+                    <i class="fas fa-satellite-dish text-3xl mb-4 text-purple-400 group-hover:scale-110 transition"></i><span class="block font-orbitron text-xs font-bold tracking-[0.2em]">UNIRSE</span>
                 </button>
             </div>
         </div>
 
-        <!-- 3. SETUP (Verde) -->
+        <!-- 4. SETUP -->
         <div id="screen-setup" class="interactive glass p-8 rounded-xl border-l-4 border-green-500 max-w-md w-full text-center fade-in hidden z-50">
             <div class="flex justify-between items-center mb-8">
                 <button onclick="goBackToDashboard()" class="text-gray-400 hover:text-white text-xs font-orbitron flex items-center gap-2"><i class="fas fa-chevron-left"></i> ATRÁS</button>
@@ -289,10 +256,10 @@
                 <label class="text-[10px] text-green-400 uppercase block mb-2 tracking-widest font-bold">ID de Frecuencia</label>
                 <input type="text" id="room-id-input" class="w-full bg-black/40 border border-gray-600 text-white font-orbitron text-2xl p-4 text-center uppercase rounded placeholder-gray-700 focus:border-green-500 outline-none focus:bg-black/60 transition" placeholder="XXXX">
             </div>
-            <button onclick="confirmGameStart()" class="w-full btn-cyber border-green-500 text-green-400 hover:bg-green-500/10 hover:text-white hover:shadow-[0_0_20px_rgba(34,197,94,0.4)]">INICIAR SISTEMA</button>
+            <button onclick="confirmGameStart()" class="w-full btn-cyber border-green-500 text-green-400 hover:bg-green-500/10">INICIAR SISTEMA</button>
         </div>
 
-        <!-- 4. WAITING -->
+        <!-- 5. WAITING -->
         <div id="screen-waiting" class="interactive glass p-10 rounded-xl border-b-4 border-yellow-500 max-w-md w-full text-center fade-in hidden z-50">
             <div class="relative w-24 h-24 mx-auto mb-8">
                 <div class="absolute inset-0 border-4 border-yellow-500/20 rounded-full"></div>
@@ -354,70 +321,76 @@
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne';
         
-        // --- FONDO DINÁMICO (CHAMELEON) ---
-        let bgParticles = [];
-        let bgContext = null;
-        let bgWidth, bgHeight;
-        let targetColor = { r: 255, g: 200, b: 0 }; 
-        let currentColor = { r: 255, g: 200, b: 0 };
+        // --- FONDO DINÁMICO ---
+        let bgParticles = [], bgContext = null, bgWidth, bgHeight;
+        let targetColor = { r: 255, g: 200, b: 0 }, currentColor = { r: 255, g: 200, b: 0 };
 
         function initBackgroundNetwork() {
             const canvas = document.getElementById('bg-canvas');
             bgContext = canvas.getContext('2d');
-            
             function resize() { bgWidth = window.innerWidth; bgHeight = window.innerHeight; canvas.width = bgWidth; canvas.height = bgHeight; createParticles(); }
             window.addEventListener('resize', resize); resize(); animateBackground();
         }
 
         function createParticles() {
-            bgParticles = [];
-            const count = Math.floor((bgWidth * bgHeight) / 9000); 
+            bgParticles = []; const count = Math.floor((bgWidth * bgHeight) / 6000); // Más densidad
             for (let i = 0; i < count; i++) {
+                // Colores aleatorios para la batalla
+                const team = Math.random() > 0.5 ? 'cyan' : 'magenta';
+                const color = team === 'cyan' ? {r:0,g:229,b:255} : {r:255,g:0,b:85};
                 bgParticles.push({ 
                     x: Math.random() * bgWidth, y: Math.random() * bgHeight, 
                     vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, 
-                    size: Math.random() * 2 + 0.5 
+                    size: Math.random() * 2 + 0.5,
+                    color: color
                 });
             }
         }
 
         function setBgPalette(hex) {
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            targetColor = { r, g, b };
+            targetColor = { r: parseInt(hex.slice(1, 3), 16), g: parseInt(hex.slice(3, 5), 16), b: parseInt(hex.slice(5, 7), 16) };
         }
 
         function lerp(start, end, t) { return start * (1 - t) + end * t; }
 
         function animateBackground() {
-            currentColor.r = lerp(currentColor.r, targetColor.r, 0.05);
-            currentColor.g = lerp(currentColor.g, targetColor.g, 0.05);
-            currentColor.b = lerp(currentColor.b, targetColor.b, 0.05);
-            
+            currentColor.r = lerp(currentColor.r, targetColor.r, 0.05); currentColor.g = lerp(currentColor.g, targetColor.g, 0.05); currentColor.b = lerp(currentColor.b, targetColor.b, 0.05);
             const rgbString = `${Math.round(currentColor.r)}, ${Math.round(currentColor.g)}, ${Math.round(currentColor.b)}`;
-
-            bgContext.clearRect(0, 0, bgWidth, bgHeight);
+            
+            bgContext.clearRect(0, 0, bgWidth, bgHeight); 
             bgContext.fillStyle = '#000000'; bgContext.fillRect(0, 0, bgWidth, bgHeight);
 
             for (let i = 0; i < bgParticles.length; i++) {
-                let p = bgParticles[i];
-                p.x += p.vx; p.y += p.vy;
+                let p = bgParticles[i]; p.x += p.vx; p.y += p.vy;
                 if (p.x < 0 || p.x > bgWidth) p.vx *= -1; if (p.y < 0 || p.y > bgHeight) p.vy *= -1;
 
-                bgContext.beginPath();
-                bgContext.fillStyle = `rgba(${rgbString}, 0.8)`;
-                bgContext.arc(p.x, p.y, p.size, 0, Math.PI * 2); 
-                bgContext.fill();
+                bgContext.beginPath(); 
+                // Usar color de partícula o el global si estamos en un estado específico
+                const r = p.color.r * 0.5 + currentColor.r * 0.5;
+                const g = p.color.g * 0.5 + currentColor.g * 0.5;
+                const b = p.color.b * 0.5 + currentColor.b * 0.5;
+                
+                bgContext.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+                bgContext.arc(p.x, p.y, p.size, 0, Math.PI * 2); bgContext.fill();
 
                 for (let j = i + 1; j < bgParticles.length; j++) {
-                    let p2 = bgParticles[j];
-                    let d = Math.sqrt(Math.pow(p.x-p2.x,2) + Math.pow(p.y-p2.y,2));
-                    if (d < 150) { 
-                        bgContext.beginPath();
-                        bgContext.strokeStyle = `rgba(${rgbString}, ${0.2 * (1 - d/150)})`;
-                        bgContext.lineWidth = 1;
-                        bgContext.moveTo(p.x, p.y); bgContext.lineTo(p2.x, p2.y); bgContext.stroke();
+                    let p2 = bgParticles[j]; let d = Math.sqrt(Math.pow(p.x-p2.x,2) + Math.pow(p.y-p2.y,2));
+                    if (d < 180) { 
+                        bgContext.beginPath(); 
+                        bgContext.strokeStyle = `rgba(${r}, ${g}, ${b}, ${0.3 * (1 - d/180)})`; 
+                        bgContext.lineWidth = 1; bgContext.moveTo(p.x, p.y); bgContext.lineTo(p2.x, p2.y); bgContext.stroke();
+                        
+                        // Triangulos
+                        for (let k = j + 1; k < bgParticles.length; k++) {
+                            let p3 = bgParticles[k];
+                            let d2 = Math.sqrt(Math.pow(p.x-p3.x,2) + Math.pow(p.y-p3.y,2));
+                            let d3 = Math.sqrt(Math.pow(p2.x-p3.x,2) + Math.pow(p2.y-p3.y,2));
+                            if(d2 < 180 && d3 < 180) {
+                                bgContext.beginPath();
+                                bgContext.fillStyle = `rgba(${r}, ${g}, ${b}, 0.05)`; 
+                                bgContext.moveTo(p.x, p.y); bgContext.lineTo(p2.x, p2.y); bgContext.lineTo(p3.x, p3.y); bgContext.fill();
+                            }
+                        }
                     }
                 }
             }
@@ -425,21 +398,70 @@
         }
         initBackgroundNetwork();
 
-        // --- MODAL TERMS LOGIC ---
-        window.openTerms = (e) => {
-            e.preventDefault();
-            document.getElementById('modal-terms').classList.remove('hidden');
-        };
-        
-        window.closeTerms = () => {
-            document.getElementById('modal-terms').classList.add('hidden');
-        };
+        // --- MODAL TERMS ---
+        window.openTerms = (e) => { e.preventDefault(); document.getElementById('modal-terms').classList.remove('hidden'); };
+        window.closeTerms = () => { document.getElementById('modal-terms').classList.add('hidden'); };
 
-        // --- VERIFICACIÓN DE SISTEMA ---
-        let isConnected = false;
+        // --- AUTH FLOW & PERSISTENCE ---
+        setPersistence(auth, browserLocalPersistence).catch(console.error);
 
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                appState.user = user;
+                const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
+                
+                try {
+                    const snapshot = await getDoc(userRef);
+                    if (snapshot.exists() && snapshot.data().termsAccepted) {
+                        authorizeSystem(); 
+                    } else {
+                        showVerificationScreen(user);
+                    }
+                } catch (e) {
+                    console.error("Error checking profile:", e);
+                    showVerificationScreen(user);
+                }
+            } else {
+                showLogin();
+            }
+        });
+
+        // --- PANTALLAS ---
+        function hideAllScreens() { 
+            ['screen-permissions', 'screen-login', 'screen-dashboard', 'screen-setup', 'screen-waiting', 'game-hud'].forEach(id => document.getElementById(id).classList.add('hidden')); 
+        }
+
+        function showLogin() { 
+            hideAllScreens(); 
+            document.getElementById('screen-login').classList.remove('hidden'); 
+            setBgPalette('#06B6D4');
+        }
+
+        async function showVerificationScreen(user) {
+            hideAllScreens();
+            setBgPalette('#EAB308'); // Amarillo
+            document.getElementById('screen-permissions').classList.remove('hidden');
+            document.getElementById('verify-username').innerText = user.displayName || "OPERADOR";
+            runSystemCheck(); // Testear red
+        }
+
+        function showDashboard(user) {
+            appState.user = user;
+            hideAllScreens();
+            document.getElementById('screen-dashboard').classList.remove('hidden');
+            setBgPalette('#A855F7'); 
+            
+            document.getElementById('user-name').innerText = user.displayName || "OPERADOR";
+            const img = document.getElementById('user-avatar');
+            const fallback = document.getElementById('user-avatar-fallback');
+            if(user.photoURL) {
+                img.src = user.photoURL; img.classList.remove('hidden'); fallback.classList.add('hidden');
+                img.onerror = () => { img.classList.add('hidden'); fallback.classList.remove('hidden'); fallback.innerText = (user.displayName||"U")[0]; };
+            } else { img.classList.add('hidden'); fallback.classList.remove('hidden'); fallback.innerText = (user.displayName||"U")[0]; }
+        }
+
+        // --- VERIFICACIÓN ---
         async function runSystemCheck() {
-            setBgPalette('#EAB308'); 
             const dbStatus = document.getElementById('check-db');
             const errBox = document.getElementById('perm-error');
             const errMsg = document.getElementById('perm-error-msg');
@@ -451,35 +473,23 @@
                 
                 dbStatus.innerHTML = '<span class="status-dot status-ok"></span> CONECTADO';
                 dbStatus.className = "text-[10px] font-mono text-green-400 flex items-center font-bold uppercase";
-                isConnected = true;
-                checkPermissions();
-
-                // Auto-check sesión
-                onAuthStateChanged(auth, (user) => {
-                    if (user) authorizeSystem();
-                });
-
             } catch (e) {
-                console.error("SysCheck Failed:", e);
                 dbStatus.innerHTML = '<span class="status-dot status-error"></span> FALLO';
                 dbStatus.className = "text-[10px] font-mono text-red-400 flex items-center font-bold uppercase";
                 errBox.classList.remove('hidden');
-                
                 if(e.message === "TIMEOUT") errMsg.innerText = "Bloqueo de red detectado. Desactiva AdBlock.";
                 else errMsg.innerText = "Error de red. Verifica tu conexión.";
-                isConnected = false;
             }
         }
-        
+
         window.checkPermissions = () => {
             const terms = document.getElementById('check-terms').checked;
             const storage = document.getElementById('check-storage').checked;
             const btn = document.getElementById('btn-authorize');
             
-            // Permite avanzar si se aceptan términos, incluso si hay error de red (modo riesgo)
             if (terms && storage) {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fas fa-check-circle mr-2"></i> AUTORIZAR INICIO`;
+                btn.innerHTML = `<i class="fas fa-check-circle mr-2"></i> CONFIRMAR & ENTRAR`;
                 btn.className = "w-full btn-cyber border-green-500 text-green-400 hover:bg-green-500/10 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(34,197,94,0.3)]";
             } else {
                 btn.disabled = true;
@@ -489,36 +499,37 @@
         };
 
         window.forceAuthorize = () => {
-            isConnected = true;
             document.getElementById('perm-error').classList.add('hidden');
             document.getElementById('check-db').innerHTML = '<span class="status-dot status-pending"></span> OMITIDO';
-            document.getElementById('check-db').className = "text-[10px] font-mono text-yellow-500 flex items-center font-bold uppercase";
         };
-        
-        window.authorizeSystem = () => {
-            hideAllScreens();
-            if(auth.currentUser) {
-                setBgPalette('#A855F7'); 
-                showDashboard(auth.currentUser);
-            } else {
-                setBgPalette('#06B6D4'); 
-                showLogin();
+
+        window.completeSetup = async () => {
+            const btn = document.getElementById('btn-authorize');
+            btn.innerText = "GUARDANDO..."; btn.disabled = true;
+            
+            try {
+                const userRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
+                await setDoc(userRef, {
+                    termsAccepted: true,
+                    acceptedAt: new Date().toISOString(),
+                    email: auth.currentUser.email,
+                    displayName: auth.currentUser.displayName
+                }, { merge: true });
+                
+                authorizeSystem();
+            } catch (e) {
+                console.error("Error saving terms:", e);
+                alert("No pudimos guardar tu confirmación en la nube (¿Bloqueo de red?), pero puedes entrar.");
+                authorizeSystem();
             }
         };
 
-        runSystemCheck();
+        window.authorizeSystem = () => {
+            hideAllScreens();
+            showDashboard(auth.currentUser);
+        };
 
-        // --- VARIABLES JUEGO ---
-        const PALETTE = ['#ff0055', '#00e5ff', '#00ff9d', '#ffea00', '#bd00ff', '#ffffff'];
-        let appState = { user: null, roomId: null, role: null, myColor: PALETTE[1], gameData: null, selectedColorIdx: 1, mode: 'menu' };
-        let scene, camera, renderer, controller, gridGroup, reticle; 
-        let gridPoints = []; let raycaster = new THREE.Raycaster(); let selectedStartPoint = null; 
-        const SPACING = 0.15; 
-        let arHitTestSource = null; let arHitTestSourceRequested = false; let isGridPlaced = false;
-
-        // --- AUTHENTICATION ---
-        setPersistence(auth, browserLocalPersistence).catch(console.error);
-
+        // --- LOGIN ---
         window.handleLogin = async (providerName) => {
             const btn = document.getElementById(`btn-${providerName}`);
             const originalContent = btn.innerHTML;
@@ -535,62 +546,14 @@
                 else if (error.code === 'auth/popup-closed-by-user') msg = "Inicio cancelado.";
                 
                 const errDiv = document.getElementById('login-error');
-                errDiv.innerText = msg;
-                errDiv.classList.remove('hidden');
+                errDiv.innerText = msg; errDiv.classList.remove('hidden');
                 setTimeout(() => errDiv.classList.add('hidden'), 5000);
             }
         };
 
-        window.logout = () => { signOut(auth).then(() => window.location.reload()); };
-
-        // --- UI HELPERS ---
-        function hideAllScreens() { 
-            ['screen-permissions', 'screen-login', 'screen-dashboard', 'screen-setup', 'screen-waiting', 'game-hud'].forEach(id => document.getElementById(id).classList.add('hidden')); 
-        }
-        function showLogin() { 
-            hideAllScreens(); 
-            document.getElementById('screen-login').classList.remove('hidden'); 
-            setBgPalette('#06B6D4');
-        }
-        
-        function showDashboard(user) {
-            appState.user = user;
-            hideAllScreens();
-            document.getElementById('screen-dashboard').classList.remove('hidden');
-            setBgPalette('#A855F7'); 
-            
-            document.getElementById('user-name').innerText = user.displayName || "OPERADOR";
-            const img = document.getElementById('user-avatar');
-            const fallback = document.getElementById('user-avatar-fallback');
-            
-            if(user.photoURL) {
-                img.src = user.photoURL;
-                img.classList.remove('hidden');
-                fallback.classList.add('hidden');
-                img.onerror = () => { img.classList.add('hidden'); fallback.classList.remove('hidden'); fallback.innerText = (user.displayName||"U")[0]; };
-            } else {
-                img.classList.add('hidden');
-                fallback.classList.remove('hidden');
-                fallback.innerText = (user.displayName||"U")[0];
-            }
-        }
-
-        window.showCreateRoom = () => { 
-            appState.role = 'host'; appState.mode = 'setup'; setupColorPicker(); 
-            document.getElementById('setup-title').innerText = "CREAR SALA"; 
-            document.getElementById('join-inputs').classList.add('hidden'); 
-            hideAllScreens(); document.getElementById('screen-setup').classList.remove('hidden'); 
-            setBgPalette('#22C55E'); // Verde
-        };
-        
-        window.showJoinRoom = () => { 
-            appState.role = 'guest'; appState.mode = 'setup'; setupColorPicker(); 
-            document.getElementById('setup-title').innerText = "UNIRSE"; 
-            document.getElementById('join-inputs').classList.remove('hidden'); 
-            hideAllScreens(); document.getElementById('screen-setup').classList.remove('hidden'); 
-            setBgPalette('#22C55E'); // Verde
-        };
-        
+        // --- GAME LOBBY ---
+        window.showCreateRoom = () => { appState.role = 'host'; appState.mode = 'setup'; setupColorPicker(); document.getElementById('setup-title').innerText = "CREAR SALA"; document.getElementById('join-inputs').classList.add('hidden'); hideAllScreens(); document.getElementById('screen-setup').classList.remove('hidden'); setBgPalette('#22C55E'); };
+        window.showJoinRoom = () => { appState.role = 'guest'; appState.mode = 'setup'; setupColorPicker(); document.getElementById('setup-title').innerText = "UNIRSE"; document.getElementById('join-inputs').classList.remove('hidden'); hideAllScreens(); document.getElementById('screen-setup').classList.remove('hidden'); setBgPalette('#22C55E'); };
         window.goBackToDashboard = () => showDashboard(appState.user);
         
         function setupColorPicker() {
@@ -613,7 +576,6 @@
         window.confirmGameStart = async () => {
             const btn = document.querySelector('#screen-setup button');
             const txt = btn.innerText; btn.innerHTML = '<i class="fas fa-cog animate-spin"></i>'; btn.disabled = true;
-            
             try {
                 if (appState.role === 'host') {
                     const roomId = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -635,203 +597,95 @@
                     appState.roomId = rid; initGameListener(rid);
                 }
             } catch(e) {
-                let msg = e.message === 'TIMEOUT' ? "Error de Red (Posible AdBlock)." : e.message;
-                alert(msg);
-                btn.innerText = txt; btn.disabled = false;
+                let msg = e.message === 'TIMEOUT' ? "Error de Red. Reintenta." : e.message;
+                alert(msg); btn.innerText = txt; btn.disabled = false;
             }
         };
 
-        function showWaitingScreen() { 
-            hideAllScreens(); 
-            document.getElementById('screen-waiting').classList.remove('hidden'); 
-            document.getElementById('display-room-id').innerText = appState.roomId;
-            setBgPalette('#EAB308'); 
-        }
-        
-        window.copyInvite = () => { 
-            navigator.clipboard.writeText(window.location.origin + window.location.pathname + '?room=' + appState.roomId);
-            document.getElementById('copy-feedback').innerText = "¡ENLACE COPIADO!";
-        };
+        function showWaitingScreen() { hideAllScreens(); document.getElementById('screen-waiting').classList.remove('hidden'); document.getElementById('display-room-id').innerText = appState.roomId; setBgPalette('#EAB308'); }
+        window.copyInvite = () => { navigator.clipboard.writeText(window.location.origin + window.location.pathname + '?room=' + appState.roomId); document.getElementById('copy-feedback').innerText = "¡ENLACE COPIADO!"; };
 
         function initGameListener(rid) {
             if(!scene) init3D();
             onSnapshot(doc(db, 'artifacts', appId, 'rooms', `room_${rid}`), (snap) => {
                 if(!snap.exists()) return;
                 const d = snap.data(); appState.gameData = d;
-                if(d.status === 'playing' && (document.getElementById('screen-waiting').classList.contains('hidden') === false || document.getElementById('game-hud').classList.contains('hidden'))) {
-                    startGameUI();
-                }
+                if(d.status === 'playing' && (document.getElementById('screen-waiting').classList.contains('hidden') === false || document.getElementById('game-hud').classList.contains('hidden'))) { startGameUI(); }
                 if(d.status === 'playing') updateGameVisuals(d);
             });
         }
 
         function startGameUI() {
-            hideAllScreens();
-            document.getElementById('game-hud').classList.remove('hidden');
-            document.getElementById('game-hud').style.display = 'flex';
-            setBgPalette('#000000'); 
-            
+            hideAllScreens(); document.getElementById('game-hud').classList.remove('hidden'); document.getElementById('game-hud').style.display = 'flex'; setBgPalette('#000000'); 
             const d = appState.gameData;
-            document.getElementById('hud-p1-color').style.backgroundColor = d.hostColor;
-            document.getElementById('hud-p1-name').innerText = (d.hostName||"HOST").split(' ')[0];
-            document.getElementById('hud-p2-color').style.backgroundColor = d.guestColor;
-            document.getElementById('hud-p2-name').innerText = (d.guestName||"GUEST").split(' ')[0];
-            
-            if('xr' in navigator) {
-                document.getElementById('ar-instructions').style.display = 'block';
-                setTimeout(() => document.getElementById('ar-instructions').style.display = 'none', 6000);
-            }
+            document.getElementById('hud-p1-color').style.backgroundColor = d.hostColor; document.getElementById('hud-p1-name').innerText = (d.hostName||"HOST").split(' ')[0];
+            document.getElementById('hud-p2-color').style.backgroundColor = d.guestColor; document.getElementById('hud-p2-name').innerText = (d.guestName||"GUEST").split(' ')[0];
+            if('xr' in navigator) { document.getElementById('ar-instructions').style.display = 'block'; setTimeout(() => document.getElementById('ar-instructions').style.display = 'none', 6000); }
         }
 
         function updateGameVisuals(d) {
-            document.getElementById('score-p1').innerText = d.scores.host;
-            document.getElementById('score-p2').innerText = d.scores.guest;
+            document.getElementById('score-p1').innerText = d.scores.host; document.getElementById('score-p2').innerText = d.scores.guest;
             const isMyTurn = d.currentPlayer === appState.role;
             const turnEl = document.getElementById('turn-indicator');
-            
-            if(isMyTurn) {
-                turnEl.innerText = "TU TURNO"; turnEl.className = "px-4 py-1 bg-green-900 text-green-400 border border-green-500 rounded animate-pulse font-bold";
-            } else {
-                turnEl.innerText = `ESPERANDO...`;
-                turnEl.className = "px-4 py-1 bg-gray-800 text-gray-400 border border-gray-600 rounded";
-            }
-
-            const toRemove = [];
-            gridGroup.children.forEach(c => { if(c.userData.isLine || c.userData.isTri) toRemove.push(c); });
-            toRemove.forEach(c => gridGroup.remove(c));
-            
+            if(isMyTurn) { turnEl.innerText = "TU TURNO"; turnEl.className = "px-4 py-1 bg-green-900 text-green-400 border border-green-500 rounded animate-pulse font-bold"; } else { turnEl.innerText = `ESPERANDO...`; turnEl.className = "px-4 py-1 bg-gray-800 text-gray-400 border border-gray-600 rounded"; }
+            const toRemove = []; gridGroup.children.forEach(c => { if(c.userData.isLine || c.userData.isTri) toRemove.push(c); }); toRemove.forEach(c => gridGroup.remove(c));
             d.lines.forEach(l => {
                 const p1 = gridPoints[l.start].position; const p2 = gridPoints[l.end].position;
                 const color = l.owner === 'host' ? d.hostColor : d.guestColor;
                 const geo = new THREE.CylinderGeometry(0.005, 0.005, p1.distanceTo(p2), 6);
                 const mat = new THREE.MeshBasicMaterial({ color: color });
                 const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.copy(p1.clone().lerp(p2, 0.5));
-                mesh.lookAt(p2); mesh.rotateX(Math.PI/2);
-                mesh.userData.isLine = true;
+                mesh.position.copy(p1.clone().lerp(p2, 0.5)); mesh.lookAt(p2); mesh.rotateX(Math.PI/2); mesh.userData.isLine = true;
                 const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, p1.distanceTo(p2), 6), new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.3 }));
-                mesh.add(glow);
-                gridGroup.add(mesh);
+                mesh.add(glow); gridGroup.add(mesh);
             });
         }
 
         // --- THREE JS ---
         function init3D() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
+            scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
             const light = new THREE.HemisphereLight(0xffffff, 0x444444, 1); scene.add(light);
-            
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setPixelRatio(window.devicePixelRatio); renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.xr.enabled = true; document.body.appendChild(renderer.domElement);
-            
-            reticle = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
-            reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
-            
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); renderer.setPixelRatio(window.devicePixelRatio); renderer.setSize(window.innerWidth, window.innerHeight); renderer.xr.enabled = true; document.body.appendChild(renderer.domElement);
+            reticle = new THREE.Mesh(new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ color: 0x00ff00 })); reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
             const arBtn = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
             arBtn.style.cssText = 'background:rgba(0,0,0,0.8); border:2px solid #00e5ff; color:#00e5ff; font-family:Orbitron; font-weight:900; padding:15px 30px; border-radius:8px; box-shadow:0 0 20px rgba(0,229,255,0.4); letter-spacing:2px;';
             document.getElementById('ar-button-container').appendChild(arBtn);
-            
-            gridGroup = new THREE.Group(); gridGroup.visible = false; scene.add(gridGroup);
-            createGrid();
-            
+            gridGroup = new THREE.Group(); gridGroup.visible = false; scene.add(gridGroup); createGrid();
             controller = renderer.xr.getController(0); controller.addEventListener('select', onSelect); scene.add(controller);
-            window.addEventListener('click', onClickPC);
-            window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
-            
-            new OrbitControls(camera, renderer.domElement).target.set(0,0,-1);
-            renderer.setAnimationLoop(render);
+            window.addEventListener('click', onClickPC); window.addEventListener('resize', () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+            new OrbitControls(camera, renderer.domElement).target.set(0,0,-1); renderer.setAnimationLoop(render);
         }
-
         function createGrid() {
-            const geo = new THREE.SphereGeometry(0.025, 16, 16);
-            const mat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.1, metalness: 0.8 });
-            let idx = 0;
-            for(let r=0; r<4; r++) {
-                for(let c=0; c<4; c++) {
-                    const m = new THREE.Mesh(geo, mat.clone());
-                    const xo = (r%2)*(SPACING/2);
-                    m.position.set(c*SPACING + xo - (3.5*SPACING)/2, 0.05, r*(SPACING*0.866) - (3*SPACING*0.866)/2);
-                    m.userData = { id: idx++, isDot: true };
-                    gridGroup.add(m); gridPoints.push(m);
-                }
-            }
-            const base = new THREE.Mesh(new THREE.CircleGeometry(0.35, 32), new THREE.MeshBasicMaterial({ color: 0x00e5ff, opacity: 0.1, transparent: true, side: THREE.DoubleSide }));
-            base.rotation.x = -Math.PI/2; gridGroup.add(base);
+            const geo = new THREE.SphereGeometry(0.025, 16, 16); const mat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.1, metalness: 0.8 });
+            let idx = 0; for(let r=0; r<4; r++) { for(let c=0; c<4; c++) { const m = new THREE.Mesh(geo, mat.clone()); const xo = (r%2)*(SPACING/2); m.position.set(c*SPACING + xo - (3.5*SPACING)/2, 0.05, r*(SPACING*0.866) - (3*SPACING*0.866)/2); m.userData = { id: idx++, isDot: true }; gridGroup.add(m); gridPoints.push(m); } }
+            const base = new THREE.Mesh(new THREE.CircleGeometry(0.35, 32), new THREE.MeshBasicMaterial({ color: 0x00e5ff, opacity: 0.1, transparent: true, side: THREE.DoubleSide })); base.rotation.x = -Math.PI/2; gridGroup.add(base);
         }
-
         function render(t, frame) {
             if(frame) {
-                const refSpace = renderer.xr.getReferenceSpace();
-                const session = renderer.xr.getSession();
-                if(!arHitTestSourceRequested) {
-                    session.requestReferenceSpace('viewer').then(ref => {
-                        session.requestHitTestSource({ space: ref }).then(src => arHitTestSource = src);
-                    });
-                    arHitTestSourceRequested = true;
-                }
-                if(arHitTestSource && !isGridPlaced) {
-                    const hit = frame.getHitTestResults(arHitTestSource);
-                    if(hit.length > 0) {
-                        reticle.visible = true; 
-                        reticle.matrix.fromArray(hit[0].getPose(refSpace).transform.matrix);
-                    } else reticle.visible = false;
-                }
-            }
-            renderer.render(scene, camera);
+                const refSpace = renderer.xr.getReferenceSpace(); const session = renderer.xr.getSession();
+                if(!arHitTestSourceRequested) { session.requestReferenceSpace('viewer').then(ref => { session.requestHitTestSource({ space: ref }).then(src => arHitTestSource = src); }); arHitTestSourceRequested = true; }
+                if(arHitTestSource && !isGridPlaced) { const hit = frame.getHitTestResults(arHitTestSource); if(hit.length > 0) { reticle.visible = true; reticle.matrix.fromArray(hit[0].getPose(refSpace).transform.matrix); } else reticle.visible = false; }
+            } renderer.render(scene, camera);
         }
-
         function onSelect() {
-            if(reticle.visible && !isGridPlaced) {
-                gridGroup.position.setFromMatrixPosition(reticle.matrix);
-                gridGroup.visible = true; isGridPlaced = true; reticle.visible = false;
-                document.getElementById('ar-instructions').innerHTML = "¡JUEGO LISTO!";
-            } else {
-                const t = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
-                raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-                raycaster.ray.direction.set(0,0,-1).applyMatrix4(t);
-                const i = raycaster.intersectObjects(gridPoints);
-                if(i.length>0) handleInput(i[0].object);
-            }
+            if(reticle.visible && !isGridPlaced) { gridGroup.position.setFromMatrixPosition(reticle.matrix); gridGroup.visible = true; isGridPlaced = true; reticle.visible = false; document.getElementById('ar-instructions').innerHTML = "¡JUEGO LISTO!"; } 
+            else { const t = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld); raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld); raycaster.ray.direction.set(0,0,-1).applyMatrix4(t); const i = raycaster.intersectObjects(gridPoints); if(i.length>0) handleInput(i[0].object); }
         }
-
         function onClickPC(e) {
             if(e.target.closest('.interactive')) return;
-            if(!renderer.xr.isPresenting) {
-                if(!isGridPlaced) { gridGroup.visible = true; gridGroup.position.set(0,-0.2,-0.5); isGridPlaced = true; }
-                raycaster.setFromCamera(new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1), camera);
-                const i = raycaster.intersectObjects(gridPoints);
-                if(i.length>0) handleInput(i[0].object);
-            }
+            if(!renderer.xr.isPresenting) { if(!isGridPlaced) { gridGroup.visible = true; gridGroup.position.set(0,-0.2,-0.5); isGridPlaced = true; } raycaster.setFromCamera(new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1), camera); const i = raycaster.intersectObjects(gridPoints); if(i.length>0) handleInput(i[0].object); }
         }
-
         function handleInput(obj) {
-            const d = appState.gameData;
-            if(!d || d.status !== 'playing') return;
+            const d = appState.gameData; if(!d || d.status !== 'playing') return;
             if(d.currentPlayer !== appState.role) { showToast("ESPERA TU TURNO"); return; }
-            
-            if(!selectedStartPoint) {
-                selectedStartPoint = obj;
-                obj.material.emissive.set(0xffffff); obj.scale.set(1.5,1.5,1.5);
-            } else {
-                if(selectedStartPoint === obj) { resetSel(); return; }
-                const s = selectedStartPoint.userData.id; const e = obj.userData.id;
-                const exists = d.lines.some(l => (l.start===s && l.end===e) || (l.start===e && l.end===s));
-                if(exists) { showToast("YA EXISTE"); resetSel(); return; }
-                if(selectedStartPoint.position.distanceTo(obj.position) > SPACING*1.2) { showToast("MUY LEJOS"); resetSel(); return; }
-                submitMove(s, e); resetSel();
-            }
+            if(!selectedStartPoint) { selectedStartPoint = obj; obj.material.emissive.set(0xffffff); obj.scale.set(1.5,1.5,1.5); } 
+            else { if(selectedStartPoint === obj) { resetSel(); return; } const s = selectedStartPoint.userData.id; const e = obj.userData.id; const exists = d.lines.some(l => (l.start===s && l.end===e) || (l.start===e && l.end===s)); if(exists) { showToast("YA EXISTE"); resetSel(); return; } if(selectedStartPoint.position.distanceTo(obj.position) > SPACING*1.2) { showToast("MUY LEJOS"); resetSel(); return; } submitMove(s, e); resetSel(); }
         }
         function resetSel() { if(selectedStartPoint) { selectedStartPoint.material.emissive.set(0x000000); selectedStartPoint.scale.set(1,1,1); } selectedStartPoint = null; }
-        
         async function submitMove(s, e) {
-            const d = appState.gameData;
-            const newLine = { start: s, end: e, owner: appState.role };
-            const newLines = [...d.lines, newLine];
-            let next = d.currentPlayer === 'host' ? 'guest' : 'host';
+            const d = appState.gameData; const newLine = { start: s, end: e, owner: appState.role }; const newLines = [...d.lines, newLine]; let next = d.currentPlayer === 'host' ? 'guest' : 'host';
             await updateDoc(doc(db, 'artifacts', appId, 'rooms', `room_${appState.roomId}`), { lines: newLines, currentPlayer: next });
         }
-        
         function showToast(m) { const el=document.getElementById('game-msg'); el.innerText=m; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000); }
     </script>
 </body>
