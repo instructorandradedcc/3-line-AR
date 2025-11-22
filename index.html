@@ -3,23 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Triángulos Conectados AR</title>
+    <title>3 LINE-AR | Multiplayer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+        /* Estética Cyberpunk / Sci-Fi para 3 LINE-AR */
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background-color: #050505; }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         .interactive { pointer-events: auto; }
-        /* Estilo tipo cristal para la UI */
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
+        
+        /* Panel de Cristal Oscuro */
+        .glass {
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
         }
-        #ar-button-container { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 20; }
+        
+        /* Efectos de Neón */
+        .neon-text { text-shadow: 0 0 10px rgba(6, 182, 212, 0.7); }
+        .neon-border { box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
+        
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .color-btn { transition: all 0.3s; position: relative; }
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.selected { border-color: white; transform: scale(1.25); box-shadow: 0 0 20px currentColor; z-index: 2; }
+        
+        #ar-button-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 20; }
     </style>
     
-    <!-- Import Maps para Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -31,584 +48,589 @@
 </head>
 <body>
 
-    <!-- UI CAPA SUPERIOR -->
-    <div id="ui-layer" class="flex flex-col justify-between p-4">
+    <div id="ui-layer" class="flex flex-col justify-center items-center p-4">
         
-        <!-- Pantalla de Login / Lobby -->
-        <div id="lobby-screen" class="interactive absolute inset-0 bg-slate-900 flex items-center justify-center z-50">
-            <div class="glass-panel p-8 rounded-xl max-w-md w-full text-center shadow-2xl">
-                <h1 class="text-3xl font-bold mb-2 text-cyan-400">Triángulos AR</h1>
-                <p class="text-gray-300 mb-6 text-sm">Conecta puntos, forma triángulos, gana.</p>
-                
-                <div class="mb-4 text-left">
-                    <label class="text-xs text-gray-400 uppercase">Tu ID de Sala</label>
-                    <input type="text" id="room-input" value="sala_demo" class="w-full bg-slate-800 border border-slate-600 p-3 rounded text-white focus:outline-none focus:border-cyan-500 transition">
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <button onclick="startGame('P1')" class="bg-blue-600 hover:bg-blue-500 py-3 rounded font-bold transition shadow-lg shadow-blue-900/50">Soy Jugador 1 (Azul)</button>
-                    <button onclick="startGame('P2')" class="bg-red-600 hover:bg-red-500 py-3 rounded font-bold transition shadow-lg shadow-red-900/50">Soy Jugador 2 (Rojo)</button>
-                </div>
-                <p class="text-xs text-gray-500">Nota: Comparte el ID de sala para jugar con un amigo.</p>
+        <!-- 1. LOGIN SCREEN -->
+        <div id="screen-login" class="interactive glass p-10 rounded-none border-l-4 border-cyan-500 max-w-md w-full text-center fade-in z-50 relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-2 opacity-20 text-cyan-500 text-6xl"><i class="fas fa-network-wired"></i></div>
+            
+            <div class="mb-8 relative z-10">
+                <h1 class="text-5xl font-orbitron font-black text-white tracking-tighter mb-2 neon-text">3 LINE<span class="text-cyan-500">-AR</span></h1>
+                <p class="text-cyan-300 text-xs tracking-widest uppercase border-t border-cyan-900 pt-2 mt-2">Conexión Segura Requerida</p>
             </div>
+            
+            <button onclick="loginWithGoogle()" class="w-full bg-white text-black py-4 rounded-sm font-bold mb-4 hover:bg-cyan-50 transition flex items-center justify-center gap-3 shadow-lg group">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5 group-hover:scale-110 transition">
+                INICIAR CON GOOGLE
+            </button>
+            
+            <!-- BOTÓN DE INVITADO ELIMINADO -->
+            
+            <p id="login-error" class="text-red-500 text-xs mt-4 font-mono hidden"></p>
         </div>
 
-        <!-- HUD del Juego (Oculto inicialmente) -->
-        <div id="game-hud" class="hidden flex-col h-full justify-between">
-            <!-- Top Bar: Marcador -->
-            <div class="glass-panel p-3 rounded-lg flex justify-between items-center shadow-lg">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div>
-                    <span class="font-bold text-blue-400">P1: <span id="score-p1">0</span></span>
-                </div>
-                <div class="text-center">
-                    <div id="turn-indicator" class="px-3 py-1 rounded-full bg-slate-700 text-xs font-bold border border-slate-500 animate-pulse">
-                        ESPERANDO...
+        <!-- 2. DASHBOARD -->
+        <div id="screen-dashboard" class="interactive glass p-8 rounded-none border-r-4 border-purple-500 max-w-md w-full text-center fade-in hidden z-50">
+            <div class="flex items-center justify-between mb-8 border-b border-gray-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <img id="user-avatar" src="" class="w-10 h-10 rounded bg-gray-800 object-cover hidden border border-gray-600">
+                    <div class="text-left">
+                        <p class="text-[10px] text-gray-500 uppercase">Operador</p>
+                        <span id="user-name" class="font-bold text-white font-orbitron tracking-wide">Jugador</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-red-400">P2: <span id="score-p2">0</span></span>
-                    <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]"></div>
-                </div>
+                <button onclick="logout()" class="text-xs text-red-500 hover:text-red-400 border border-red-900 px-2 py-1 hover:bg-red-900/20 transition">SALIR</button>
             </div>
 
-            <!-- Instrucciones Inferiores -->
-            <div class="text-center pb-16 pointer-events-none">
-                <p id="game-msg" class="text-sm text-white drop-shadow-md bg-black/30 inline-block px-4 py-1 rounded-full backdrop-blur-sm">
-                    Toca dos puntos cercanos para conectarlos.
-                </p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="showCreateRoom()" class="bg-gradient-to-b from-cyan-900 to-cyan-950 border border-cyan-700 hover:border-cyan-400 text-white py-10 rounded-sm transition group relative overflow-hidden">
+                    <div class="absolute inset-0 bg-cyan-500 opacity-0 group-hover:opacity-10 transition duration-500"></div>
+                    <i class="fas fa-plus text-3xl mb-3 text-cyan-400 group-hover:scale-110 transition"></i>
+                    <span class="block font-orbitron text-sm">CREAR SALA</span>
+                </button>
+                <button onclick="showJoinRoom()" class="bg-gradient-to-b from-purple-900 to-purple-950 border border-purple-700 hover:border-purple-400 text-white py-10 rounded-sm transition group relative overflow-hidden">
+                    <div class="absolute inset-0 bg-purple-500 opacity-0 group-hover:opacity-10 transition duration-500"></div>
+                    <i class="fas fa-satellite-dish text-3xl mb-3 text-purple-400 group-hover:scale-110 transition"></i>
+                    <span class="block font-orbitron text-sm">UNIRSE</span>
+                </button>
             </div>
         </div>
+
+        <!-- 3. SETUP -->
+        <div id="screen-setup" class="interactive glass p-8 rounded-none border-t-4 border-green-500 max-w-md w-full text-center fade-in hidden z-50">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="goBackToDashboard()" class="text-gray-500 hover:text-white transition"><i class="fas fa-chevron-left"></i> VOLVER</button>
+                <h2 class="text-lg text-white font-orbitron" id="setup-title">CONFIGURAR</h2>
+            </div>
+
+            <p class="text-gray-400 text-xs mb-4 uppercase tracking-widest">Selecciona tu Firma Energética</p>
+            <div class="flex justify-center gap-4 mb-8 flex-wrap" id="color-picker"></div>
+
+            <div id="join-inputs" class="hidden mb-6 text-left">
+                <label class="text-[10px] text-green-400 uppercase block mb-2 tracking-widest">Código de Frecuencia (ID)</label>
+                <input type="text" id="room-id-input" class="w-full bg-black/50 border border-gray-700 text-white font-orbitron text-2xl text-center p-4 focus:border-green-500 outline-none transition uppercase placeholder-gray-800" placeholder="XXXX">
+            </div>
+
+            <button onclick="confirmGameStart()" class="w-full bg-white text-black py-4 rounded-sm font-black font-orbitron hover:bg-green-400 transition shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                <span id="setup-action-btn">INICIAR SISTEMA</span>
+            </button>
+        </div>
+
+        <!-- 4. WAITING -->
+        <div id="screen-waiting" class="interactive glass p-10 rounded-none border-b-4 border-yellow-500 max-w-md w-full text-center fade-in hidden z-50">
+            <div class="relative w-16 h-16 mx-auto mb-6">
+                <div class="absolute inset-0 border-4 border-yellow-500/30 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h2 class="text-2xl text-white font-orbitron mb-2">ESPERANDO ENLACE...</h2>
+            <p class="text-gray-400 text-xs mb-6 font-mono">Transmite este código al oponente</p>
+
+            <div class="bg-black/60 p-6 border border-yellow-500/30 mb-4 flex items-center justify-between group cursor-pointer hover:border-yellow-500 transition" onclick="copyInvite()">
+                <span id="display-room-id" class="text-4xl font-orbitron text-yellow-400 tracking-[0.2em]">...</span>
+                <i class="far fa-copy text-gray-500 group-hover:text-white transition"></i>
+            </div>
+            <p id="copy-feedback" class="text-green-400 text-xs h-4 font-mono"></p>
+        </div>
+
+        <!-- HUD -->
+        <div id="game-hud" class="absolute top-0 left-0 w-full p-4 hidden flex-col z-40 pointer-events-none">
+            <!-- Marcador -->
+            <div class="glass px-6 py-3 rounded-none flex justify-between items-center mx-auto max-w-2xl w-full pointer-events-auto border-b-2 border-cyan-500/50">
+                <div class="flex items-center gap-3">
+                    <div id="hud-p1-color" class="w-3 h-3 rotate-45 border border-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+                    <div>
+                        <span id="hud-p1-name" class="text-[10px] text-gray-400 block uppercase tracking-wider">Host</span>
+                        <span id="score-p1" class="text-2xl font-orbitron text-white leading-none">0</span>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <div id="turn-indicator" class="px-6 py-1 bg-black/80 border border-gray-700 text-[10px] font-orbitron tracking-widest text-gray-500 uppercase">
+                        Sincronizando...
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 text-right">
+                    <div>
+                        <span id="hud-p2-name" class="text-[10px] text-gray-400 block uppercase tracking-wider">Guest</span>
+                        <span id="score-p2" class="text-2xl font-orbitron text-white leading-none">0</span>
+                    </div>
+                    <div id="hud-p2-color" class="w-3 h-3 rotate-45 border border-white bg-gray-800"></div>
+                </div>
+            </div>
+            
+            <!-- Mensajes -->
+            <div class="flex justify-center mt-32">
+                 <p id="game-msg" class="text-sm text-cyan-300 font-orbitron drop-shadow-[0_2px_2px_rgba(0,0,0,1)] bg-black/60 border border-cyan-500/30 px-6 py-2 backdrop-blur-md hidden transition-all transform"></p>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Contenedor para botón AR -->
     <div id="ar-button-container" class="interactive"></div>
 
-    <!-- Módulos JS -->
     <script type="module">
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // NOTA: Se eliminó signInAnonymously de las importaciones
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- CONFIGURACIÓN FIREBASE ---
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // --- CONFIGURACIÓN FIREBASE (Extraída de tu imagen) ---
+        // Esta lógica intenta usar la config del entorno (para el chat) si existe,
+        // si no, usa TU configuración para cuando descargues el archivo.
+        let firebaseConfig;
+        if (typeof __firebase_config !== 'undefined') {
+            firebaseConfig = JSON.parse(__firebase_config);
+        } else {
+            // TUS CREDENCIALES REALES
+            firebaseConfig = {
+                apiKey: "AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4",
+                authDomain: "ar-3lilne.firebaseapp.com",
+                projectId: "ar-3lilne",
+                storageBucket: "ar-3lilne.firebasestorage.app",
+                messagingSenderId: "382966716480",
+                appId: "1:382966716480:web:ee244825bb34bc35c667a5",
+                measurementId: "G-HCRXFC2QBJ"
+            };
+        }
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
-        
-        // --- ESTADO GLOBAL ---
-        let state = {
-            roomId: "",
-            myPlayerId: null, // "P1" o "P2"
-            currentPlayer: "P1",
-            lines: [], // {start: pointIdx, end: pointIdx, owner: "P1"}
-            triangles: [], // {points: [a,b,c], owner: "P1"}
-            scores: { P1: 0, P2: 0 },
-            ready: false
+        // Usamos 'ar-3lilne' como fallback si no hay variable de entorno
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne';
+
+        // Paleta Cyberpunk
+        const PALETTE = [
+            '#ff0055', // Neon Red
+            '#00e5ff', // Cyan
+            '#00ff9d', // Matrix Green
+            '#ffea00', // Cyber Yellow
+            '#bd00ff', // Electric Purple
+            '#ffffff'  // Pure White
+        ];
+
+        let appState = {
+            user: null,
+            roomId: null,
+            role: null,
+            myColor: PALETTE[1],
+            gameData: null,
+            selectedColorIdx: 1,
+            mode: 'menu'
         };
 
-        // --- CONFIGURACIÓN 3D ---
-        let camera, scene, renderer, controller;
+        let scene, camera, renderer, controller, gridGroup;
+        let gridPoints = [];
         let raycaster = new THREE.Raycaster();
-        let pointer = new THREE.Vector2();
-        let controls; // OrbitControls para modo escritorio
-        
-        // Objetos de la escena
-        let gridPoints = []; // Meshes de los puntos
-        let gridGroup; // Grupo que contiene todo el tablero (para moverlo en AR)
-        let previewLine; // Línea temporal al arrastrar/seleccionar
-        let selectedStartPoint = null; // Primer punto seleccionado
+        let selectedStartPoint = null;
+        const SPACING = 0.15; 
 
-        // Configuración de la cuadrícula (Triangular Lattice para mejores triángulos)
-        // Usaremos una cuadrícula simple desplazada para facilitar triángulos equiláteros visualmente
-        const GRID_ROWS = 4;
-        const GRID_COLS = 4;
-        const SPACING = 0.15; // Metros en AR
-
-        // --- INICIALIZACIÓN ---
-
-        window.startGame = async (role) => {
-            const roomInput = document.getElementById('room-input').value.trim();
-            if(!roomInput) return alert("Ingresa un nombre de sala");
-            
-            state.roomId = roomInput;
-            state.myPlayerId = role;
-            
-            // Autenticación Firebase
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
+        // --- AUTH & NAVIGATION ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                appState.user = user;
+                showDashboard();
+                const urlParams = new URLSearchParams(window.location.search);
+                const roomInvite = urlParams.get('room');
+                if (roomInvite) {
+                    appState.mode = 'setup';
+                    setupJoinRoom(roomInvite);
+                }
             } else {
-                await signInAnonymously(auth);
+                appState.user = null;
+                showLogin();
             }
+        });
 
-            document.getElementById('lobby-screen').classList.add('hidden');
+        window.loginWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Error auth:", error);
+                // Mensaje amigable si falla el popup (común en iframes de vista previa)
+                const errorMsg = document.getElementById('login-error');
+                errorMsg.innerHTML = "Error de seguridad del navegador (Popup bloqueado).<br>Descarga el archivo para probarlo localmente.";
+                errorMsg.classList.remove('hidden');
+            }
+        };
+
+        // Eliminado loginGuest()
+
+        window.logout = () => { signOut(auth); window.location.href = window.location.origin + window.location.pathname; };
+
+        function hideAllScreens() {
+            ['screen-login', 'screen-dashboard', 'screen-setup', 'screen-waiting', 'game-hud'].forEach(id => document.getElementById(id).classList.add('hidden'));
+        }
+
+        function showLogin() { hideAllScreens(); document.getElementById('screen-login').classList.remove('hidden'); }
+        
+        function showDashboard() {
+            hideAllScreens();
+            document.getElementById('screen-dashboard').classList.remove('hidden');
+            const u = appState.user;
+            if(u.photoURL) {
+                document.getElementById('user-avatar').src = u.photoURL;
+                document.getElementById('user-avatar').classList.remove('hidden');
+            }
+            document.getElementById('user-name').innerText = u.displayName || "OPERADOR";
+        }
+
+        window.showCreateRoom = () => {
+            appState.role = 'host';
+            appState.mode = 'setup';
+            setupColorPicker();
+            document.getElementById('setup-title').innerText = "NUEVA SESIÓN";
+            document.getElementById('setup-action-btn').innerText = "INICIAR SALA";
+            document.getElementById('join-inputs').classList.add('hidden');
+            hideAllScreens();
+            document.getElementById('screen-setup').classList.remove('hidden');
+        };
+
+        window.showJoinRoom = () => {
+            appState.role = 'guest';
+            appState.mode = 'setup';
+            setupColorPicker();
+            document.getElementById('setup-title').innerText = "SINCRONIZAR";
+            document.getElementById('setup-action-btn').innerText = "CONECTAR";
+            document.getElementById('join-inputs').classList.remove('hidden');
+            hideAllScreens();
+            document.getElementById('screen-setup').classList.remove('hidden');
+        };
+
+        function setupJoinRoom(id) { showJoinRoom(); document.getElementById('room-id-input').value = id; }
+        window.goBackToDashboard = () => showDashboard();
+
+        function setupColorPicker() {
+            const container = document.getElementById('color-picker');
+            container.innerHTML = '';
+            PALETTE.forEach((color, idx) => {
+                const btn = document.createElement('div');
+                btn.className = `w-12 h-12 rounded-sm cursor-pointer color-btn border-2 border-transparent ${idx === appState.selectedColorIdx ? 'selected' : ''}`;
+                btn.style.backgroundColor = color;
+                btn.style.boxShadow = `0 0 10px ${color}aa`;
+                btn.onclick = () => {
+                    appState.selectedColorIdx = idx;
+                    appState.myColor = color;
+                    setupColorPicker();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // --- GAME LOGIC ---
+        window.confirmGameStart = async () => {
+            const btn = document.getElementById('setup-action-btn');
+            btn.innerText = "PROCESANDO...";
+            btn.disabled = true;
+            try {
+                if (appState.role === 'host') {
+                    const shortId = Math.random().toString(36).substring(2, 6).toUpperCase();
+                    // IMPORTANTE: Usamos la colección 'data' bajo tu appId
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${shortId}`);
+                    await setDoc(docRef, {
+                        hostId: appState.user.uid,
+                        hostName: appState.user.displayName || "HOST",
+                        hostColor: appState.myColor,
+                        guestId: null,
+                        status: 'waiting',
+                        currentPlayer: 'host',
+                        lines: [],
+                        scores: { host: 0, guest: 0 },
+                        createdAt: new Date().toISOString()
+                    });
+                    appState.roomId = shortId;
+                    showWaitingScreen();
+                    initGameListener(shortId);
+                } else {
+                    const inputId = document.getElementById('room-id-input').value.trim().toUpperCase();
+                    if (!inputId) throw new Error("ID Requerido");
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${inputId}`);
+                    const snapshot = await getDoc(docRef);
+                    if (!snapshot.exists()) throw new Error("Sala inexistente");
+                    const data = snapshot.data();
+                    if (data.status !== 'waiting') throw new Error("Sala ocupada");
+                    
+                    await updateDoc(docRef, {
+                        guestId: appState.user.uid,
+                        guestName: appState.user.displayName || "GUEST",
+                        guestColor: appState.myColor,
+                        status: 'playing'
+                    });
+                    appState.roomId = inputId;
+                    initGameListener(inputId);
+                }
+            } catch (e) {
+                alert(e.message);
+                btn.innerText = appState.role === 'host' ? "INICIAR SALA" : "CONECTAR";
+                btn.disabled = false;
+            }
+        };
+
+        function showWaitingScreen() {
+            hideAllScreens();
+            document.getElementById('screen-waiting').classList.remove('hidden');
+            document.getElementById('display-room-id').innerText = appState.roomId;
+        }
+
+        window.copyInvite = () => {
+            const url = window.location.origin + window.location.pathname + '?room=' + appState.roomId;
+            navigator.clipboard.writeText(url).then(() => {
+                document.getElementById('copy-feedback').innerText = "ENLACE COPIADO AL PORTAPAPELES";
+                setTimeout(() => document.getElementById('copy-feedback').innerText = "", 3000);
+            });
+        };
+
+        function initGameListener(roomId) {
+            if(!scene) init3D();
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${roomId}`);
+            onSnapshot(docRef, (snapshot) => {
+                if(!snapshot.exists()) return;
+                const data = snapshot.data();
+                appState.gameData = data;
+                
+                if (appState.role === 'host' && data.status === 'playing' && !document.getElementById('screen-waiting').classList.contains('hidden')) {
+                    startGameUI();
+                } else if (appState.role === 'guest' && data.status === 'playing' && document.getElementById('game-hud').classList.contains('hidden')) {
+                    startGameUI();
+                }
+                if (data.status === 'playing') updateGameVisuals(data);
+            });
+        }
+
+        function startGameUI() {
+            hideAllScreens();
             document.getElementById('game-hud').classList.remove('hidden');
             document.getElementById('game-hud').style.display = 'flex';
+            const data = appState.gameData;
+            document.getElementById('hud-p1-color').style.backgroundColor = data.hostColor;
+            document.getElementById('hud-p1-color').style.boxShadow = `0 0 10px ${data.hostColor}`;
+            document.getElementById('hud-p1-name').innerText = data.hostName;
+            document.getElementById('hud-p2-color').style.backgroundColor = data.guestColor;
+            document.getElementById('hud-p2-color').style.boxShadow = `0 0 10px ${data.guestColor}`;
+            document.getElementById('hud-p2-name').innerText = data.guestName;
+            showToast("SISTEMA EN LÍNEA. BATALLA INICIADA.");
+        }
 
-            init3D();
-            setupFirebaseListener();
-        };
-
-        function init3D() {
-            const container = document.createElement('div');
-            document.body.appendChild(container);
-
-            scene = new THREE.Scene();
-
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+        function updateGameVisuals(data) {
+            document.getElementById('score-p1').innerText = data.scores.host;
+            document.getElementById('score-p2').innerText = data.scores.guest;
+            const turnEl = document.getElementById('turn-indicator');
+            const isMyTurn = data.currentPlayer === appState.role;
             
-            // Luces
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambientLight);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(1, 2, 0.5);
-            scene.add(directionalLight);
+            if (isMyTurn) {
+                turnEl.innerText = "TU TURNO // EJECUTA MOVIMIENTO";
+                turnEl.className = "px-6 py-1 bg-green-900/50 border border-green-500 text-[10px] font-orbitron tracking-widest text-green-300 uppercase animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.3)]";
+            } else {
+                const enemy = appState.role === 'host' ? data.guestName : data.hostName;
+                turnEl.innerText = `ESPERANDO A ${enemy}`;
+                turnEl.className = "px-6 py-1 bg-black/50 border border-gray-700 text-[10px] font-orbitron tracking-widest text-gray-500 uppercase";
+            }
+
+            const toRemove = [];
+            gridGroup.children.forEach(child => { if (child.userData.isLine || child.userData.isTriangle) toRemove.push(child); });
+            toRemove.forEach(c => gridGroup.remove(c));
+
+            data.lines.forEach(l => drawLine3D(l.start, l.end, l.owner === 'host' ? data.hostColor : data.guestColor));
+            findAllTriangles(data.lines).forEach(t => drawTriangle3D(t.points, t.owner === 'host' ? data.hostColor : data.guestColor));
+        }
+
+        // --- THREE.JS ---
+        function init3D() {
+            scene = new THREE.Scene();
+            // Fondo degradado sutil si es posible en AR (generalmente transparente)
+            // Para desktop:
+            scene.background = new THREE.Color(0x050505);
+            
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const dl = new THREE.DirectionalLight(0xffffff, 1.5);
+            dl.position.set(2, 5, 2);
+            scene.add(dl);
 
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.xr.enabled = true;
-            container.appendChild(renderer.domElement);
+            document.body.appendChild(renderer.domElement);
+            
+            const arBtn = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+            arBtn.style.background = 'rgba(0,255,255,0.2)';
+            arBtn.style.border = '1px solid #00e5ff';
+            arBtn.style.color = '#00e5ff';
+            arBtn.style.fontFamily = 'Orbitron';
+            document.getElementById('ar-button-container').appendChild(arBtn);
 
-            // Botón AR
-            const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
-            document.getElementById('ar-button-container').appendChild(arButton);
-
-            // Grupo del tablero
             gridGroup = new THREE.Group();
-            // Posicionar el tablero frente a la cámara por defecto para modo escritorio
-            gridGroup.position.set(-0.25, -0.2, -0.8); 
+            gridGroup.position.set(-0.25, -0.2, -0.8);
             scene.add(gridGroup);
-
             createGrid();
 
-            // Interacciones (Toque/Click)
-            // Para WebXR (Móvil AR)
             controller = renderer.xr.getController(0);
             controller.addEventListener('select', onSelectAR);
             scene.add(controller);
-
-            // Para Escritorio (Mouse)
             window.addEventListener('click', onClickDesktop);
-            window.addEventListener('resize', onWindowResize);
-
-            // Orbit Controls para debug en escritorio
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.target.set(0, 0, -1);
-            controls.update();
-
-            animate();
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            new OrbitControls(camera, renderer.domElement).target.set(0,0,-1);
+            renderer.setAnimationLoop(() => renderer.render(scene, camera));
         }
 
         function createGrid() {
-            // Crear puntos (Esferas)
-            const geometry = new THREE.SphereGeometry(0.015, 16, 16); // 1.5cm radio
-            const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.1, metalness: 0.5 });
-
+            const geo = new THREE.SphereGeometry(0.012, 16, 16); // Puntos más pequeños y tecnológicos
+            const mat = new THREE.MeshStandardMaterial({ color: 0x333333, emissive: 0x111111, roughness: 0.2, metalness: 0.9 });
             let idx = 0;
-            for (let row = 0; row < GRID_ROWS; row++) {
-                for (let col = 0; col < GRID_COLS; col++) {
-                    const sphere = new THREE.Mesh(geometry, material.clone());
-                    
-                    // Offset para crear patrón triangular (hexagonal)
-                    const xOffset = (row % 2) * (SPACING / 2); 
-                    
-                    sphere.position.set(
-                        col * SPACING + xOffset - (GRID_COLS * SPACING)/2, 
-                        0, // Plano en el suelo (XZ)
-                        row * (SPACING * 0.866) - (GRID_ROWS * SPACING * 0.866)/2 // 0.866 es sin(60deg) para equiláteros
-                    );
-                    
-                    sphere.userData = { id: idx, isDot: true };
-                    gridGroup.add(sphere);
-                    gridPoints.push(sphere);
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const m = new THREE.Mesh(geo, mat.clone());
+                    const xo = (row % 2) * (SPACING / 2);
+                    m.position.set(col * SPACING + xo - (4*SPACING)/2, 0, row * (SPACING*0.866) - (4*SPACING*0.866)/2);
+                    m.userData = { id: idx, isDot: true };
+                    gridGroup.add(m);
+                    gridPoints.push(m);
                     idx++;
                 }
             }
         }
 
-        // --- LÓGICA DEL JUEGO ---
-
-        function handleInput(intersectedObject) {
-            if (!intersectedObject || !state.ready) return;
-            if (state.currentPlayer !== state.myPlayerId) {
-                showToast("¡Espera tu turno!");
+        function handleInput(obj) {
+            const data = appState.gameData;
+            if (!data || data.status !== 'playing' || data.currentPlayer !== appState.role) {
+                if(data && data.currentPlayer !== appState.role) showToast("ERROR: TURNO DEL OPONENTE");
                 return;
             }
-
-            const dot = intersectedObject.userData;
-
-            // Lógica de selección
-            if (selectedStartPoint === null) {
-                // Primer clic
-                selectedStartPoint = intersectedObject;
-                intersectedObject.material.color.set(0xffff00); // Amarillo selección
-                intersectedObject.scale.set(1.5, 1.5, 1.5);
-                showToast("Selecciona un punto adyacente");
+            
+            if (!selectedStartPoint) {
+                selectedStartPoint = obj;
+                obj.material.emissive.set(0x00e5ff);
+                obj.material.emissiveIntensity = 1;
+                obj.scale.set(1.5,1.5,1.5);
             } else {
-                // Segundo clic
-                if (selectedStartPoint === intersectedObject) {
-                    // Cancelar selección
-                    resetSelection();
-                    return;
-                }
-
+                if (selectedStartPoint === obj) { resetSelection(); return; }
                 const startId = selectedStartPoint.userData.id;
-                const endId = dot.id;
-
-                // Validar distancia (solo vecinos cercanos)
-                const dist = selectedStartPoint.position.distanceTo(intersectedObject.position);
-                // SPACING es 0.15. Permitimos un pequeño margen de error (0.16)
-                if (dist > SPACING * 1.2) {
-                    showToast("¡Puntos demasiado lejos!");
-                    resetSelection();
-                    return;
+                const endId = obj.userData.id;
+                if (selectedStartPoint.position.distanceTo(obj.position) > SPACING * 1.2) {
+                    showToast("ERROR: ENLACE FUERA DE RANGO");
+                    resetSelection(); return;
                 }
-
-                // Validar si la línea ya existe
-                const exists = state.lines.some(l => 
-                    (l.start === startId && l.end === endId) || (l.start === endId && l.end === startId)
-                );
-
-                if (exists) {
-                    showToast("Esa línea ya existe");
-                    resetSelection();
-                    return;
-                }
-
-                // MOVIMIENTO VÁLIDO: Enviar a Firebase
+                const exists = data.lines.some(l => (l.start===startId && l.end===endId) || (l.start===endId && l.end===startId));
+                if (exists) { showToast("ERROR: ENLACE YA EXISTE"); resetSelection(); return; }
+                
                 submitMove(startId, endId);
                 resetSelection();
             }
         }
 
         function resetSelection() {
-            if (selectedStartPoint) {
-                selectedStartPoint.material.color.set(0xffffff);
-                selectedStartPoint.scale.set(1, 1, 1);
+            if(selectedStartPoint) {
+                selectedStartPoint.material.emissive.set(0x111111);
+                selectedStartPoint.scale.set(1,1,1);
             }
             selectedStartPoint = null;
         }
 
-        // --- FIREBASE SYNC ---
-
-        function getGameRef() {
-            return doc(db, 'artifacts', appId, 'public', 'data', `game_${state.roomId}`);
-        }
-
-        async function setupFirebaseListener() {
-            const gameRef = getGameRef();
+        async function submitMove(s, e) {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${appState.roomId}`);
+            const newLine = { start: s, end: e, owner: appState.role };
+            const newLines = [...appState.gameData.lines, newLine];
+            const newTris = detectNewTriangles(newLine, newLines);
+            let next = appState.gameData.currentPlayer === 'host' ? 'guest' : 'host';
+            let scoreUp = {};
             
-            // Listener
-            onSnapshot(gameRef, (snapshot) => {
-                if (!snapshot.exists()) {
-                    // Si no existe, la creamos
-                    if (state.myPlayerId === 'P1') initializeGameDoc();
-                } else {
-                    const data = snapshot.data();
-                    updateGameState(data);
-                }
-            }, (error) => {
-                console.error("Error en listener:", error);
-                showToast("Error de conexión");
-            });
-        }
-
-        async function initializeGameDoc() {
-            const gameRef = getGameRef();
-            await setDoc(gameRef, {
-                currentPlayer: 'P1',
-                lines: [],
-                scores: { P1: 0, P2: 0 },
-                createdAt: new Date().toISOString()
-            });
-        }
-
-        async function submitMove(startId, endId) {
-            const gameRef = getGameRef();
-            const newLine = { start: startId, end: endId, owner: state.myPlayerId };
-            
-            // Lectura optimista o transacción para validar
-            // Aquí hacemos una actualización directa por simplicidad del prototipo, 
-            // pero en producción usaríamos una transacción para evitar conflictos.
-            
-            // Calculamos localmente si formó triángulo para actualizar score
-            const currentLines = [...state.lines, newLine];
-            const newTriangles = detectNewTriangles(newLine, currentLines);
-            
-            let nextPlayer = state.myPlayerId === 'P1' ? 'P2' : 'P1';
-            let scoreUpdate = {};
-            let pointsGained = 0;
-
-            if (newTriangles.length > 0) {
-                // Si hizo punto, repite turno
-                nextPlayer = state.myPlayerId;
-                pointsGained = newTriangles.length;
-                scoreUpdate = { 
-                    [`scores.${state.myPlayerId}`]: state.scores[state.myPlayerId] + pointsGained 
-                };
-                showToast(`¡Triángulo completado! (+${pointsGained})`);
+            if (newTris.length > 0) {
+                next = appState.role;
+                scoreUp = { [`scores.${appState.role}`]: appState.gameData.scores[appState.role] + newTris.length };
+                showToast(`ZONA CAPTURADA (+${newTris.length})`);
             }
-
-            // Actualizar documento
-            try {
-                // Nota: Firestore arrayUnion es mejor, pero aquí reemplazamos todo el array para simplificar lógica
-                // Necesitamos leer el estado actual para asegurar no sobrescribir movimientos de otros milisegundos antes
-                // Simplificamos asumiendo sincronización rápida
-                
-                const updatePayload = {
-                    lines: currentLines,
-                    currentPlayer: nextPlayer,
-                    ...scoreUpdate
-                };
-                
-                await updateDoc(gameRef, updatePayload);
-                
-            } catch (e) {
-                console.error("Error enviando movimiento:", e);
-            }
+            await updateDoc(docRef, { lines: newLines, currentPlayer: next, ...scoreUp });
         }
 
-        function updateGameState(data) {
-            state.ready = true;
-            state.currentPlayer = data.currentPlayer;
-            state.scores = data.scores;
+        function drawLine3D(s, e, hex) {
+            const p1 = gridPoints[s].position;
+            const p2 = gridPoints[e].position;
+            const geo = new THREE.CylinderGeometry(0.003, 0.003, p1.distanceTo(p2), 6);
+            const mat = new THREE.MeshBasicMaterial({ color: hex });
+            const m = new THREE.Mesh(geo, mat);
+            m.position.copy(new THREE.Vector3().addVectors(p1,p2).multiplyScalar(0.5));
+            m.lookAt(p2); m.rotateX(Math.PI/2);
+            m.userData = { isLine: true };
             
-            // Actualizar UI
-            document.getElementById('score-p1').innerText = data.scores.P1;
-            document.getElementById('score-p2').innerText = data.scores.P2;
+            // Glow effect simple (otro cilindro mas grande transparente)
+            const glowGeo = new THREE.CylinderGeometry(0.008, 0.008, p1.distanceTo(p2), 6);
+            const glowMat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.2 });
+            const glow = new THREE.Mesh(glowGeo, glowMat);
+            m.add(glow);
             
-            const turnBadge = document.getElementById('turn-indicator');
-            if (state.currentPlayer === state.myPlayerId) {
-                turnBadge.innerText = "TU TURNO";
-                turnBadge.className = "px-3 py-1 rounded-full bg-green-600 text-white text-xs font-bold animate-pulse";
-            } else {
-                turnBadge.innerText = `TURNO ${state.currentPlayer}`;
-                turnBadge.className = "px-3 py-1 rounded-full bg-gray-600 text-gray-300 text-xs font-bold";
-            }
-
-            // Actualizar Tablero 3D
-            // 1. Dibujar nuevas líneas
-            // Limpiamos líneas viejas (ineficiente pero seguro para MVP)
-            // Mejor: Solo añadir las nuevas.
-            // Vamos a limpiar el grupo de líneas y repintar.
-            
-            // Remover líneas y triángulos visuales previos
-            const toRemove = [];
-            gridGroup.children.forEach(child => {
-                if (child.userData.isLine || child.userData.isTriangle) toRemove.push(child);
-            });
-            toRemove.forEach(c => gridGroup.remove(c));
-
-            state.lines = data.lines || [];
-            state.lines.forEach(lineData => {
-                drawLine3D(lineData.start, lineData.end, lineData.owner);
-            });
-
-            // 2. Detectar y dibujar triángulos (Recalculamos todo para asegurar sync visual)
-            const allTriangles = findAllTriangles(state.lines);
-            allTriangles.forEach(tri => {
-                drawTriangle3D(tri.points, tri.owner);
-            });
+            gridGroup.add(m);
         }
 
-        // --- ALGORITMOS GEOMÉTRICOS ---
-
-        function drawLine3D(startId, endId, ownerId) {
-            const p1 = gridPoints[startId].position;
-            const p2 = gridPoints[endId].position;
-            
-            const color = ownerId === 'P1' ? 0x3b82f6 : 0xef4444; // Azul o Rojo
-
-            // Usamos Cilindro para la línea (más visible en AR que GL_LINES)
-            const distance = p1.distanceTo(p2);
-            const geometry = new THREE.CylinderGeometry(0.005, 0.005, distance, 8);
-            const material = new THREE.MeshStandardMaterial({ color: color });
-            const cylinder = new THREE.Mesh(geometry, material);
-            
-            // Orientar cilindro
-            const midPoint = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
-            cylinder.position.copy(midPoint);
-            cylinder.lookAt(p2);
-            cylinder.rotateX(Math.PI / 2); // Three.js cylinders stand up by default
-
-            cylinder.userData = { isLine: true };
-            gridGroup.add(cylinder);
-        }
-
-        function drawTriangle3D(pointIds, ownerId) {
-            const pA = gridPoints[pointIds[0]].position;
-            const pB = gridPoints[pointIds[1]].position;
-            const pC = gridPoints[pointIds[2]].position;
-
-            const shape = new THREE.Shape();
-            shape.moveTo(0,0);
-            // Esto requiere proyectar puntos a un plano 2D local para crear la geometría Shape, 
-            // pero como son triángulos 3D simples, usamos BufferGeometry.
-            
-            const geom = new THREE.BufferGeometry();
-            const vertices = new Float32Array([
-                pA.x, pA.y, pA.z,
-                pB.x, pB.y, pB.z,
-                pC.x, pC.y, pC.z
-            ]);
-            geom.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            
-            // Necesitamos 2 caras para que se vea por ambos lados
-            geom.setIndex([0, 1, 2, 2, 1, 0]); 
-            geom.computeVertexNormals();
-
-            const color = ownerId === 'P1' ? 0x3b82f6 : 0xef4444;
-            const mat = new THREE.MeshBasicMaterial({ 
-                color: color, 
-                transparent: true, 
-                opacity: 0.4, 
-                side: THREE.DoubleSide 
-            });
-            
-            const mesh = new THREE.Mesh(geom, mat);
-            mesh.userData = { isTriangle: true };
-            gridGroup.add(mesh);
-        }
-
-        // Algoritmo para detectar triángulos formados por líneas
-        function findAllTriangles(lines) {
-            // Crear mapa de adyacencia
-            const adj = {};
-            lines.forEach(l => {
-                if (!adj[l.start]) adj[l.start] = [];
-                if (!adj[l.end]) adj[l.end] = [];
-                adj[l.start].push({ to: l.end, owner: l.owner });
-                adj[l.end].push({ to: l.start, owner: l.owner });
-            });
-
-            const triangles = [];
-            const seen = new Set(); // Para evitar duplicados (A-B-C es igual a B-C-A)
-
-            // Buscar ciclos de longitud 3
-            // Iterar sobre cada punto 'u'
-            for (const u in adj) {
-                const neighbors = adj[u];
-                // Pares de vecinos
-                for (let i = 0; i < neighbors.length; i++) {
-                    for (let j = i + 1; j < neighbors.length; j++) {
-                        const v = neighbors[i].to;
-                        const w = neighbors[j].to;
-                        
-                        // ¿Existe conexión directa entre v y w?
-                        // Verificar si v tiene w en su lista
-                        if (adj[v] && adj[v].some(n => n.to == w)) {
-                            // ¡Triángulo encontrado! {u, v, w}
-                            // Determinar el "dueño". En este juego, el dueño es quien puso la ÚLTIMA línea.
-                            // Pero para renderizado histórico, podemos simplificar asumiendo el color de la mayoría o del último.
-                            // Como este juego rellena al instante, Firestore ya debería tener los triángulos guardados si quisiéramos persistencia estricta,
-                            // pero aquí recalculamos. Asignaremos el color basado en la línea que cerró (difícil saber aquí sin timestamp).
-                            // HACK VISUAL: Usamos el color del jugador actual si es nuevo, o alternamos. 
-                            // MEJOR: Buscar la línea en 'lines' array para saber el owner de cada arista, pero el triángulo es una entidad propia.
-                            // Para el MVP, asignaremos el dueño de la línea entre v y w (arbitrario para rendering estático).
-                            
-                            const ids = [parseInt(u), v, w].sort((a,b) => a-b);
-                            const key = ids.join('-');
-                            if (!seen.has(key)) {
-                                seen.add(key);
-                                // Buscamos quién cerró. No tenemos historial temporal aquí fácil.
-                                // Asignamos el owner de la primera línea encontrada para el color (simplificación visual).
-                                triangles.push({ points: ids, owner: neighbors[i].owner }); 
-                            }
-                        }
-                    }
-                }
-            }
-            return triangles;
-        }
-
-        function detectNewTriangles(newLine, allLines) {
-            // Verifica solo si newLine cierra triángulos
-            const adj = {}; 
-            // Construir adyacencia solo necesaria
-            allLines.forEach(l => {
-                if (!adj[l.start]) adj[l.start] = [];
-                if (!adj[l.end]) adj[l.end] = [];
-                adj[l.start].push(l.end);
-                adj[l.end].push(l.start);
-            });
-
-            const u = newLine.start;
-            const v = newLine.end;
-            const newTris = [];
-
-            // Buscar nodos 'w' conectados a AMBOS u y v
-            if (adj[u] && adj[v]) {
-                adj[u].forEach(w => {
-                    if (w !== v && adj[v].includes(w)) {
-                        // Triángulo u-v-w encontrado
-                        newTris.push([u, v, w]);
-                    }
-                });
-            }
-            return newTris;
-        }
-
-        // --- INTERACCIÓN ---
-
-        function onSelectAR() {
-            // Raycast desde el controlador VR/AR
-            // En Three.js WebXR, el 'select' event ya implica un toque.
-            // Usamos una matriz de referencia temporal del controlador para raycasting
-            const tempMatrix = new THREE.Matrix4();
-            tempMatrix.identity().extractRotation(controller.matrixWorld);
-
-            raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-            raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
-            const intersects = raycaster.intersectObjects(gridPoints);
-            if (intersects.length > 0) {
-                handleInput(intersects[0].object);
-            }
-        }
-
-        function onClickDesktop(event) {
-            // Raycast desde el mouse
-            pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-            pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(pointer, camera);
-            const intersects = raycaster.intersectObjects(gridPoints);
-
-            if (intersects.length > 0) {
-                handleInput(intersects[0].object);
-            }
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function animate() {
-            renderer.setAnimationLoop(render);
-        }
-
-        function render() {
-            renderer.render(scene, camera);
+        function drawTriangle3D(ids, hex) {
+            const pts = ids.map(i => gridPoints[i].position);
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+                pts[0].x, pts[0].y, pts[0].z, pts[1].x, pts[1].y, pts[1].z, pts[2].x, pts[2].y, pts[2].z
+            ]), 3));
+            geo.setIndex([0,1,2, 2,1,0]);
+            const mat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
+            const m = new THREE.Mesh(geo, mat);
+            m.userData = { isTriangle: true };
+            gridGroup.add(m);
         }
 
         function showToast(msg) {
             const el = document.getElementById('game-msg');
             el.innerText = msg;
             el.classList.remove('hidden');
-            setTimeout(() => {
-                if(el.innerText === msg) el.innerText = "Tu turno"; // Reset msg
-            }, 2000);
+            el.style.opacity = 1;
+            el.style.transform = 'translateY(0)';
+            setTimeout(() => { el.style.opacity = 0; el.style.transform = 'translateY(10px)'; }, 2000);
+            setTimeout(() => el.classList.add('hidden'), 2300);
         }
 
+        function onSelectAR() {
+            const t = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
+            raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+            raycaster.ray.direction.set(0,0,-1).applyMatrix4(t);
+            const i = raycaster.intersectObjects(gridPoints);
+            if (i.length > 0) handleInput(i[0].object);
+        }
+        function onClickDesktop(e) {
+            raycaster.setFromCamera(new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1), camera);
+            const i = raycaster.intersectObjects(gridPoints);
+            if (i.length > 0) handleInput(i[0].object);
+        }
+
+        function findAllTriangles(l) {
+            const adj = {}; l.forEach(x => { 
+                if(!adj[x.start]) adj[x.start]=[]; if(!adj[x.end]) adj[x.end]=[];
+                adj[x.start].push({t:x.end,o:x.owner}); adj[x.end].push({t:x.start,o:x.owner}); 
+            });
+            const t = [], s = new Set();
+            for(const u in adj) {
+                const n = adj[u];
+                for(let i=0;i<n.length;i++) for(let j=i+1;j<n.length;j++) {
+                    const v=n[i].t, w=n[j].t;
+                    if(adj[v] && adj[v].some(x=>x.t==w)) {
+                        const k = [parseInt(u),v,w].sort((a,b)=>a-b).join('-');
+                        if(!s.has(k)) { s.add(k); t.push({points:[parseInt(u),v,w], owner:n[i].o}); }
+                    }
+                }
+            }
+            return t;
+        }
+        function detectNewTriangles(n, al) {
+            const adj={}; al.forEach(x=>{ if(!adj[x.start])adj[x.start]=[]; if(!adj[x.end])adj[x.end]=[]; adj[x.start].push(x.end); adj[x.end].push(x.start); });
+            const u=n.start, v=n.end, nt=[];
+            if(adj[u]&&adj[v]) adj[u].forEach(w=>{ if(w!==v && adj[v].includes(w)) nt.push([u,v,w]); });
+            return nt;
+        }
     </script>
 </body>
 </html>
-
-
