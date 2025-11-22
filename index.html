@@ -15,46 +15,42 @@
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         .interactive { pointer-events: auto; }
         
-        /* CANVAS DE FONDO (VERSUS MESH) */
+        /* CANVAS DE FONDO */
         #bg-canvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
-            /* Brillo sutil, no saturado */
-            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.1)); 
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1)); 
         }
 
-        /* Paneles más transparentes */
+        /* Paneles */
         .glass {
-            background: rgba(5, 5, 8, 0.8); 
-            backdrop-filter: blur(12px);
+            background: rgba(5, 5, 8, 0.85); 
+            backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
         }
 
-        /* Tarjeta Login */
         .login-card {
-            background: linear-gradient(180deg, rgba(5, 8, 15, 0.9) 0%, rgba(0, 0, 0, 0.95) 100%);
+            background: linear-gradient(180deg, rgba(8, 10, 18, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
             border: 1px solid rgba(0, 229, 255, 0.3);
-            box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(15px);
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
         }
         
         .neon-title { color: #fff; text-shadow: 0 0 15px rgba(0, 229, 255, 0.8); }
         .neon-blue { color: #00e5ff; text-shadow: 0 0 12px rgba(0, 229, 255, 0.6); }
         
-        /* Botones Cyberpunk */
+        /* Botones */
         .btn-cyber {
             position: relative; background: rgba(20, 30, 50, 0.6); border: 1px solid;
             backdrop-filter: blur(4px); transition: all 0.3s ease; overflow: hidden;
             display: flex; align-items: center; justify-content: center; gap: 1rem;
             font-family: 'Orbitron', sans-serif; font-weight: bold; padding: 1rem; border-radius: 0.25rem;
         }
-        .btn-cyber:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); }
-        .btn-cyber:active { transform: scale(0.98); }
-        .btn-cyber:disabled { opacity: 0.6; cursor: wait; transform: none; }
+        .btn-cyber:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); cursor: pointer; }
+        .btn-cyber:active:not(:disabled) { transform: scale(0.98); }
+        .btn-cyber:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
         .btn-google-cyber { border-color: rgba(255,255,255,0.3); color: white; }
         .btn-facebook-cyber { border-color: rgba(24, 119, 242, 0.5); color: #1877F2; }
-        .btn-facebook-cyber:hover { color: white; background: rgba(24, 119, 242, 0.2); }
 
         .fade-in { animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -91,11 +87,10 @@
             <div class="relative z-10">
                 <!-- LOGO -->
                 <div class="mb-6 flex justify-center relative">
-                    <!-- Brillo reducido -->
                     <div class="absolute inset-0 bg-cyan-500 blur-[80px] opacity-20 rounded-full animate-pulse"></div>
                     <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
                          onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';"
-                         class="w-44 h-44 rounded-2xl object-cover shadow-[0_0_30px_rgba(0,229,255,0.3)] border-2 border-cyan-400/40 relative z-10 mx-auto bg-black hover:scale-105 transition duration-500">
+                         class="w-44 h-44 rounded-2xl object-cover shadow-[0_0_30px_rgba(0,229,255,0.3)] border-2 border-cyan-400/40 relative z-10 mx-auto bg-black">
                      <div id="fallback-logo" class="hidden w-44 h-44 bg-black/80 rounded-xl border-2 border-cyan-500 flex items-center justify-center mx-auto">
                         <i class="fas fa-cube text-6xl text-cyan-400"></i>
                     </div>
@@ -127,7 +122,8 @@
                     Sistema En Línea
                 </div>
                 
-                <div id="login-error" class="hidden mt-4 p-3 bg-red-900/80 border border-red-500 rounded text-white text-xs font-mono text-left"></div>
+                <!-- Mensaje de error visible -->
+                <div id="login-error" class="hidden mt-4 p-4 bg-red-900/90 border border-red-500 rounded text-white text-xs font-bold font-mono text-center shadow-lg animate-pulse"></div>
             </div>
         </div>
 
@@ -142,7 +138,7 @@
                     </div>
                 </div>
                 <button onclick="logout()" class="text-[10px] text-red-300 border border-red-800 bg-red-900/30 px-3 py-2 rounded hover:bg-red-600 hover:text-white transition font-orbitron tracking-widest">
-                    ABORTAR
+                    CERRAR SESIÓN
                 </button>
             </div>
 
@@ -235,9 +231,10 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, FacebookAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // CAMBIO IMPORTANTE: signInWithPopup en lugar de signInWithRedirect
+        import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- 1. FONDO VERSUS MESH (Optimizado y Multicolor) ---
+        // --- 1. FONDO VERSUS MESH (Equilibrado) ---
         function initBackgroundNetwork() {
             const canvas = document.getElementById('bg-canvas');
             const ctx = canvas.getContext('2d');
@@ -251,11 +248,10 @@
 
             function createParticles() {
                 particles = [];
-                // DENSIDAD REDUCIDA: Antes 2500, ahora 9000 (Menos partículas)
-                const count = Math.floor((width * height) / 9000); 
+                // Densidad balanceada: 1 partícula cada 8000px
+                const count = Math.floor((width * height) / 8000); 
                 
                 for (let i = 0; i < count; i++) {
-                    // Asignamos un bando (color) aleatorio a cada punto para simular batalla
                     const team = Math.random() > 0.5 ? 'cyan' : 'magenta';
                     particles.push({
                         x: Math.random() * width,
@@ -264,7 +260,7 @@
                         vy: (Math.random() - 0.5) * 0.3,
                         size: Math.random() * 2 + 0.5,
                         team: team,
-                        color: team === 'cyan' ? 'rgba(0, 229, 255,' : 'rgba(255, 0, 85,' // Guardamos prefijo RGB
+                        color: team === 'cyan' ? 'rgba(0, 229, 255,' : 'rgba(255, 0, 85,' 
                     });
                 }
             }
@@ -279,7 +275,6 @@
                     if (p.x < 0 || p.x > width) p.vx *= -1;
                     if (p.y < 0 || p.y > height) p.vy *= -1;
 
-                    // Dibujar Punto
                     ctx.beginPath();
                     ctx.fillStyle = `${p.color} 0.8)`;
                     ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); 
@@ -289,19 +284,14 @@
                         let p2 = particles[j];
                         let d = Math.sqrt(Math.pow(p.x-p2.x,2) + Math.pow(p.y-p2.y,2));
                         
-                        if (d < 150) { // Distancia de conexión
+                        if (d < 150) { 
                             ctx.beginPath();
-                            // Si son del mismo equipo, usan su color. Si no, blanco neutro.
-                            if (p.team === p2.team) {
-                                ctx.strokeStyle = `${p.color} ${0.3 * (1 - d/150)})`;
-                            } else {
-                                ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - d/150)})`;
-                            }
+                            if (p.team === p2.team) ctx.strokeStyle = `${p.color} ${0.3 * (1 - d/150)})`;
+                            else ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 * (1 - d/150)})`;
                             
                             ctx.lineWidth = 1;
                             ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
 
-                            // Triángulos
                             for (let k = j + 1; k < particles.length; k++) {
                                 let p3 = particles[k];
                                 let d2 = Math.sqrt(Math.pow(p.x-p3.x,2) + Math.pow(p.y-p3.y,2));
@@ -309,16 +299,9 @@
                                 
                                 if(d2 < 150 && d3 < 150) {
                                     ctx.beginPath();
-                                    // Color del triángulo depende de la mayoría
                                     let fill = 'rgba(255,255,255,0.02)';
-                                    if (p.team === p2.team && p2.team === p3.team) {
-                                        // Triángulo puro (fuerte)
-                                        fill = `${p.color} 0.08)`; 
-                                    } else if (p.team === p2.team || p.team === p3.team) {
-                                        // Triángulo disputado (suave)
-                                        fill = `${p.color} 0.04)`;
-                                    }
-                                    
+                                    if (p.team === p2.team && p2.team === p3.team) fill = `${p.color} 0.08)`; 
+                                    else if (p.team === p2.team || p.team === p3.team) fill = `${p.color} 0.04)`;
                                     ctx.fillStyle = fill;
                                     ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p3.x, p3.y); ctx.fill();
                                 }
@@ -345,23 +328,20 @@
         let appState = { user: null, roomId: null, role: null, myColor: PALETTE[1], gameData: null, selectedColorIdx: 1, mode: 'menu' };
         let scene, camera, renderer, controller, gridGroup; let gridPoints = []; let raycaster = new THREE.Raycaster(); let selectedStartPoint = null; const SPACING = 0.15; 
 
-        // --- LOGIC DE LOGIN ROBUSTA ---
-        getRedirectResult(auth)
-            .then((result) => { if (result) console.log("Regreso de login:", result.user); })
-            .catch((error) => {
-                console.error("Error Redirect:", error);
-                showError(`Error de Acceso: ${error.message}`);
-                resetButtons();
-            });
-
+        // --- LOGIN ROBUSTO (POPUP) ---
+        
+        // Escuchamos cambios de auth
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                appState.user = user; showDashboard();
+                console.log("Usuario autenticado:", user.displayName);
+                appState.user = user;
+                showDashboard(); // <--- ESTO DEBE EJECUTARSE AL LOGUEAR
                 const urlParams = new URLSearchParams(window.location.search);
                 const roomInvite = urlParams.get('room');
                 if (roomInvite) { appState.mode = 'setup'; setupJoinRoom(roomInvite); window.history.replaceState({}, document.title, "/"); }
             } else {
-                appState.user = null; showLogin();
+                appState.user = null;
+                showLogin();
             }
         });
 
@@ -380,14 +360,30 @@
             else provider = new FacebookAuthProvider();
 
             try {
-                await signInWithRedirect(auth, provider);
+                // CAMBIO: signInWithPopup evita el refresh de la página
+                const result = await signInWithPopup(auth, provider);
+                // onAuthStateChanged se disparará automáticamente
             } catch (error) {
                 console.error("Login Error:", error);
                 btn.disabled = false;
                 document.getElementById(txtId).innerText = originalText;
-                showError(`Fallo en conexión: ${error.code || error.message}`);
+                
+                let msg = "Error desconocido.";
+                if (error.code === 'auth/popup-blocked') msg = "VENTANA EMERGENTE BLOQUEADA. Por favor permite popups para este sitio.";
+                else if (error.code === 'auth/popup-closed-by-user') msg = "Cancelaste el inicio de sesión.";
+                else if (error.code === 'auth/cancelled-popup-request') msg = "Demasiadas peticiones. Intenta de nuevo.";
+                else msg = `Error: ${error.message}`;
+                
+                showError(msg);
             }
         };
+
+        function showError(msg) {
+            const el = document.getElementById('login-error');
+            el.innerText = msg; 
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 6000);
+        }
 
         function resetButtons() {
             ['google', 'facebook'].forEach(p => {
@@ -396,14 +392,9 @@
             });
         }
 
-        function showError(msg) {
-            const el = document.getElementById('login-error');
-            el.innerText = msg; el.classList.remove('hidden');
-        }
-
         window.logout = () => { signOut(auth).then(() => window.location.reload()); };
 
-        // --- PANTALLAS ---
+        // --- NAVEGACIÓN ---
         function hideAllScreens() { ['screen-login', 'screen-dashboard', 'screen-setup', 'screen-waiting', 'game-hud'].forEach(id => document.getElementById(id).classList.add('hidden')); }
         function showLogin() { hideAllScreens(); document.getElementById('screen-login').classList.remove('hidden'); resetButtons(); }
         function showDashboard() {
@@ -519,3 +510,4 @@
     </script>
 </body>
 </html>
+
