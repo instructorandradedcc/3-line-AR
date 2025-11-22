@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V22.0 SOLID DEFENSE</title>
+    <title>3 LINE-AR | V24.0 LOGIC PERFECT</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,13 +25,13 @@
         body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         /* FONDO */
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #050510 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #080810 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
         
         canvas { display: block; outline: none; } 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
         
-        /* UI PANELS */
+        /* PANELES */
         .glass-panel {
             background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 40px rgba(0, 243, 255, 0.15);
@@ -68,11 +68,14 @@
 
         #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
         
-        /* SELECTOR */
+        /* PANTALLA DE VICTORIA */
+        #win-screen { position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: auto; }
+
+        /* SELECTOR ARREGLADO */
         .opt { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: 0.2s; transform: scale(0.9); }
-        .opt.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
-        .opt-i { font-size: 20px; color: #555; transition: 0.2s; cursor: pointer; }
-        .opt-i.active { color: #00f3ff; transform: scale(1.2); text-shadow: 0 0 10px #00f3ff; }
+        .opt.active { border-color: white; transform: scale(1.2); box-shadow: 0 0 20px currentColor; border-width: 2px; }
+        .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; }
+        .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
         /* AR Button Override */
         #ar-zone button {
@@ -90,18 +93,18 @@
     <!-- UI LAYER -->
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
-        <!-- 1. LOGIN DIRECTO (SIN CARGA) -->
+        <!-- 1. LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
-                <div class="text-6xl text-cyber animate-pulse-fast drop-shadow-[0_0_20px_rgba(0,243,255,0.6)]"><i class="fas fa-shield-alt"></i></div>
+                <div class="text-6xl text-cyber animate-pulse-fast drop-shadow-[0_0_20px_rgba(0,243,255,0.6)]"><i class="fas fa-cube"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V22.0 SOLID DEFENSE</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V24.0 LOGIC PERFECT</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
-                    <i class="fab fa-google"></i> CONECTAR
+                    <i class="fab fa-google"></i> INICIAR SESIÓN
                 </button>
-                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA PROTEGIDO</p>
+                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA EN ESPERA</p>
             </div>
         </div>
 
@@ -109,21 +112,16 @@
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
             <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
-                    <div>
-                        <span class="text-[9px] text-cyber block tracking-widest">OPERADOR</span>
-                        <span id="u-name" class="text-white font-bold text-lg">...</span>
-                    </div>
-                    <button onclick="window.logout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition">
-                        <i class="fas fa-power-off"></i>
-                    </button>
+                    <div><span class="text-[9px] text-cyber block tracking-widest">AGENTE</span><span id="u-name" class="text-white font-bold text-lg">...</span></div>
+                    <button onclick="window.logout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
                 </div>
 
                 <!-- Personalización -->
                 <div class="bg-white/5 p-4 rounded border border-white/10">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-[9px] text-gray-400 font-bold">COLOR</span>
-                        <div class="flex gap-2" id="c-pick">
-                            <div onclick="window.setProf('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 10px #00f3ff"></div>
+                        <div class="flex gap-3" id="c-pick">
+                            <div onclick="window.setProf('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 15px #00f3ff"></div>
                             <div onclick="window.setProf('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
                             <div onclick="window.setProf('c','#39ff14',this)" class="opt bg-[#39ff14]"></div>
                             <div onclick="window.setProf('c','#ffd700',this)" class="opt bg-[#ffd700]"></div>
@@ -140,81 +138,59 @@
                     </div>
                 </div>
 
-                <button onclick="window.quickMatch()" class="btn-neon py-5 text-lg shadow-lg">
-                    <i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA
-                </button>
-                
+                <button onclick="window.quickMatch()" class="btn-neon py-5 text-lg shadow-lg"><i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA</button>
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="window.createRoom()" class="btn-neon py-3 text-xs">CREAR SALA</button>
                     <button onclick="window.showJoin()" class="btn-neon py-3 text-xs">UNIRSE</button>
                 </div>
-                
                 <div id="join-box" class="hidden flex gap-2 mt-1 animate-fade-in">
                     <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CÓDIGO" maxlength="4">
                     <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
-
-                <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2">
-                    <i class="fas fa-microchip mr-2"></i> PRÁCTICA (CPU)
-                </button>
-                
-                <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO SENSORES...</div>
+                <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> PRÁCTICA (CPU)</button>
+                <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
             </div>
         </div>
 
         <!-- 3. JUEGO HUD -->
         <div id="s-game" class="hidden flex flex-col justify-between h-full pointer-events-none relative z-10">
-            <!-- Top Bar -->
             <div class="interactive glass-panel p-3 flex justify-between items-center mt-2 mx-2 backdrop-blur-md">
-                <div class="text-center w-20">
-                    <span class="text-[8px] text-gray-400 block tracking-widest">PUNTAJE</span>
-                    <span id="sc-p1" class="text-3xl text-white font-black leading-none drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">0</span>
-                </div>
-                
+                <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">PUNTAJE</span><span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span></div>
                 <div class="flex flex-col items-center -mt-10 z-20">
-                    <div class="dice-wrap" onclick="window.rollDice()">
-                        <div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div>
-                    </div>
+                    <div class="dice-wrap" onclick="window.rollDice()"><div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div></div>
                     <div id="mov-hud" class="bg-black/90 px-3 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[100px] shadow-lg">
                         <div class="flex justify-between items-center gap-2">
                             <div><p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p></div>
-                            <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-1 rounded hover:bg-red-500 hover:text-white transition">SKIP</button>
+                            <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold">SKIP</button>
                         </div>
                     </div>
                 </div>
-
-                <div class="text-center w-20">
-                    <span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span>
-                    <span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span>
-                </div>
+                <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span><span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span></div>
             </div>
             
-            <div class="text-center mt-2 pointer-events-none">
-                <span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">
-                    SALA: <span id="room-lbl" class="text-white">--</span>
-                </span>
-            </div>
+            <div class="text-center mt-2 pointer-events-none"><span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">SALA: <span id="room-lbl" class="text-white">--</span></span></div>
 
-            <div id="mini-loader" class="hidden text-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div>
-                <span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span>
-            </div>
+            <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span></div>
 
             <div class="flex justify-center items-center flex-grow pointer-events-none">
-                <div id="toast" class="toast-box text-center">
-                    <p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">SISTEMA</p>
-                    <p id="t-body" class="text-sm tracking-wide">Mensaje</p>
-                </div>
+                <div id="toast" class="toast-box text-center"><p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">SISTEMA</p><p id="t-body" class="text-sm tracking-wide">Mensaje</p></div>
             </div>
 
             <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end">
-                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition">
-                    <i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span>
-                </button>
-                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2">
-                    <i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR
-                </button>
+                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition"><i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span></button>
+                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
             </div>
+        </div>
+
+        <!-- WIN SCREEN -->
+        <div id="win-screen" class="hidden">
+            <h1 id="win-title" class="text-6xl font-black text-cyber mb-2 animate-pulse">VICTORIA</h1>
+            <p id="win-msg" class="text-white font-mono mb-8 tracking-widest">AGENTE DOMINANTE</p>
+            <div class="flex gap-8 text-center mb-8">
+                <div><span class="text-gray-500 text-xs block">TU PUNTAJE</span><span id="final-p1" class="text-4xl font-bold text-white">0</span></div>
+                <div><span class="text-gray-500 text-xs block">RIVAL</span><span id="final-p2" class="text-4xl font-bold text-white">0</span></div>
+            </div>
+            <button onclick="window.goHome()" class="btn-neon py-4 px-10 text-lg">VOLVER AL MENÚ</button>
         </div>
 
         <div id="ar-hint" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden flex-col items-center z-0">
@@ -263,13 +239,16 @@
                 osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now + 0.2);
                 gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2);
                 osc.start(now); osc.stop(now + 0.2);
+            } else if(type === 'end') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(600, now + 0.5);
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+                osc.start(now); osc.stop(now + 1.0);
             }
         }
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
         let pts=[], selPt=null, placed=false, roomUnsub=null;
 
-        // GENERADOR ALEATORIO (2D CHAOS)
         function genPoints() {
             const p=[]; const count=16; const minD=0.25;
             for(let i=0;i<count;i++){
@@ -292,40 +271,20 @@
             } else el.innerText="MODO 3D (PC)";
         }
 
-        // --- MATH & COLLISION ---
-        // Verifica si el segmento (a,b) corta el segmento (c,d)
-        // Retorna true solo si hay cruce real (excluyendo vértices compartidos)
+        // --- COLLISION LOGIC ---
         function intersect(a, b, c, d) {
-            const x1 = a.x, y1 = a.z;
-            const x2 = b.x, y2 = b.z;
-            const x3 = c.x, y3 = c.z;
-            const x4 = d.x, y4 = d.z;
-
-            const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-            if (denom === 0) return false; // Paralelas
-
-            const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom;
-            const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-
-            // Usamos margen (epsilon) para permitir compartir vértices (0 y 1)
-            // Solo bloquea si cruza por el medio
+            const x1=a.x, y1=a.z, x2=b.x, y2=b.z, x3=c.x, y3=c.z, x4=d.x, y4=d.z;
+            const denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1);
+            if (denom === 0) return false;
+            const ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom;
+            const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom;
             return (ua > 0.01 && ua < 0.99 && ub > 0.01 && ub < 0.99);
         }
-
-        // Revisa si la nueva línea (p1, p2) cruza ALGÚN triángulo existente
         function checkCollision(p1, p2, tris) {
-            const A = pts[p1].position;
-            const B = pts[p2].position;
-
+            const A = pts[p1].position; const B = pts[p2].position;
             for (let t of tris) {
-                const v1 = pts[t.p1].position;
-                const v2 = pts[t.p2].position;
-                const v3 = pts[t.p3].position;
-
-                // Chequear cruce con los 3 lados del triángulo
-                if (intersect(A, B, v1, v2) || intersect(A, B, v2, v3) || intersect(A, B, v3, v1)) {
-                    return true;
-                }
+                const v1=pts[t.p1].position; const v2=pts[t.p2].position; const v3=pts[t.p3].position;
+                if (intersect(A, B, v1, v2) || intersect(A, B, v2, v3) || intersect(A, B, v3, v1)) return true;
             }
             return false;
         }
@@ -333,22 +292,13 @@
         // --- AUTH ---
         onAuthStateChanged(auth, async u => {
             S.user = u;
-            if(u) {
-                document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE';
-                nav('s-menu'); checkAR();
-            }
+            if(u) { document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE'; nav('s-menu'); checkAR(); }
         });
-
-        window.doLogin = async () => { 
-            try{ 
-                document.getElementById('login-msg').innerText = "CONECTANDO...";
-                await signInWithPopup(auth, new GoogleAuthProvider()); 
-            } catch(e) { document.getElementById('login-msg').innerText = "ERROR: POPUP"; } 
-        };
+        window.doLogin = async () => { try{ await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { document.getElementById('login-msg').innerText = "ERROR: POPUP"; } };
         window.logout = () => { if(confirm("¿Salir?")) signOut(auth).then(()=>location.reload()); };
 
         function nav(id) {
-            ['s-login','s-menu','s-game'].forEach(i => document.getElementById(i).classList.add('hidden'));
+            ['s-login','s-menu','s-game','win-screen'].forEach(i => document.getElementById(i).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
         
@@ -357,18 +307,22 @@
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
             toast("SISTEMA", "DESCONECTADO");
         }
-        window.setOpt = (t,v,el) => {
-            S.prof[t]=v; const p=el.parentNode; 
-            Array.from(p.children).forEach(c=>{ c.classList.remove('active'); if(t==='c') c.style.boxShadow='none'; else c.style.color='white'; });
-            el.classList.add('active'); if(t==='c') el.style.boxShadow=`0 0 15px ${v}`; else el.style.color='#00f3ff';
+        
+        // FIX: LLAMADA CORRECTA DESDE HTML
+        window.setProf = (t,v,el) => {
+            S.prof[t]=v; 
+            const parent = el.parentNode; 
+            Array.from(parent.children).forEach(c=>{ 
+                c.classList.remove('active'); 
+                if(t==='c') { c.style.boxShadow='none'; c.style.borderColor='#333'; }
+                else { c.style.color='#555'; c.style.textShadow='none'; c.style.transform='scale(1)'; }
+            });
+            el.classList.add('active'); 
+            if(t==='c') { el.style.boxShadow=`0 0 15px ${v}`; el.style.borderColor='#fff'; }
+            else { el.style.color='#00f3ff'; el.style.textShadow='0 0 10px #00f3ff'; el.style.transform='scale(1.2)'; }
         }
         window.showJoin = () => document.getElementById('join-box').classList.remove('hidden');
-        
-        function showLoad(show, txt) {
-            const l = document.getElementById('mini-loader');
-            if(show) { l.classList.remove('hidden'); document.getElementById('mini-load-txt').innerText=txt; } 
-            else l.classList.add('hidden');
-        }
+        function showLoad(show, txt) { const l = document.getElementById('mini-loader'); if(show) { l.classList.remove('hidden'); document.getElementById('mini-load-txt').innerText=txt; } else l.classList.add('hidden'); }
 
         // ROOMS
         window.quickMatch = async () => {
@@ -383,7 +337,7 @@
         window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
-            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}};
+            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}};
             start();
         };
 
@@ -391,7 +345,7 @@
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
             showLoad(true,"CREANDO...");
             await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
-                host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
+                host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof
             });
             sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
@@ -406,6 +360,7 @@
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
+                    else if(d.stat==='end') endGame(d);
                     else if(S.role==='host') showLoad(true,"ESPERANDO...");
                 }
             });
@@ -417,18 +372,60 @@
             const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Rival"); if(d.movs>0) return toast("JUEGA","Usa tus líneas");
             const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
             setTimeout(()=>{
-                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v});
+                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v, skips:0}); // Reset skips on roll
                 toast("DADO",`ENERGÍA: ${v}`);
             },500);
         };
+        
         window.skipTurn = () => {
-            const d=S.data; if(d.turn===S.role && d.movs>0) {
-                const t = d.turn==='host'?'guest':'host'; update({movs:0, turn:t, dice:null}); toast("SISTEMA", "TURNO SALTADO");
+            const d=S.data; 
+            if(d.turn===S.role) {
+                const t = d.turn==='host'?'guest':'host'; 
+                const newSkips = (d.skips || 0) + 1;
+                
+                if(newSkips >= 2) {
+                    update({stat:'end'});
+                } else {
+                    update({movs:0, turn:t, dice:null, skips:newSkips}); 
+                    toast("SISTEMA", "TURNO SALTADO");
+                }
             }
         };
-        function update(o) {
-            if(S.cpu) { Object.assign(S.data,o); ui(); } else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
+
+        function endGame(d) {
+            // SOLO MOSTRAR SI NO ESTAMOS YA EN EL MENU
+            if(!document.getElementById('s-menu').classList.contains('hidden')) return;
+            
+            nav('win-screen');
+            playSfx('end');
+            const win = d.sc.host > d.sc.guest ? 'HOST' : (d.sc.host < d.sc.guest ? 'GUEST' : 'DRAW');
+            const isMe = (win === 'HOST' && S.role === 'host') || (win === 'GUEST' && S.role === 'guest');
+            
+            const tit = document.getElementById('win-title');
+            const msg = document.getElementById('win-msg');
+            
+            if(win === 'DRAW') {
+                tit.innerText = "EMPATE"; tit.className = "text-6xl font-black text-warn mb-2";
+                msg.innerText = "SIN DOMINIO CLARO";
+            } else if(isMe) {
+                tit.innerText = "VICTORIA"; tit.className = "text-6xl font-black text-neon mb-2 animate-pulse";
+                msg.innerText = "DOMINIO TOTAL";
+            } else {
+                tit.innerText = "DERROTA"; tit.className = "text-6xl font-black text-hot mb-2";
+                msg.innerText = "TERRITORIO PERDIDO";
+            }
+            document.getElementById('final-p1').innerText = S.role==='host' ? d.sc.host : d.sc.guest;
+            document.getElementById('final-p2').innerText = S.role==='host' ? d.sc.guest : d.sc.host;
         }
+
+        function update(o) {
+            if(S.cpu) { 
+                Object.assign(S.data,o); 
+                if(S.data.stat === 'end') endGame(S.data);
+                else ui(); 
+            } else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
+        }
+
         function ui() {
             const d=S.data;
             document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
@@ -437,30 +434,29 @@
             if(d.turn===S.role && d.movs>0) { b.style.opacity=1; document.getElementById('mov-cnt').innerText=d.movs; dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; }
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#444'; dv.style.color='#555'; }
             draw();
-            if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
+            if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3, skips:0}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
         }
+
         function clickPt(id) {
             const d=S.data; if(d.turn!==S.role || d.movs<=0) return toast("ERROR","Lanza el dado");
             playSfx('click');
             if(selPt===null) { selPt=id; highlight(id,true); }
             else { if(selPt===id) { highlight(id,false); selPt=null; } else { tryLine(selPt,id); highlight(selPt,false); selPt=null; } }
         }
+
         function tryLine(p1,p2) {
             const d=S.data; const v1=pts[p1].position; const v2=pts[p2].position;
             if(v1.distanceTo(v2) > 1.2) return toast("RANGO","Demasiado lejos");
             if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("OCUPADO","Enlace existente");
-            
-            // VALIDACIÓN DE COLISIÓN CON TRIÁNGULOS
-            if(checkCollision(p1, p2, d.tris)) {
-                playSfx('error');
-                return toast("BLOQUEADO", "Territorio Protegido");
-            }
+            if(checkCollision(p1, p2, d.tris)) { playSfx('error'); return toast("BLOQUEADO", "Territorio Protegido"); }
             
             const nl=[...d.lines,{s:p1,e:p2,own:S.role}]; const nt=checkTri(p1,p2,S.role,nl);
             const sc={...d.sc}; if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); toast("CONQUISTA","¡Nexo Cerrado!"); }
+            
             let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
-            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di});
+            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0}); // Reset skips on move
         }
+
         function checkTri(p1,p2,o,ls) {
             const f=[]; for(let p3=0; p3<pts.length; p3++) {
                 if(p3!==p1 && p3!==p2) {
@@ -470,13 +466,22 @@
                 }
             } return f;
         }
+
         function cpuMove() {
-            let m=null; for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) if(pts[i].position.distanceTo(pts[j].position)<0.8 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !checkCollision(i,j,S.data.tris)) { m={s:i,e:j}; break; }
+            let m=null; 
+            for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) 
+                if(pts[i].position.distanceTo(pts[j].position)<0.8 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !checkCollision(i,j,S.data.tris)) { m={s:i,e:j}; break; }
+            
             if(m) {
                 const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
                 let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
-                update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di});
-            } else update({movs:0,turn:'host',dice:null});
+                update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
+            } else {
+                // CPU SKIPS
+                const newSkips = (S.data.skips || 0) + 1;
+                if(newSkips >= 2) update({stat:'end'});
+                else update({movs:0, turn:'host', dice:null, skips:newSkips});
+            }
         }
 
         // 3D ENGINE
@@ -574,4 +579,3 @@
     </script>
 </body>
 </html>
-
