@@ -6,7 +6,7 @@
     <title>3 LINE-AR | Conecta & Conquista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Configuración Tailwind para suprimir advertencias en consola
+        // Configuración Tailwind
         tailwind.config = { theme: { extend: { colors: { cyber: '#00e5ff', neon: '#ff0055' } } } }
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -84,6 +84,15 @@
             background: rgba(0,0,0,0.6); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
             pointer-events: none; display: none; z-index: 50;
         }
+
+        /* Modal Legal */
+        .legal-modal-content {
+            max-height: 60vh; overflow-y: auto; 
+            scrollbar-width: thin; scrollbar-color: #555 #111;
+        }
+        .legal-modal-content::-webkit-scrollbar { width: 6px; }
+        .legal-modal-content::-webkit-scrollbar-track { background: #111; }
+        .legal-modal-content::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
     </style>
     
     <script type="importmap">
@@ -94,14 +103,14 @@
 
     <canvas id="bg-canvas"></canvas>
     <div class="scanline"></div>
-    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V4.3.0 SOFT-CHECK</div>
+    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V4.4.0 LEGAL-CORE</div>
 
     <div id="ui-layer" class="flex flex-col justify-center items-center p-4 overflow-y-auto min-h-screen bg-black/40">
         
-        <!-- 0. PANTALLA DE VERIFICACIÓN (Amarillo) -->
+        <!-- 0. PANTALLA DE VERIFICACIÓN -->
         <div id="screen-permissions" class="interactive glass p-8 rounded-lg max-w-md w-full text-left fade-in z-50 relative border-t-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
             
-            <!-- LOGO INTEGRADO -->
+            <!-- LOGO -->
             <div class="mb-6 flex justify-center">
                 <div class="relative">
                     <div class="absolute inset-0 bg-yellow-500 blur-[60px] opacity-20 rounded-full"></div>
@@ -118,7 +127,6 @@
                 <i class="fas fa-check-circle"></i> Verificación de Sistema
             </h2>
             
-            <!-- Diagnóstico -->
             <div class="space-y-3 mb-6">
                 <div class="flex items-center justify-between bg-black/30 p-3 rounded border border-white/5">
                     <div class="flex items-center gap-3">
@@ -131,24 +139,22 @@
                 </div>
             </div>
 
-            <!-- Caja de Error (Oculta por defecto) -->
             <div id="perm-error" class="hidden mb-6 p-4 bg-red-900/30 border border-red-500/30 rounded text-red-200 text-xs font-mono">
                 <div class="flex items-start gap-3">
                     <i class="fas fa-exclamation-triangle text-red-500 mt-0.5"></i>
                     <span id="perm-error-msg">...</span>
                 </div>
-                <!-- Botón de Omitir (Nuevo) -->
                 <button onclick="forceAuthorize()" class="mt-3 text-[10px] underline text-red-300 hover:text-white">
-                    Ignorar error y continuar (Puede fallar)
+                    Ignorar error y continuar (Riesgo)
                 </button>
             </div>
 
-            <!-- Checkboxes de Consentimiento (Req Usuario) -->
+            <!-- Checkboxes de Consentimiento -->
             <div class="mb-6 space-y-3 border-t border-white/10 pt-4">
                 <label class="flex items-start gap-3 cursor-pointer group">
                     <input type="checkbox" id="check-terms" class="cyber-check" onchange="checkPermissions()">
                     <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
-                        Acepto los <span class="text-yellow-500">Términos de Servicio</span> y Política de Privacidad.
+                        Acepto los <a href="#" onclick="openTerms(event)" class="text-yellow-500 hover:text-yellow-300 underline">Términos de Servicio</a> y Política de Privacidad.
                     </span>
                 </label>
                 <label class="flex items-start gap-3 cursor-pointer group">
@@ -163,7 +169,48 @@
                 <i class="fas fa-lock mr-2"></i> PENDIENTE APROBACIÓN
             </button>
             
-            <p class="text-[9px] text-gray-600 text-center mt-4 font-mono">v4.3.0 Secure Core</p>
+            <p class="text-[9px] text-gray-600 text-center mt-4 font-mono">v4.4.0 Secure Core</p>
+        </div>
+
+        <!-- MODAL DE TÉRMINOS LEGALES -->
+        <div id="modal-terms" class="fixed inset-0 bg-black/90 z-[60] hidden flex justify-center items-center p-4 fade-in">
+            <div class="glass max-w-2xl w-full rounded-lg border border-yellow-500/30 p-6 relative shadow-[0_0_50px_rgba(234,179,8,0.2)] flex flex-col max-h-[90vh]">
+                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+                    <h3 class="text-xl font-orbitron font-bold text-yellow-400"><i class="fas fa-file-contract mr-2"></i> PROTOCOLO LEGAL 3 LINE-AR</h3>
+                    <button onclick="closeTerms()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-2xl"></i></button>
+                </div>
+                
+                <div class="legal-modal-content pr-4 text-gray-300 text-xs font-mono leading-relaxed space-y-4">
+                    <p class="text-yellow-500 font-bold">1. INTRODUCCIÓN</p>
+                    <p>Bienvenido a 3 LINE-AR. Al acceder a nuestra plataforma de realidad aumentada ("el Servicio"), usted acepta estar vinculado por estos Términos de Servicio y todas las leyes aplicables. Si no está de acuerdo, no use el Servicio.</p>
+
+                    <p class="text-yellow-500 font-bold">2. PRIVACIDAD Y DATOS (GDPR/CCPA)</p>
+                    <p>Utilizamos Google Firebase para la autenticación y el almacenamiento de datos en tiempo real. Recopilamos:</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li>Identificadores básicos (UID, Email, Foto de Perfil) proporcionados por Google/Facebook.</li>
+                        <li>Datos de juego (Puntuaciones, Estado de Sala).</li>
+                        <li>No vendemos sus datos a terceros.</li>
+                    </ul>
+
+                    <p class="text-yellow-500 font-bold">3. CONDUCTA DEL USUARIO</p>
+                    <p>Usted acepta no usar el Servicio para fines ilegales o no autorizados. Está prohibido interferir con la seguridad del juego, usar cheats, o acosar a otros jugadores.</p>
+
+                    <p class="text-yellow-500 font-bold">4. MONETIZACIÓN Y COMPRAS FUTURAS</p>
+                    <p>3 LINE-AR se reserva el derecho de introducir funciones de pago, monedas virtuales o publicidad en el futuro. Cualquier transacción será definitiva y no reembolsable, salvo que la ley exija lo contrario. Los términos específicos de compra se presentarán en el momento de la transacción.</p>
+
+                    <p class="text-yellow-500 font-bold">5. PROPIEDAD INTELECTUAL</p>
+                    <p>Todo el código, diseño, gráficos y lógica de juego son propiedad exclusiva de 3 LINE-AR y sus desarrolladores. Se prohíbe la ingeniería inversa o la copia no autorizada.</p>
+
+                    <p class="text-yellow-500 font-bold">6. DESCARGO DE RESPONSABILIDAD AR</p>
+                    <p>Al usar funciones de Realidad Aumentada, preste atención a su entorno físico para evitar lesiones. 3 LINE-AR no se hace responsable de accidentes ocurridos durante el juego.</p>
+                    
+                    <p class="text-center mt-8 text-gray-500 border-t border-white/10 pt-4">Última actualización: Noviembre 2025</p>
+                </div>
+
+                <button onclick="closeTerms()" class="mt-6 w-full btn-cyber border-yellow-500 text-yellow-400 hover:bg-yellow-500/10">
+                    ENTENDIDO Y CERRAR
+                </button>
+            </div>
         </div>
 
         <!-- 1. LOGIN SCREEN -->
@@ -378,7 +425,17 @@
         }
         initBackgroundNetwork();
 
-        // --- VERIFICACIÓN DE SISTEMA (LÓGICA MEJORADA) ---
+        // --- MODAL TERMS LOGIC ---
+        window.openTerms = (e) => {
+            e.preventDefault();
+            document.getElementById('modal-terms').classList.remove('hidden');
+        };
+        
+        window.closeTerms = () => {
+            document.getElementById('modal-terms').classList.add('hidden');
+        };
+
+        // --- VERIFICACIÓN DE SISTEMA ---
         let isConnected = false;
 
         async function runSystemCheck() {
@@ -414,12 +471,12 @@
             }
         }
         
-        // Se llama al marcar los checkboxes
         window.checkPermissions = () => {
             const terms = document.getElementById('check-terms').checked;
             const storage = document.getElementById('check-storage').checked;
             const btn = document.getElementById('btn-authorize');
             
+            // Permite avanzar si se aceptan términos, incluso si hay error de red (modo riesgo)
             if (terms && storage) {
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fas fa-check-circle mr-2"></i> AUTORIZAR INICIO`;
