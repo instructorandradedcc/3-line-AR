@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V17.0 PLANAR</title>
+    <title>3 LINE-AR | V19.0 CONQUEROR</title>
     
-    <!-- Configuración Gráfica -->
+    <!-- Dependencias Gráficas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { 
             theme: { 
                 extend: { 
-                    colors: { glass: 'rgba(8, 12, 20, 0.98)', cyber: '#00f3ff', neon: '#39ff14', danger: '#ff0055' },
+                    colors: { glass: 'rgba(5, 10, 15, 0.95)', cyber: '#00f3ff', neon: '#39ff14', hot: '#ff0055', warn: '#ffcc00' },
                     fontFamily: { orbitron: ['Orbitron', 'sans-serif'], mono: ['monospace'] },
-                    animation: { 'spin-slow': 'spin 4s linear infinite' }
+                    animation: { 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
                 } 
             } 
         }
@@ -25,64 +25,65 @@
         body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         /* FONDO */
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #0a0a15 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #050510 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
         
         canvas { display: block; outline: none; } 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
         
-        /* UI ESTILO */
+        /* UI */
         .glass-panel {
-            background: rgba(5, 8, 15, 0.96); backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
-            clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+            background: rgba(8, 12, 18, 0.9); backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 243, 255, 0.2); box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+            border-radius: 12px;
         }
         
-        .btn-cyber {
-            background: linear-gradient(90deg, rgba(0,243,255,0.15), transparent);
+        .btn-neon {
+            background: linear-gradient(180deg, rgba(0,243,255,0.1), rgba(0,243,255,0));
             border: 1px solid #00f3ff; color: #00f3ff; font-weight: 800;
-            transition: all 0.2s; text-transform: uppercase; letter-spacing: 2px;
+            text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
         }
-        .btn-cyber:active { transform: scale(0.95); background: #00f3ff; color: #000; }
-        .btn-cyber.danger { border-color: #ff0055; color: #ff0055; background: linear-gradient(90deg, rgba(255,0,85,0.15), transparent); }
+        .btn-neon:active { transform: scale(0.95); background: #00f3ff; color: #000; }
+        .btn-neon.danger { border-color: #ff0055; color: #ff0055; }
 
         /* DADO */
-        .dice-container { perspective: 800px; width: 64px; height: 64px; pointer-events: auto; cursor: pointer; }
+        .dice-wrap { perspective: 800px; width: 70px; height: 70px; pointer-events: auto; cursor: pointer; }
         .dice-cube {
             width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            background: rgba(0,0,0,0.9); border: 2px solid #00f3ff;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background: rgba(0,0,0,0.85); border: 2px solid #00f3ff; border-radius: 12px;
             display: flex; justify-content: center; align-items: center;
-            font-size: 32px; color: #00f3ff; box-shadow: 0 0 20px #00f3ff;
+            font-size: 36px; color: #00f3ff; text-shadow: 0 0 15px #00f3ff;
         }
-        .rolling { animation: shake 0.4s infinite; background: #00f3ff; color: #000; }
-        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(5deg); } 75% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
+        .rolling { animation: shake 0.4s infinite; background: #00f3ff; color: #000; text-shadow: none; }
+        @keyframes shake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
 
-        /* LOADING OVERLAY */
-        #loading-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: flex; flex-col; justify-content: center; align-items: center; pointer-events: auto; transition: opacity 0.5s; }
-        
         /* TOAST */
-        .toast-msg {
-            background: #000; border: 1px solid #00f3ff; border-left-width: 6px;
-            padding: 15px 30px; color: #fff; font-size: 12px;
-            transform: translateY(150%); opacity: 0; transition: all 0.3s ease-out;
+        .toast-box {
+            background: rgba(0,0,0,0.95); border: 1px solid #00f3ff; border-left-width: 5px;
+            padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace';
+            transform: translateY(100px); opacity: 0; transition: all 0.4s;
         }
-        .toast-msg.show { transform: translateY(0); opacity: 1; }
+        .toast-box.show { transform: translateY(0); opacity: 1; }
+
+        /* LOADER */
+        #loader { position: absolute; inset: 0; background: black; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; }
+        .scanner { width: 200px; height: 2px; background: #00f3ff; box-shadow: 0 0 10px #00f3ff; animation: scan 1.5s infinite ease-in-out; }
+        @keyframes scan { 0%,100% { transform: scaleX(0); opacity: 0; } 50% { transform: scaleX(1); opacity: 1; } }
+
+        /* AR BUTTON FIX */
+        #ar-zone button {
+            background: rgba(20, 20, 30, 0.9) !important; border: 1px solid #00f3ff !important;
+            color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
+            border-radius: 6px !important; text-transform: uppercase !important; letter-spacing: 1px !important;
+        }
         
         /* SELECTOR */
-        .sel-opt { border: 2px solid #333; opacity: 0.5; transition: 0.2s; transform: scale(0.9); }
-        .sel-opt.active { border-color: #fff; opacity: 1; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
-
-        /* AR BTN OVERRIDE */
-        #ar-btn-zone button {
-            background: rgba(0, 0, 0, 0.9) !important;
-            border: 2px solid #00f3ff !important;
-            color: #00f3ff !important;
-            font-family: 'Orbitron' !important;
-            text-transform: uppercase !important;
-            padding: 15px 30px !important;
-            font-weight: bold !important;
-        }
+        .opt { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: 0.2s; transform: scale(0.9); }
+        .opt.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
+        .opt-i { font-size: 20px; color: #555; transition: 0.2s; cursor: pointer; }
+        .opt-i.active { color: #00f3ff; transform: scale(1.2); text-shadow: 0 0 10px #00f3ff; }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -90,31 +91,26 @@
 <body>
     <canvas id="bg-canvas"></canvas>
 
-    <!-- LOADING GLOBAL -->
-    <div id="loading-overlay" class="hidden">
-        <div class="w-20 h-20 border-4 border-cyber border-t-transparent rounded-full animate-spin mb-6"></div>
-        <h2 class="text-2xl text-white font-bold mb-2">CARGANDO TABLERO</h2>
-        <p id="loading-txt" class="text-cyber font-mono tracking-widest text-xs animate-pulse">SINCRONIZANDO PUNTOS...</p>
+    <!-- LOADER -->
+    <div id="loader" class="hidden">
+        <h2 class="text-3xl font-black text-white mb-2 tracking-widest">CARGANDO</h2>
+        <div class="scanner mb-2"></div>
+        <p id="load-msg" class="text-[10px] text-cyber font-mono">INICIALIZANDO...</p>
     </div>
 
-    <!-- CAPA UI -->
-    <div id="ui-layer" class="flex flex-col justify-between p-4">
+    <!-- UI -->
+    <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
         <!-- LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
-            <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center">
-                <!-- Logo Abstracto Triangulo -->
-                <svg class="w-24 h-24 mb-6 text-cyber animate-pulse" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M50 10 L90 90 L10 90 Z" />
-                    <circle cx="50" cy="10" r="5" fill="currentColor"/>
-                    <circle cx="90" cy="90" r="5" fill="currentColor"/>
-                    <circle cx="10" cy="90" r="5" fill="currentColor"/>
-                </svg>
-
-                <h1 class="text-4xl font-black text-white italic">3 LINE<span class="text-cyber">-AR</span></h1>
-                <p class="text-gray-500 text-[10px] mb-8 font-mono tracking-[0.3em] mt-2">V17.0 PLANAR CHAOS</p>
-                <button onclick="window.doLogin()" class="btn-cyber w-full py-4 mb-2 flex justify-center items-center gap-3"><i class="fab fa-google"></i> ACCEDER</button>
-                <p id="login-log" class="text-[9px] text-gray-600 font-mono uppercase">Red Neuronal Activa</p>
+            <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
+                <div class="text-5xl text-cyber animate-pulse-fast"><i class="fas fa-network-wired"></i></div>
+                <div>
+                    <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-1">V19.0 CONQUEROR</p>
+                </div>
+                <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm"><i class="fab fa-google"></i> INICIAR SISTEMA</button>
+                <p id="login-stat" class="text-[9px] text-gray-600">ESPERANDO CREDENCIALES...</p>
             </div>
         </div>
 
@@ -122,75 +118,81 @@
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
             <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
-                    <div><span class="text-[9px] text-cyber block">AGENTE</span><span id="u-name" class="text-white font-bold text-xl">...</span></div>
-                    <button onclick="window.logout()" class="w-8 h-8 rounded text-danger border border-danger hover:bg-danger hover:text-white"><i class="fas fa-sign-out-alt"></i></button>
+                    <div><span class="text-[9px] text-cyber block tracking-widest">OPERADOR</span><span id="u-name" class="text-white font-bold text-lg">...</span></div>
+                    <button onclick="window.logout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
                 </div>
 
-                <!-- Personalización -->
                 <div class="bg-white/5 p-4 rounded border border-white/10">
-                    <p class="text-[9px] text-gray-400 mb-2">COLOR DE NEXO</p>
-                    <div class="flex justify-between mb-4" id="c-pick">
-                        <div onclick="window.setOpt('c','#00f3ff',this)" class="sel-opt w-8 h-8 rounded-full bg-[#00f3ff] active shadow-[0_0_10px_#00f3ff]"></div>
-                        <div onclick="window.setOpt('c','#ff0055',this)" class="sel-opt w-8 h-8 rounded-full bg-[#ff0055]"></div>
-                        <div onclick="window.setOpt('c','#39ff14',this)" class="sel-opt w-8 h-8 rounded-full bg-[#39ff14]"></div>
-                        <div onclick="window.setOpt('c','#f0f',this)" class="sel-opt w-8 h-8 rounded-full bg-[#f0f]"></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-[9px] text-gray-400 font-bold">COLOR DE NEXO</span>
+                        <div class="flex gap-2" id="c-pick">
+                            <div onclick="window.setProf('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 10px #00f3ff"></div>
+                            <div onclick="window.setProf('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
+                            <div onclick="window.setOpt('c','#39ff14',this)" class="opt bg-[#39ff14]"></div>
+                            <div onclick="window.setProf('c','#ffd700',this)" class="opt bg-[#ffd700]"></div>
+                        </div>
                     </div>
-                    <p class="text-[9px] text-gray-400 mb-2">SIGILO DE CONQUISTA</p>
-                    <div class="flex justify-between text-xl text-white" id="i-pick">
-                        <i onclick="window.setOpt('i','gem',this)" class="sel-opt fas fa-gem active p-2 text-cyber"></i>
-                        <i onclick="window.setOpt('i','bolt',this)" class="sel-opt fas fa-bolt p-2"></i>
-                        <i onclick="window.setOpt('i','star',this)" class="sel-opt fas fa-star p-2"></i>
-                        <i onclick="window.setOpt('i','dragon',this)" class="sel-opt fas fa-dragon p-2"></i>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[9px] text-gray-400 font-bold">TU FICHA</span>
+                        <div class="flex gap-4 text-lg" id="i-pick">
+                            <i onclick="window.setProf('i','gem',this)" class="opt-i fas fa-gem active"></i>
+                            <i onclick="window.setProf('i','bolt',this)" class="opt-i fas fa-bolt"></i>
+                            <i onclick="window.setProf('i','star',this)" class="opt-i fas fa-star"></i>
+                            <i onclick="window.setProf('i','atom',this)" class="opt-i fas fa-atom"></i>
+                        </div>
                     </div>
                 </div>
 
-                <button onclick="window.quickMatch()" class="btn-cyber py-5 text-lg"><i class="fas fa-globe mr-2"></i> PARTIDA RÁPIDA</button>
+                <button onclick="window.quickMatch()" class="btn-neon py-5 text-lg shadow-lg"><i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA</button>
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="window.createRoom()" class="btn-cyber py-3 text-xs">CREAR</button>
-                    <button onclick="window.showJoin()" class="btn-cyber py-3 text-xs">UNIRSE</button>
+                    <button onclick="window.createRoom()" class="btn-neon py-3 text-xs">CREAR</button>
+                    <button onclick="window.showJoin()" class="btn-neon py-3 text-xs">UNIRSE</button>
                 </div>
-                <div id="join-box" class="hidden flex gap-2 mt-1">
-                    <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg" placeholder="CÓDIGO" maxlength="4">
-                    <button onclick="window.joinRoom()" class="btn-cyber w-14"><i class="fas fa-arrow-right"></i></button>
+                <div id="join-box" class="hidden flex gap-2 mt-1 animate-fade-in">
+                    <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CÓDIGO" maxlength="4">
+                    <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
-                <button onclick="window.vsCpu()" class="btn-cyber danger py-3 text-xs mt-2"><i class="fas fa-robot mr-2"></i> PRÁCTICA (CPU)</button>
-                <div id="sys-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono pt-2 border-t border-white/10">ESCANEO DE SENSORES...</div>
+                <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> PRÁCTICA (CPU)</button>
+                <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO SENSORES...</div>
             </div>
         </div>
 
         <!-- GAME HUD -->
         <div id="s-game" class="hidden flex flex-col justify-between h-full pointer-events-none relative z-10">
-            <div class="interactive glass-panel p-3 flex justify-between items-center mt-2 mx-2">
-                <div class="text-center w-16"><span class="text-[8px] text-gray-400 block">TÚ</span><span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span></div>
+            <div class="interactive glass-panel p-3 flex justify-between items-center mt-2 mx-2 backdrop-blur-md">
+                <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">TÚ</span><span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span></div>
                 <div class="flex flex-col items-center -mt-10 z-20">
-                    <div class="dice-container" onclick="window.rollDice()"><div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div></div>
-                    <div id="mov-box" class="bg-black/90 px-4 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[90px]">
-                        <p class="text-[8px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-num" class="text-2xl text-cyber font-bold leading-none">0</p>
+                    <div class="dice-wrap" onclick="window.rollDice()"><div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div></div>
+                    <div id="mov-hud" class="bg-black/90 px-3 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[100px] shadow-lg">
+                        <div class="flex justify-between items-center gap-2">
+                            <div><p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p></div>
+                            <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-1 rounded hover:bg-red-500 hover:text-white transition">SKIP</button>
+                        </div>
                     </div>
                 </div>
-                <div class="text-center w-16"><span class="text-[8px] text-gray-400 block">RIVAL</span><span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span></div>
+                <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span><span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span></div>
             </div>
             
-            <div class="text-center mt-2 pointer-events-none"><span class="bg-black/70 text-[10px] px-4 py-1 rounded text-gray-300 border border-white/10">SALA: <span id="room-id" class="text-cyber font-bold">--</span></span></div>
+            <div class="text-center mt-2 pointer-events-none"><span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">SALA: <span id="room-lbl" class="text-white">--</span></span></div>
 
-            <div class="flex justify-center items-center flex-grow">
-                <div id="toast" class="toast-msg text-center shadow-2xl"><p id="t-tit" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1">ALERTA</p><p id="t-msg" class="text-sm font-mono">Msg</p></div>
+            <div class="flex justify-center items-center flex-grow pointer-events-none">
+                <div id="toast" class="toast-box text-center"><p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">INFO</p><p id="t-body" class="text-sm tracking-wide">Mensaje</p></div>
             </div>
 
-            <div class="interactive flex justify-center gap-6 pb-20 md:pb-10 items-end">
-                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-900/90 border border-gray-500 text-gray-300 flex items-center justify-center shadow-lg flex-col gap-1"><i class="fas fa-home text-lg"></i><span class="text-[8px]">MENU</span></button>
-                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/20 border border-cyber text-xs text-white font-mono shadow-lg flex items-center"><i class="fas fa-sync mr-2"></i> RE-CENTRAR</button>
+            <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end">
+                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition"><i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span></button>
+                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
             </div>
         </div>
 
         <div id="ar-hint" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden flex-col items-center z-0">
-            <div class="w-24 h-24 border-2 border-cyber rounded-full animate-ping absolute opacity-40"></div>
-            <i class="fas fa-crosshairs text-white text-4xl drop-shadow-lg"></i>
-            <span class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-6 font-bold tracking-widest">APUNTA AL SUELO</span>
+            <div class="w-32 h-32 border-2 border-cyber rounded-full animate-ping absolute opacity-30"></div>
+            <div class="w-4 h-4 bg-cyber rounded-full shadow-[0_0_20px_#00f3ff]"></div>
+            <span class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-8 font-bold tracking-widest backdrop-blur">ESCANEA UNA SUPERFICIE</span>
         </div>
     </div>
 
-    <div id="ar-btn-zone" class="absolute bottom-6 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
+    <div id="ar-zone" class="absolute bottom-8 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
 
     <script type="module">
         import * as THREE from 'three';
@@ -200,47 +202,45 @@
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        const APP_ID = 'ar-3lilne';
+        const APP_ID = 'ar-3lilne-flux';
         const CONF = { apiKey:"AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
-        
         let app, auth, db;
         try { app = initializeApp(CONF); auth = getAuth(app); db = getFirestore(app); } catch(e) { console.error(e); }
 
+        // AUDIO
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            if(type === 'click') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if(type === 'win') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.linearRampToValueAtTime(800, now + 0.2);
+                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if(type === 'roll') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(100, now);
+                gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            }
+        }
+
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
         let pts=[], selPt=null, placed=false, roomUnsub=null;
-        
-        // --- GENERADOR PLANAR (2D en 3D) ---
-        function generatePlanarPoints() {
-            const p = [];
-            const count = 16; // Cantidad de puntos
-            const minDist = 0.25; // Distancia mínima para evitar solapamiento
 
-            for(let i=0; i<count; i++) {
-                let valid = false;
-                let pt = {};
-                let attempts = 0;
-                
-                while(!valid && attempts < 100) {
-                    // Generar en plano XZ (Y=0 siempre)
-                    // Rango aprox -0.8 a 0.8
-                    pt = {
-                        x: (Math.random() - 0.5) * 1.6,
-                        y: 0, 
-                        z: (Math.random() - 0.5) * 1.6
-                    };
-
-                    // Verificar distancia con anteriores
-                    let tooClose = false;
-                    for(let existing of p) {
-                        const dx = existing.x - pt.x;
-                        const dz = existing.z - pt.z;
-                        if(Math.sqrt(dx*dx + dz*dz) < minDist) {
-                            tooClose = true;
-                            break;
-                        }
-                    }
-                    if(!tooClose) valid = true;
-                    attempts++;
+        // GENERADOR PUNTOS
+        function genPoints() {
+            const p=[]; const count=16; const minD=0.25;
+            for(let i=0;i<count;i++){
+                let v=false, pt, att=0;
+                while(!v && att<100){
+                    pt = { x:(Math.random()-0.5)*1.8, y:0, z:(Math.random()-0.5)*1.8 };
+                    let ok=true; for(let ex of p) if(Math.hypot(ex.x-pt.x, ex.z-pt.z) < minD) ok=false;
+                    if(ok) v=true; att++;
                 }
                 p.push(pt);
             }
@@ -248,351 +248,246 @@
         }
 
         async function checkAR() {
-            const st = document.getElementById('sys-status');
-            if ('xr' in navigator) {
-                try {
-                    const ok = await navigator.xr.isSessionSupported('immersive-ar');
-                    if(ok) { st.innerHTML='<span class="text-cyber"><i class="fas fa-check-circle"></i> MÓVIL AR DETECTADO</span>'; return; }
-                } catch(e){}
-            }
-            st.innerHTML='<span class="text-gray-500">PC / 3D MODE</span>';
+            const el = document.getElementById('ar-status');
+            if('xr' in navigator) {
+                const ok = await navigator.xr.isSessionSupported('immersive-ar').catch(()=>false);
+                if(ok) el.innerHTML='<span class="text-cyber font-bold">AR DETECTADO</span>'; else el.innerText="MODO 3D (PC)";
+            } else el.innerText="MODO 3D (PC)";
         }
 
         onAuthStateChanged(auth, async u => {
             S.user = u;
-            if(u) {
-                document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE';
-                nav('s-menu'); await checkAR();
-            } else nav('s-login');
+            if(u) { document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE'; nav('s-menu'); checkAR(); } else nav('s-login');
         });
 
-        window.doLogin = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { alert("Login Error"); } };
-        window.logout = () => { if(confirm("¿Cerrar Sesión?")) signOut(auth).then(() => location.reload()); };
+        window.doLogin = async () => { try{ await signInWithPopup(auth, new GoogleAuthProvider()); }catch(e){ alert("Error Auth"); } };
+        window.logout = () => { if(confirm("¿Salir?")) signOut(auth).then(()=>location.reload()); };
 
         function nav(id) {
-            ['s-login','s-menu','s-game'].forEach(i => document.getElementById(i).classList.add('hidden'));
+            ['s-login','s-menu','s-game'].forEach(i=>document.getElementById(i).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
-        
         window.goHome = () => {
-            if(roomUnsub) roomUnsub(); roomUnsub = null; S.room = null; S.data = null;
-            nav('s-menu');
-            if(group) { 
-                while(group.children.length > 0){ group.remove(group.children[0]); }
-            }
-            toast("SISTEMA", "SALA ABANDONADA");
-        };
-
+            if(roomUnsub) roomUnsub(); roomUnsub=null; nav('s-menu');
+            if(group) { while(group.children.length>0) group.remove(group.children[0]); }
+            toast("SISTEMA", "DESCONECTADO");
+        }
         window.setOpt = (t,v,el) => {
-            S.prof[t]=v; const p=el.parentNode; Array.from(p.children).forEach(c=>{c.classList.remove('active'); if(t==='c')c.style.boxShadow='none'; else c.style.color='white'});
-            el.classList.add('active'); if(t==='c')el.style.boxShadow=`0 0 15px ${v}`; else el.style.color='#00f3ff';
+            S.prof[t]=v; const p=el.parentNode; 
+            Array.from(p.children).forEach(c=>{ c.classList.remove('active'); if(t==='c') c.style.boxShadow='none'; else c.style.color='white'; });
+            el.classList.add('active'); if(t==='c') el.style.boxShadow=`0 0 15px ${v}`; else el.style.color='#00f3ff';
         }
         window.showJoin = () => document.getElementById('join-box').classList.remove('hidden');
-        window.loading = (show, txt) => {
-            const el = document.getElementById('loading-overlay');
-            if(show) { el.classList.remove('hidden'); document.getElementById('loading-txt').innerText=txt; }
-            else el.classList.add('hidden');
-        }
+        function loading(s,t) { const l=document.getElementById('loader'); if(s) { l.classList.remove('hidden'); document.getElementById('load-msg').innerText=t; } else l.classList.add('hidden'); }
 
-        // --- ROOM LOGIC ---
+        // ROOMS
         window.quickMatch = async () => {
-            S.cpu=false; loading(true, "BUSCANDO SEÑAL...");
+            S.cpu=false; loading(true,"BUSCANDO SEÑAL...");
             try {
-                const coll = collection(db, 'artifacts', APP_ID, 'public', 'data', 'rooms');
-                const q = await getDocs(coll);
-                let found = null;
-                for (const d of q.docs) { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) { found=d.id; break; } }
-                if(found) join(found); else create(true);
-            } catch(e) { loading(false); toast("ERROR", "Sin red. Modo CPU."); setTimeout(window.vsCpu, 1500); }
+                const q = await getDocs(collection(db,'artifacts',APP_ID,'rooms'));
+                let f=null; for(const d of q.docs) { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) { f=d.id; break; } }
+                if(f) join(f); else create(true);
+            } catch(e) { loading(false); toast("ERROR","Sin Red. Modo CPU."); setTimeout(window.vsCpu,1500); }
         };
-
         window.createRoom = () => create(false);
         window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
-        
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
-            const rawPts = generatePlanarPoints();
-            S.data={stat:'play', turn:'host', points:rawPts, lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof, p2:{c:'#ff0055', i:'skull'}};
-            startGame();
+            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}};
+            start();
         };
 
         async function create(pub) {
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
-            loading(true, "CALIBRANDO TABLERO...");
-            const rawPts = generatePlanarPoints();
-            await setDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), {
-                host:S.user.uid, stat:'wait', public:pub, turn:'host', 
-                points: rawPts, 
-                lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
+            loading(true,"CALIBRANDO...");
+            await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
+                host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
             });
-            sub(c); document.getElementById('room-id').innerText=pub?"PÚBLICA":c;
+            sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
-
         async function join(c) {
-            S.role='guest'; S.room=c;
-            loading(true, "SINCRONIZANDO...");
-            await updateDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
-            sub(c); document.getElementById('room-id').innerText=c;
+            S.role='guest'; S.room=c; loading(true,"SINCRONIZANDO...");
+            await updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
+            sub(c); document.getElementById('room-lbl').innerText=c;
         }
-        
         function sub(c) {
             if(roomUnsub) roomUnsub();
-            roomUnsub = onSnapshot(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), s => {
-                if(s.exists()) { 
-                    const d=s.data(); S.data=d; 
-                    if(d.stat==='play') { 
-                        if(document.getElementById('s-game').classList.contains('hidden')) startGame(); 
-                        renderUI(); 
-                    } else {
-                        if(S.role==='host') loading(true, "ESPERANDO RIVAL...");
-                    }
+            roomUnsub = onSnapshot(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), s => {
+                if(s.exists()) {
+                    const d=s.data(); S.data=d;
+                    if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
+                    else if(S.role==='host') loading(true,"ESPERANDO RIVAL...");
                 }
             });
         }
+        function start() { loading(false); nav('s-game'); init3D(); toast("SISTEMA","RED NEURONAL ACTIVA"); }
 
-        function startGame() { 
-            loading(false); nav('s-game'); 
-            init3D(); 
-            toast("SISTEMA", "LISTO PARA EL COMBATE"); 
-        }
-
-        // --- GAMEPLAY ---
+        // GAMEPLAY
         window.rollDice = () => {
-            const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Enemigo"); if(d.movs>0) return toast("ACCIÓN","Tienes movimientos");
-            const el=document.getElementById('dice-vis'); el.classList.add('rolling');
+            const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Rival"); if(d.movs>0) return toast("JUEGA","Usa tus líneas");
+            const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
             setTimeout(()=>{
-                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v}); toast("DADO",`Sacaste ${v}`);
+                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v});
+                toast("DADO",`ENERGÍA: ${v}`);
             },500);
         };
-
+        window.skipTurn = () => {
+            const d=S.data; if(d.turn===S.role && d.movs>0) {
+                const t = d.turn==='host'?'guest':'host'; update({movs:0, turn:t, dice:null}); toast("SISTEMA", "TURNO SALTADO");
+            }
+        };
         function update(o) {
-            if(S.cpu) { Object.assign(S.data,o); renderUI(); }
-            else updateDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${S.room}`), o);
+            if(S.cpu) { Object.assign(S.data,o); ui(); } else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
         }
-
-        function renderUI() {
+        function ui() {
             const d=S.data;
             document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
             document.getElementById('sc-p2').innerText = S.role==='host'?d.sc.guest:d.sc.host;
-            const box=document.getElementById('mov-box'); const dv=document.getElementById('dice-vis');
-            
-            if(d.turn===S.role && d.movs>0) {
-                box.style.opacity=1; document.getElementById('mov-num').innerText=d.movs; 
-                dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff';
-            } else {
-                box.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#333'; dv.style.color='#555';
-            }
-            render3D();
-            if(S.cpu && d.turn==='guest') {
-                if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3}),1000);
-                else if(d.movs>0) setTimeout(cpuMove,1000);
-            }
+            const b=document.getElementById('mov-hud'); const dv=document.getElementById('dice-vis');
+            if(d.turn===S.role && d.movs>0) { b.style.opacity=1; document.getElementById('mov-cnt').innerText=d.movs; dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; }
+            else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#444'; dv.style.color='#555'; }
+            draw();
+            if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
         }
-
-        function onPtClick(id) {
+        function clickPt(id) {
             const d=S.data; if(d.turn!==S.role || d.movs<=0) return toast("ERROR","Lanza el dado");
+            playSfx('click');
             if(selPt===null) { selPt=id; highlight(id,true); }
-            else {
-                if(selPt===id) { highlight(id,false); selPt=null; }
-                else { tryLink(selPt,id); highlight(selPt,false); selPt=null; }
-            }
+            else { if(selPt===id) { highlight(id,false); selPt=null; } else { tryLine(selPt,id); highlight(selPt,false); selPt=null; } }
         }
-
-        function tryLink(p1,p2) {
-            const d=S.data; 
-            // VALIDACION RELAJADA PARA PERMITIR CRUCES
-            // Solo validamos que la linea no exista YA entre esos dos puntos especificos
-            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("ERROR","Ya conectado");
+        function tryLine(p1,p2) {
+            const d=S.data; const v1=pts[p1].position; const v2=pts[p2].position;
+            if(v1.distanceTo(v2) > 1.2) return toast("RANGO","Demasiado lejos");
+            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("OCUPADO","Enlace existente");
             
-            // Validar distancia maxima (para no cruzar todo el mapa si no se quiere)
-            // Aumentamos rango para permitir juego fluido
-            const v1=pts[p1].position; const v2=pts[p2].position;
-            if(v1.distanceTo(v2) > 1.0) return toast("RANGO","Demasiado lejos"); 
-
-            const nl=[...d.lines, {s:p1,e:p2,own:S.role}];
-            const nt=checkTri(p1,p2,S.role,nl);
-            const sc={...d.sc}; if(nt.length){ sc[S.role]+=nt.length; toast("CONQUISTA","¡Triángulo cerrado!"); }
-            
-            let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){t=t==='host'?'guest':'host'; di=null;}
+            const nl=[...d.lines,{s:p1,e:p2,own:S.role}]; const nt=checkTri(p1,p2,S.role,nl);
+            const sc={...d.sc}; if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); toast("CONQUISTA","¡Nexo Cerrado!"); }
+            let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
             update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di});
         }
-
         function checkTri(p1,p2,o,ls) {
             const f=[]; for(let p3=0; p3<pts.length; p3++) {
                 if(p3!==p1 && p3!==p2) {
                     if(ls.some(l=>(l.s===p1&&l.e===p3)||(l.s===p3&&l.e===p1)) && ls.some(l=>(l.s===p2&&l.e===p3)||(l.s===p3&&l.e===p2))) {
-                        const v=[p1,p2,p3].sort();
-                        if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) f.push({p1:v[0],p2:v[1],p3:v[2],own:o});
+                        const v=[p1,p2,p3].sort(); if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) f.push({p1:v[0],p2:v[1],p3:v[2],own:o});
                     }
                 }
             } return f;
         }
-
         function cpuMove() {
-            let m=null; 
-            // CPU intenta conectar puntos cercanos (< 0.6)
-            for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) 
-                if(pts[i].position.distanceTo(pts[j].position)<0.6 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) { m={s:i,e:j}; break; }
-            
+            let m=null; for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) if(pts[i].position.distanceTo(pts[j].position)<0.8 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) { m={s:i,e:j}; break; }
             if(m) {
-                const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=checkTri(m.s,m.e,'guest',nl);
-                const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
+                const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
                 let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
                 update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di});
             } else update({movs:0,turn:'host',dice:null});
         }
 
-        // --- 3D ENGINE ---
+        // 3D ENGINE
         let scene, cam, ren, group, ray, reticle, arHit, controls;
-
         function init3D() {
             if(!S.data.points) return;
-            if(scene) {
-                while(group.children.length > 0){ group.remove(group.children[0]); }
-                pts=[];
-                buildBoard();
-                return;
-            }
-
-            scene = new THREE.Scene();
-            cam = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
-            
-            ren = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            ren.setSize(window.innerWidth, window.innerHeight);
-            ren.xr.enabled = true;
-            ren.domElement.style.position = 'absolute'; ren.domElement.style.top = '0'; ren.domElement.style.zIndex = '1';
+            if(scene) { while(group.children.length>0) group.remove(group.children[0]); pts=[]; build(); return; }
+            scene=new THREE.Scene(); cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.01,20);
+            ren=new THREE.WebGLRenderer({antialias:true, alpha:true}); ren.setSize(innerWidth,innerHeight); ren.xr.enabled=true;
+            ren.domElement.style.position='absolute'; ren.domElement.style.top='0'; ren.domElement.style.zIndex='1';
             document.body.appendChild(ren.domElement);
-
-            const btn = ARButton.createButton(ren, { requiredFeatures:['hit-test'], optionalFeatures:['dom-overlay'], domOverlay:{root:document.body} });
-            btn.style.pointerEvents = 'auto';
-            document.getElementById('ar-btn-zone').appendChild(btn);
-            
-            btn.addEventListener('click', () => {
-                placed = false; group.visible = false;
-                document.getElementById('bg-canvas').style.opacity = '0';
-                document.getElementById('btn-rec').style.display = 'none';
-            });
-            ren.xr.addEventListener('sessionend', () => {
-                 window.recenter();
-                 document.getElementById('bg-canvas').style.opacity = '1';
-                 document.getElementById('btn-rec').style.display = 'flex';
-            });
-
-            scene.add(new THREE.HemisphereLight(0xffffff, 0x222222, 3));
-            group = new THREE.Group(); scene.add(group);
-
-            buildBoard();
-
-            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color:0x00f3ff}));
+            const btn=ARButton.createButton(ren,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:document.body}});
+            document.getElementById('ar-zone').appendChild(btn);
+            btn.addEventListener('click',()=>{ placed=false; group.visible=false; document.getElementById('bg-canvas').style.opacity=0; document.getElementById('btn-rec').style.display='none'; });
+            ren.xr.addEventListener('sessionend',()=>{ recenter(); document.getElementById('bg-canvas').style.opacity=1; document.getElementById('btn-rec').style.display='flex'; });
+            scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); group=new THREE.Group(); scene.add(group);
+            build();
+            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
             reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
-
-            ray=new THREE.Raycaster();
-            ren.setAnimationLoop(loop);
-            
-            window.addEventListener('pointerdown', (e) => {
-                if(e.target.closest('.interactive') || e.target.closest('#ar-btn-zone')) return;
-                const cv = ren.domElement;
-                const m = new THREE.Vector2((e.clientX/cv.width)*2-1, -(e.clientY/cv.height)*2+1);
-                ray.setFromCamera(m,cam);
-                const hits=ray.intersectObjects(group.children,true);
-                const h=hits.find(x=>x.object.parent && x.object.parent.userData.id!==undefined);
-                if(h) onPtClick(h.object.parent.userData.id);
+            ray=new THREE.Raycaster(); ren.setAnimationLoop(loop);
+            window.addEventListener('pointerdown', (e)=>{
+                if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return;
+                const m=new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
+                ray.setFromCamera(m,cam); const h=ray.intersectObjects(group.children,true);
+                const obj=h.find(x=>x.object.parent && x.object.parent.userData.id!==undefined); if(obj) clickPt(obj.object.parent.userData.id);
             });
-
-            controls=new OrbitControls(cam, ren.domElement);
-            window.recenter();
+            controls=new OrbitControls(cam,ren.domElement); recenter();
         }
 
-        function buildBoard() {
-            pts=[];
-            const dataPoints = S.data.points; 
-            
-            // ESFERAS BRILLANTES (ESTILO IMAGEN)
-            const geo=new THREE.SphereGeometry(0.05,32,32);
-            const mat=new THREE.MeshStandardMaterial({
-                color:0x000000, emissive:0x00f3ff, emissiveIntensity:2, roughness:0.1
-            }); 
-            const hitGeo=new THREE.SphereGeometry(0.15); // Hitbox grande
-            const hitMat=new THREE.MeshBasicMaterial({visible:false});
-
-            dataPoints.forEach((p, i) => {
-                const m=new THREE.Mesh(geo,mat.clone());
-                m.position.set(p.x, p.y, p.z);
-                m.userData.id = i;
-                
-                // Brillo externo
-                const glow = new THREE.Mesh(new THREE.SphereGeometry(0.07,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3}));
-                m.add(glow);
-
-                const h=new THREE.Mesh(hitGeo,hitMat); m.add(h);
+        function build() {
+            pts=[]; const geo=new THREE.SphereGeometry(0.04,32,32); const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:2}); const hGeo=new THREE.SphereGeometry(0.15); const hMat=new THREE.MeshBasicMaterial({visible:false});
+            S.data.points.forEach((p,i)=>{
+                const m=new THREE.Mesh(geo,mat.clone()); m.position.set(p.x,p.y,p.z); m.userData.id=i;
+                const h=new THREE.Mesh(hGeo,hMat); m.add(h); const glow=new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})); m.add(glow);
                 group.add(m); pts.push(m);
             });
         }
-
-        window.recenter = () => {
-            group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0);
-            cam.position.set(0,2.2,0.1); cam.lookAt(0,0,0); // VISTA DESDE ARRIBA (TOP DOWN)
-        }
-
+        window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); }
         function highlight(id,on) {
-            const m=pts[id];
-            if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); }
-            else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); }
+            const m=pts[id]; if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); } else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); }
         }
 
-        function render3D() {
+        function draw() {
             if(!S.data || !group) return;
-            for(let i=group.children.length-1; i>=0; i--) if(group.children[i].userData.temp) group.remove(group.children[i]);
+            for(let i=group.children.length-1;i>=0;i--) if(group.children[i].userData.t) group.remove(group.children[i]);
             
             S.data.lines.forEach(l=>{
                 const p=l.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff';
                 const p1=pts[l.s].position; const p2=pts[l.e].position;
-                const g=new THREE.CylinderGeometry(0.015,0.015,p1.distanceTo(p2),8); // Lineas mas gruesas tipo neon
-                const m=new THREE.MeshBasicMaterial({color:c});
-                const mesh=new THREE.Mesh(g,m);
-                mesh.position.copy(p1).lerp(p2,0.5); mesh.lookAt(p2); mesh.rotateX(Math.PI/2);
-                mesh.userData.temp=true; group.add(mesh);
+                const g=new THREE.CylinderGeometry(0.012,0.012,p1.distanceTo(p2),8); 
+                const m=new THREE.MeshBasicMaterial({color:c}); 
+                const o=new THREE.Mesh(g,m);
+                o.position.copy(p1).lerp(p2,0.5); o.lookAt(p2); o.rotateX(Math.PI/2); o.userData.t=true; group.add(o);
             });
 
             S.data.tris.forEach(t=>{
-                const p=t.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff'; const i=p?p.i:'gem';
+                const p=t.own==='host'?S.data.p1:S.data.p2; 
+                const c=p?p.c:'#fff'; 
+                const i=p?p.i:'gem';
+                
                 const v=new Float32Array([pts[t.p1].position.x,pts[t.p1].position.y,pts[t.p1].position.z,pts[t.p2].position.x,pts[t.p2].position.y,pts[t.p2].position.z,pts[t.p3].position.x,pts[t.p3].position.y,pts[t.p3].position.z]);
                 const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(v,3));
-                const m=new THREE.MeshBasicMaterial({color:c, opacity:0.4, transparent:true, side:THREE.DoubleSide});
-                const mesh=new THREE.Mesh(g,m); mesh.userData.temp=true;
+                // RELLENO CON TRANSPARENCIA DEL COLOR DE JUGADOR
+                const m=new THREE.MeshBasicMaterial({color:c, opacity:0.3, transparent:true, side:THREE.DoubleSide, depthWrite:false});
+                const o=new THREE.Mesh(g,m); o.userData.t=true;
                 
-                let ig; if(i==='skull')ig=new THREE.BoxGeometry(0.05,0.05,0.05); else if(i==='star')ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='dragon')ig=new THREE.TorusKnotGeometry(0.03,0.01,64,8); else ig=new THREE.IcosahedronGeometry(0.04,0);
-                const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c,wireframe:true}));
+                // ICONO FLOTANTE
+                let ig; if(i==='atom') ig=new THREE.IcosahedronGeometry(0.05,0); else if(i==='star') ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); else ig=new THREE.IcosahedronGeometry(0.04,0); // Gem default
+                const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false})); // Solido
+                
                 const ce=new THREE.Vector3().add(pts[t.p1].position).add(pts[t.p2].position).add(pts[t.p3].position).divideScalar(3);
-                im.position.copy(ce); im.position.y+=0.05; mesh.add(im); group.add(mesh);
+                im.position.copy(ce); im.position.y+=0.08; 
+                
+                // Animacion simple
+                const frame = Date.now() * 0.001;
+                im.rotation.y = frame;
+                im.position.y += Math.sin(frame * 2) * 0.01;
+
+                o.add(im); group.add(o);
             });
         }
 
         function loop(t, frame) {
             if(controls) controls.update();
-            if(ren.xr.isPresenting) {
+            if(ren.xr.isPresenting && !placed) {
                 const s=ren.xr.getSession();
-                if(!placed) {
-                    if(frame) {
-                        s.requestReferenceSpace('viewer').then(r=>s.requestHitTestSource({space:r}).then(h=>arHit=h));
-                        if(arHit) {
-                            const h=frame.getHitTestResults(arHit);
-                            if(h.length) { reticle.visible=true; reticle.matrix.fromArray(h[0].getPose(ren.xr.getReferenceSpace()).transform.matrix); document.getElementById('ar-hint').style.display='flex'; }
-                            else reticle.visible=false;
-                        }
+                if(frame) {
+                    s.requestReferenceSpace('viewer').then(r=>s.requestHitTestSource({space:r}).then(h=>arHit=h));
+                    if(arHit) {
+                        const h=frame.getHitTestResults(arHit);
+                        if(h.length) { reticle.visible=true; reticle.matrix.fromArray(h[0].getPose(ren.xr.getReferenceSpace()).transform.matrix); document.getElementById('ar-hint').style.display='flex'; }
+                        else reticle.visible=false;
                     }
-                    const c=ren.xr.getController(0);
-                    c.addEventListener('select',()=>{
-                        if(reticle.visible){ group.position.setFromMatrixPosition(reticle.matrix); group.visible=true; placed=true; reticle.visible=false; document.getElementById('ar-hint').style.display='none'; }
-                    },{once:true});
                 }
+                const c=ren.xr.getController(0);
+                c.addEventListener('select',()=>{ if(reticle.visible){ group.position.setFromMatrixPosition(reticle.matrix); group.visible=true; placed=true; reticle.visible=false; document.getElementById('ar-hint').style.display='none'; } },{once:true});
             }
+            // Update icons rotation logic if needed per frame here or in draw()
+            // For simple effect, draw() recreates meshes, so better handling inside draw is fine for low count
+            // Ideally we keep references but for this simplicity recreating is acceptable
             ren.render(scene,cam);
         }
 
-        function toast(t,m){const e=document.getElementById('toast');document.getElementById('t-tit').innerText=t;document.getElementById('t-msg').innerText=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3000);}
-        window.exit = () => { if(confirm("¿Salir?")) location.reload(); }
+        function toast(t,m){const e=document.getElementById('toast');document.getElementById('t-head').innerText=t;document.getElementById('t-body').innerText=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3000);}
+        window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); };
     </script>
 </body>
 </html>
+
 
