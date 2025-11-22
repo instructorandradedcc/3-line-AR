@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V35.0 MASTER LINK</title>
+    <title>3 LINE-AR | V36.1 FIX</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -82,28 +83,31 @@
         .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; pointer-events: auto; }
         .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
-        /* AR Button Override */
+        /* AR Button Override: Usamos este selector global para dar estilo al botón creado por Three.js */
         #ar-zone button {
             background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important;
             color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
             border-radius: 6px !important; text-transform: uppercase !important;
+            transition: background 0.2s; /* Aseguramos la transición para iOS/Safari */
         }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
 </head>
 <body>
+    <!-- Canvas para el fondo estático 3D -->
     <canvas id="bg-canvas"></canvas>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
-        <!-- 1. LOGIN -->
+        <!-- 1. PANTALLA DE LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V35.0 MASTER LINK</p>
+                    <!-- Versión visible -->
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.1 FIX</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -112,7 +116,7 @@
             </div>
         </div>
 
-        <!-- 2. MENÚ -->
+        <!-- 2. PANTALLA DE MENÚ -->
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
             <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
@@ -150,8 +154,10 @@
                     <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CÓDIGO" maxlength="4">
                     <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
-                <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> PRÁCTICA (CPU)</button>
+                <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
+                <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.1 FIX</div>
             </div>
         </div>
 
@@ -165,7 +171,8 @@
                         <div>
                             <p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p>
                         </div>
-                        <button onclick="window.claimEnd()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold leading-tight">SIN<br>JUGADAS</button>
+                        <!-- Modificado a 'SIN JUGADAS' como se especificó -->
+                        <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold leading-tight">SIN<br>JUGADAS</button>
                     </div>
                 </div>
                 <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span><span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span></div>
@@ -202,6 +209,7 @@
         </div>
     </div>
 
+    <!-- Zona de botones AR -->
     <div id="ar-zone" class="absolute bottom-8 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
 
     <script type="module">
@@ -209,15 +217,27 @@
         import { ARButton } from 'three/addons/webxr/ARButton.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configuración y variables globales
+        setLogLevel('Debug');
         const defaultConf = { apiKey:"AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
         const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) ? JSON.parse(__firebase_config) : defaultConf;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne-flux';
         
         let app, auth, db;
-        try { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); } catch(e) { console.error(e); }
+        try { 
+            app = initializeApp(firebaseConfig); 
+            auth = getAuth(app); 
+            db = getFirestore(app); 
+            if (typeof __initial_auth_token !== 'undefined') {
+                signInWithCustomToken(auth, __initial_auth_token).catch(e => console.error("Custom token sign in failed:", e));
+            } else {
+                signInAnonymously(auth).catch(e => console.error("Anonymous sign in failed:", e));
+            }
+        } catch(e) { console.error("Firebase initialization failed:", e); }
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(type) {
@@ -236,6 +256,7 @@
         let pts=[], selPt=null, placed=false, roomUnsub=null, gameStartTime=0, currentScale=1.0;
         const LOSE_MSGS = ["¡BUEN INTENTO!", "LA PRÓXIMA SERÁ TUYA", "GRAN ESTRATEGIA", "BUENA PARTIDA", "SIGUE ASÍ"];
 
+        // Generación de puntos (Tablero Caótico)
         function genPoints() {
             const p=[]; const count=16; const minD=0.25;
             for(let i=0;i<count;i++){
@@ -250,44 +271,49 @@
             return p;
         }
 
-        async function checkAR() {
-            const el = document.getElementById('ar-status');
-            if('xr' in navigator) {
-                const ok = await navigator.xr.isSessionSupported('immersive-ar').catch(()=>false);
-                if(ok) el.innerHTML='<span class="text-cyber font-bold">AR DETECTADO</span>'; else el.innerText="MODO 3D (PC)";
-            } else el.innerText="MODO 3D (PC)";
-        }
-
+        // Regla: No cruzar muros sólidos (triángulos conquistados)
         function intersect(a, b, c, d) {
             const x1=a.x, y1=a.z, x2=b.x, y2=b.z, x3=c.x, y3=c.z, x4=d.x, y4=d.z;
             const denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1);
             if (denom === 0) return false;
             const ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom;
             const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom;
-            return (ua > 0.01 && ua < 0.99 && ub > 0.01 && ub < 0.99);
+            return (ua > 0.01 && ua < 0.99 && ub > 0.01 && ub < 0.99); // Excluir extremos
         }
         function checkCollision(p1, p2, tris) {
             const A = pts[p1].position; const B = pts[p2].position;
             for (let t of tris) {
                 const v1=pts[t.p1].position; const v2=pts[t.p2].position; const v3=pts[t.p3].position;
+                // Verificar intersección con las 3 líneas del triángulo conquistado
                 if (intersect(A, B, v1, v2) || intersect(A, B, v2, v3) || intersect(A, B, v3, v1)) return true;
             }
             return false;
         }
+        // Regla: No inclusión de otro punto
         function isPointInTriangle(p, a, b, c) {
             const area = 0.5 * (-b.z * c.x + a.z * (-b.x + c.x) + a.x * (b.z - c.z) + b.x * c.z);
             const sign = area < 0 ? -1 : 1;
             const s = (a.z * c.x - a.x * c.z + (c.z - a.z) * p.x + (a.x - c.x) * p.z) * sign;
             const t = (a.x * b.z - a.z * b.x + (a.z - b.z) * p.x + (b.x - a.x) * p.z) * sign;
-            return s > 0 && t > 0 && (s + t) < 2 * area * sign;
+            // Usamos un pequeño margen para inclusión de puntos casi-colineales
+            return s > 0.001 && t > 0.001 && (s + t) < 2 * area * sign - 0.001;
         }
 
+        // AUTH & NAVIGATION
         onAuthStateChanged(auth, async u => {
             S.user = u;
-            if(u) { document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE'; nav('s-menu'); checkAR(); }
+            if(u) { 
+                document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
+                nav('s-menu'); 
+                checkAR(); 
+            } else {
+                // Si la sesión es anónima/cerrada, mostramos login o esperamos
+                if (!auth.currentUser) nav('s-login'); 
+            }
         });
-        window.doLogin = async () => { try{ await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { document.getElementById('login-msg').innerText = "ERROR: POPUP"; } };
-        window.logout = () => { if(confirm("¿Salir?")) signOut(auth).then(()=>location.reload()); };
+        // Simplificado a Google Sign-In como se pide en el informe
+        window.doLogin = async () => { try{ await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { toast("ERROR","Inicio de sesión fallido."); } };
+        window.logout = () => { if(confirm("¿Cerrar sesión?")) signOut(auth).then(()=>location.reload()); };
 
         function nav(id) {
             ['s-login','s-menu','s-game','win-screen'].forEach(i => {
@@ -307,6 +333,7 @@
             toast("SISTEMA", "DESCONECTADO");
         }
         
+        // Personalización de perfil (Color y Marca/Icono)
         window.setProf = (t,v,el) => {
             S.prof[t]=v; 
             const parent = el.parentNode; 
@@ -316,68 +343,165 @@
                 else { c.style.color='#555'; c.style.textShadow='none'; c.style.transform='scale(1)'; }
             });
             el.classList.add('active'); 
-            if(t==='c') { el.style.boxShadow=`0 0 15px ${v}`; el.style.borderColor='#fff'; }
-            else { el.style.color='#00f3ff'; el.style.textShadow='0 0 10px #00f3ff'; el.style.transform='scale(1.2)'; }
+            if(t==='c') { 
+                el.style.boxShadow=`0 0 15px ${v}`; 
+                el.style.borderColor='#fff'; 
+            }
+            else { 
+                // Aseguramos que el icono activo tome el color del perfil actual (S.prof.c)
+                const currentProfileColor = S.prof.c;
+                el.style.color=currentProfileColor; 
+                el.style.textShadow=`0 0 10px ${currentProfileColor}`; 
+                el.style.transform='scale(1.2)'; 
+            }
         }
-        window.showJoin = () => document.getElementById('join-box').classList.remove('hidden');
+        window.showJoin = () => document.getElementById('join-box').classList.toggle('hidden');
         function showLoad(show, txt) { const l = document.getElementById('mini-loader'); if(show) { l.classList.remove('hidden'); document.getElementById('mini-load-txt').innerText=txt; } else l.classList.add('hidden'); }
 
-        // CORRECCION RUTA FIREBASE
+        // FIREBASE & LOGICA DE SALAS
         const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
+        // Búsqueda de sala pública o creación
         window.quickMatch = async () => {
-            if(!S.user) return;
+            if(!S.user) return toast("ERROR","Debe iniciar sesión.");
             S.cpu=false; showLoad(true,"BUSCANDO...");
             try {
-                const q = await getDocs(ROOMS_COLL);
-                let f=null; for(const d of q.docs) { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) { f=d.id; break; } }
+                // Modificado para usar getDocs en la colección, que es el uso correcto para buscar
+                const qSnapshot = await getDocs(ROOMS_COLL);
+                let f=null; 
+                qSnapshot.forEach(d => { 
+                    const v=d.data(); 
+                    if(v.stat==='wait' && v.host!==S.user.uid) { f=d.id.replace('room_',''); } 
+                });
+                
                 if(f) join(f); else create(true);
-            } catch(e) { showLoad(false); toast("ERROR","Sin Red. Modo CPU."); setTimeout(window.vsCpu,1500); }
+            } catch(e) { 
+                console.error("QuickMatch error:", e); 
+                showLoad(false); 
+                toast("ERROR","Error de red. Intente de nuevo."); 
+            }
         };
+
         window.createRoom = () => create(false);
-        window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
+        window.joinRoom = () => { 
+            const c=document.getElementById('code-in').value.toUpperCase(); 
+            if(c.length===4) join(c);
+            else toast("ERROR", "Código inválido (4 letras)");
+        };
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
-            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}, scale: 1.0};
+            // Generamos un estado inicial de juego
+            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'atom'}, scale: 1.0};
             start();
         };
 
         async function create(pub) {
             if(!S.user) return;
-            S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
-            showLoad(true,"CREANDO...");
+            S.role='host'; 
+            // Generar código único de 4 letras
+            const c=Math.random().toString(36).substring(2,6).toUpperCase(); 
+            S.room=c;
+            showLoad(true, pub ? "CREANDO PÚBLICA..." : "CREANDO SALA...");
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
-            await setDoc(docRef, {
-                host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, scale:1.0
-            });
-            sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
+            try {
+                await setDoc(docRef, {
+                    host:S.user.uid, 
+                    stat:'wait', 
+                    pub:pub, 
+                    turn:'host', 
+                    points:genPoints(), 
+                    lines:[], 
+                    tris:[], 
+                    sc:{host:0,guest:0}, 
+                    dice:null, 
+                    movs:0, 
+                    skips:0, 
+                    p1:S.prof, 
+                    scale:1.0
+                });
+                sub(c); 
+                document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
+            } catch (e) {
+                console.error("Create Room error:", e);
+                showLoad(false);
+                toast("ERROR", "Fallo al crear la sala.");
+            }
         }
+
+        // Blindaje de conexión (V36.0/V36.1)
         async function join(c) {
             if(!S.user) return;
             S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
-            await updateDoc(docRef, { guest:S.user.uid, stat:'play', p2:S.prof });
-            sub(c); document.getElementById('room-lbl').innerText=c;
+            const docId = `room_${c}`;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', docId);
+            
+            try {
+                // Leemos el estado actual para blindar la unión
+                const roomSnap = await getDoc(docRef);
+                
+                if (!roomSnap.exists()) {
+                    showLoad(false);
+                    toast("ERROR", "Sala no encontrada o código incorrecto.");
+                    S.room = null;
+                    return;
+                }
+
+                const roomData = roomSnap.data();
+                let updateData = { guest:S.user.uid, stat:'play', p2:S.prof };
+
+                // Si la sala estaba en 'wait', iniciamos el dado.
+                if(roomData.stat === 'wait') {
+                    // Inicializamos dados y movimientos para que el HOST juegue primero
+                    updateData = {...updateData, dice: roomData.dice || 6, movs: roomData.movs || 6, skips: 0, turn: roomData.turn || 'host'};
+                }
+                
+                await updateDoc(docRef, updateData);
+
+                sub(c); 
+                document.getElementById('room-lbl').innerText=c;
+
+            } catch(e) { 
+                showLoad(false);
+                toast("ERROR", "Fallo al intentar unirse.");
+                S.room = null;
+                console.error("Join error:", e);
+            }
         }
+        
         function sub(c) {
             if(roomUnsub) roomUnsub();
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             roomUnsub = onSnapshot(docRef, s => {
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
-                    if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
+                    if(d.stat==='play') { 
+                        if(document.getElementById('s-game').classList.contains('hidden')) start(); 
+                        ui(); 
+                    }
+                    else if(d.stat==='wait') {
+                        if(S.role==='host') showLoad(true,"ESPERANDO RIVAL...");
+                    }
                     else if(d.stat==='end') endGame(d);
-                    else if(S.role==='host') showLoad(true,"ESPERANDO...");
+                } else if(S.room) {
+                    toast("FIN", "Sala eliminada.");
+                    window.goHome();
                 }
+            }, err => {
+                console.error("Firestore snapshot error:", err);
+                toast("ERROR", "Pérdida de sincronización.");
             });
         }
-        function start() { showLoad(false); nav('s-game'); init3D(); gameStartTime = Date.now(); toast("SISTEMA","LISTO"); }
+        function start() { showLoad(false); nav('s-game'); init3D(); gameStartTime = Date.now(); toast("SISTEMA","PARTIDA INICIADA"); }
 
+        // Funciones de juego
         function checkStatus() {
             const d = S.data;
+            if (d.stat !== 'play') return;
+            // Lógica para revisar si quedan movimientos válidos
             let movesLeft = 0;
             for(let i=0; i<pts.length; i++) {
                 for(let j=i+1; j<pts.length; j++) {
+                    // Si el punto está cerca, la línea no existe y no cruza muros
                     if(pts[i].position.distanceTo(pts[j].position) < 1.2 && 
                        !d.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && 
                        !checkCollision(i,j,d.tris)) {
@@ -392,13 +516,27 @@
             const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Rival"); if(d.movs>0) return toast("JUEGA","Usa tus líneas");
             const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
             setTimeout(()=>{
-                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v, skips:0});
-                toast("DADO",`ENERGÍA: ${v}`);
+                el.classList.remove('rolling'); 
+                const v=Math.ceil(Math.random()*6); 
+                update({dice:v, movs:v, skips:0});
+                toast("DADO",`ENERGÍA: ${v} líneas disponibles.`);
             },500);
         };
         
-        window.claimEnd = () => { const d=S.data; if(d.turn===S.role) update({stat:'end'}); };
-        window.skipTurn = () => { const d=S.data; if(d.turn===S.role) { const t = d.turn==='host'?'guest':'host'; update({movs:0, turn:t, dice:null}); } }
+        window.skipTurn = () => { 
+            const d=S.data; 
+            if(d.turn===S.role) { 
+                const newSkips = (d.skips || 0) + 1;
+                // Si ambos jugadores consecutivamente no tienen jugadas, termina la partida.
+                if (newSkips >= 2) {
+                    update({stat:'end'});
+                } else {
+                    const t = d.turn==='host'?'guest':'host'; 
+                    update({movs:0, turn:t, dice:null, skips: newSkips}); 
+                    toast("TURNO SALTADO", "Sin jugadas válidas. Pasa el turno.");
+                }
+            } 
+        }
 
         function endGame(d) {
             if(document.getElementById('s-game').classList.contains('hidden')) return;
@@ -414,8 +552,16 @@
         }
 
         function update(o) {
-            if(S.cpu) { Object.assign(S.data,o); if(S.data.stat === 'end') endGame(S.data); else ui(); } 
-            else updateDoc(doc(db,'artifacts',appId,'public','data','rooms',`room_${S.room}`), o);
+            if(S.cpu) { 
+                Object.assign(S.data,o); 
+                if(S.data.stat === 'end') endGame(S.data); 
+                else ui(); 
+            } else {
+                updateDoc(doc(db,'artifacts',appId,'public','data','rooms',`room_${S.room}`), o).catch(e => {
+                    console.error("Firestore update failed:", e);
+                    toast("ERROR","No se pudo guardar la jugada.");
+                });
+            }
         }
 
         function ui() {
@@ -423,19 +569,54 @@
             document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
             document.getElementById('sc-p2').innerText = S.role==='host'?d.sc.guest:d.sc.host;
             const b=document.getElementById('mov-hud'); const dv=document.getElementById('dice-vis');
-            if(d.turn===S.role && d.movs>0) { b.style.opacity=1; document.getElementById('mov-cnt').innerText=d.movs; dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; }
-            else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#444'; dv.style.color='#555'; }
+            
+            // Control del HUD y dado
+            if(d.turn===S.role && d.movs>0) { 
+                b.style.opacity=1; 
+                document.getElementById('mov-cnt').innerText=d.movs; 
+                dv.innerText=d.dice; 
+                dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; 
+            }
+            else { 
+                b.style.opacity=0; 
+                dv.innerText=d.dice||"?"; 
+                dv.style.borderColor=d.dice?'#00f3ff':'#444'; // Si hay dado pero no es tu turno, se ve el valor
+                dv.style.color=d.dice?'#00f3ff':'#555'; 
+            }
+            
+            // Sincronización de escala en AR
             if(group && d.scale) { currentScale = d.scale; group.scale.set(currentScale, currentScale, currentScale); }
+            
             draw();
-            if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3, skips:0}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
-            if(S.role === 'host') checkStatus();
+            
+            // Lógica de CPU
+            if(S.cpu && d.turn==='guest') { 
+                if(d.movs===0 && !d.dice) {
+                    // CPU Lanza dado
+                    setTimeout(()=>update({dice:Math.ceil(Math.random()*6),movs:3, skips:0}),1000); 
+                } else if(d.movs>0) {
+                    // CPU Realiza jugada
+                    setTimeout(cpuMove,1500);
+                }
+            }
+            
+            // Arbitro automático (solo el host chequea el estado de fin)
+            if(S.role === 'host' && !S.cpu) checkStatus();
         }
 
         function clickPt(id) {
-            const d=S.data; if(d.turn!==S.role || d.movs<=0) return toast("ERROR","Lanza el dado");
+            const d=S.data; if(d.turn!==S.role || d.movs<=0) return toast("ERROR","Lanza el dado o espera tu turno");
             playSfx('click');
             if(selPt===null) { selPt=id; highlight(id,true); }
-            else { if(selPt===id) { highlight(id,false); selPt=null; } else { tryLine(selPt,id); highlight(selPt,false); selPt=null; } }
+            else { 
+                if(selPt===id) { 
+                    highlight(id,false); selPt=null; // Deseleccionar
+                } else { 
+                    tryLine(selPt,id); 
+                    highlight(selPt,false); 
+                    selPt=null; 
+                } 
+            }
         }
 
         function tryLine(p1,p2) {
@@ -443,56 +624,155 @@
             if(v1.distanceTo(v2) > 1.2) return toast("RANGO","Demasiado lejos");
             if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("OCUPADO","Enlace existente");
             if(checkCollision(p1, p2, d.tris)) { playSfx('error'); return toast("BLOQUEADO", "Territorio Protegido"); }
-            const nl=[...d.lines,{s:p1,e:p2,own:S.role}]; const nt=checkTri(p1,p2,S.role,nl);
-            const sc={...d.sc}; if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); toast("CONQUISTA","¡Nexo Cerrado!"); }
-            let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
+            
+            // Intentar trazar línea y chequear triángulos
+            const nl=[...d.lines,{s:p1,e:p2,own:S.role}]; 
+            const nt=checkTri(p1,p2,S.role,nl);
+            
+            const sc={...d.sc}; 
+            if(nt.length) { 
+                sc[S.role]+=nt.length; 
+                playSfx('win'); 
+                toast("CONQUISTA",`¡Nexo Cerrado! (+${nt.length} tris)`); 
+            } else {
+                toast("LÍNEA", "Enlace establecido.");
+            }
+            
+            let m=d.movs-1; 
+            let t=d.turn; 
+            let di=d.dice; 
+            if(m===0){ 
+                t=t==='host'?'guest':'host'; 
+                di=null; 
+            }
+            
+            // Actualización de estado atómica
             update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
         }
 
         function checkTri(p1,p2,o,ls) {
-            const f=[]; for(let p3=0; p3<pts.length; p3++) {
+            const f=[]; 
+            for(let p3=0; p3<pts.length; p3++) {
                 if(p3!==p1 && p3!==p2) {
+                    // Si las dos líneas restantes existen (p1-p3 y p2-p3)
                     if(ls.some(l=>(l.s===p1&&l.e===p3)||(l.s===p3&&l.e===p1)) && ls.some(l=>(l.s===p2&&l.e===p3)||(l.s===p3&&l.e===p2))) {
                         const v1 = pts[p1].position; const v2 = pts[p2].position; const v3 = pts[p3].position;
-                        let valid = true; for(let i=0; i<pts.length; i++) if(i!==p1 && i!==p2 && i!==p3 && isPointInTriangle(pts[i].position, v1, v2, v3)) { valid=false; break; }
-                        if(valid) { const v=[p1,p2,p3].sort(); if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) f.push({p1:v[0],p2:v[1],p3:v[2],own:o}); }
+                        let valid = true; 
+                        
+                        // Regla de No Inclusión: Si otro punto cae dentro, NO es válido
+                        for(let i=0; i<pts.length; i++) {
+                            if(i!==p1 && i!==p2 && i!==p3) {
+                                if(isPointInTriangle(pts[i].position, v1, v2, v3)) { 
+                                    valid=false; 
+                                    break; 
+                                }
+                            }
+                        }
+                        
+                        if(valid) { 
+                            // Solo si el triángulo es nuevo
+                            const v=[p1,p2,p3].sort(); 
+                            if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) {
+                                f.push({p1:v[0],p2:v[1],p3:v[2],own:o}); 
+                            }
+                        }
                     }
                 }
-            } return f;
+            } 
+            return f;
         }
 
+        // Lógica de movimiento para el oponente CPU
         function cpuMove() {
             let m=null; 
-            for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) 
-                if(pts[i].position.distanceTo(pts[j].position)<0.8 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !checkCollision(i,j,S.data.tris)) { m={s:i,e:j}; break; }
+            
+            // Prioridad: Buscar línea que cierre un triángulo
+            for(let i=0; i<pts.length; i++) {
+                for(let j=i+1; j<pts.length; j++) {
+                    if(pts[i].position.distanceTo(pts[j].position)<1.2 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !checkCollision(i,j,S.data.tris)) {
+                        const testLines = [...S.data.lines, {s:i,e:j,own:'guest'}];
+                        if (checkTri(i, j, 'guest', testLines).length > 0) {
+                            m={s:i,e:j};
+                            break;
+                        }
+                    }
+                }
+                if(m) break;
+            }
+
+            // Si no hay conquista, trazar una línea válida cualquiera (cercana)
+            if(!m) {
+                for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) 
+                    if(pts[i].position.distanceTo(pts[j].position)<0.8 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !checkCollision(i,j,S.data.tris)) { m={s:i,e:j}; break; }
+            }
+            
             if(m) {
-                const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
-                let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
+                const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; 
+                const nt=checkTri(m.s,m.e,'guest',nl); 
+                const sc={...S.data.sc}; 
+                if(nt.length) sc.guest+=nt.length;
+                
+                let mo=S.data.movs-1; 
+                let t=S.data.turn; 
+                let di=S.data.dice; 
+                if(mo===0){t='host'; di=null;}
+                
                 update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
-            } else update({movs:0, turn:'host', dice:null});
+            } else {
+                // Si CPU no encuentra jugada, pasa el turno (simula 'SIN JUGADAS')
+                update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1});
+            }
         }
 
+        // THREE.JS & AR SETUP
         let scene, cam, ren, group, ray, reticle, arHit, controls;
         let touchDist = 0;
 
+        function checkAR() {
+            const el = document.getElementById('ar-status');
+            if('xr' in navigator) {
+                navigator.xr.isSessionSupported('immersive-ar')
+                    .then(ok => {
+                        if(ok) el.innerHTML='<span class="text-neon font-bold">AR DETECTADO</span>'; 
+                        else el.innerText="MODO 3D (No AR)";
+                    })
+                    .catch(()=>el.innerText="MODO 3D (Error AR)");
+            } else el.innerText="MODO 3D (PC)";
+        }
+
         function init3D() {
             if(!S.data.points) return;
-            if(scene) { while(group.children.length>0) group.remove(group.children[0]); pts=[]; build(); return; }
-            scene=new THREE.Scene(); cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.01,20);
-            ren=new THREE.WebGLRenderer({antialias:true, alpha:true}); ren.setSize(innerWidth,innerHeight); ren.xr.enabled=true;
+            if(scene) { while(group.children.length>0) group.remove(group.children[0]); pts=[]; build(); return; } // Reiniciar tablero
+            
+            scene=new THREE.Scene(); 
+            cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.01,20);
+            ren=new THREE.WebGLRenderer({antialias:true, alpha:true}); 
+            ren.setSize(innerWidth,innerHeight); 
+            ren.xr.enabled=true;
             ren.domElement.style.position='absolute'; ren.domElement.style.top='0'; ren.domElement.style.zIndex='1';
             document.body.appendChild(ren.domElement);
             
+            // CORRECCIÓN V36.0: Simplificación del handler del botón AR (Activación inmediata)
             navigator.xr?.isSessionSupported('immersive-ar').then(supported => {
                 if(supported) {
-                    const btn=ARButton.createButton(ren,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:document.body}});
+                    // Creamos el botón nativo de WebXR
+                    const btn = ARButton.createButton(ren, {
+                        requiredFeatures: ['hit-test'],
+                        optionalFeatures: ['dom-overlay'],
+                        domOverlay: { root: document.body }
+                    });
                     document.getElementById('ar-zone').appendChild(btn);
-                    btn.addEventListener('click',()=>{ 
-                        placed=false; group.visible=false; 
-                        document.getElementById('bg-canvas').style.opacity=0; 
-                        document.getElementById('btn-rec').style.display='none';
-                        document.getElementById('ar-hint').style.display='flex';
-                        document.getElementById('ar-scale-hint').style.display='block';
+
+                    // Preparamos la UI para AR al iniciar la sesión
+                    btn.addEventListener('click', ()=>{ 
+                        // Necesario asegurar que se pide la sesión inmediatamente
+                        if (ren.xr.isPresenting) {
+                            placed=false; group.visible=false; 
+                            document.getElementById('bg-canvas').style.opacity=0; 
+                            document.getElementById('btn-rec').style.display='none';
+                            document.getElementById('ar-hint').style.display='flex';
+                            document.getElementById('ar-scale-hint').style.display='block';
+                        }
                     });
                 }
             });
@@ -502,89 +782,215 @@
                 document.getElementById('bg-canvas').style.opacity=1; 
                 document.getElementById('btn-rec').style.display='flex';
                 document.getElementById('ar-hint').style.display='none';
+                document.getElementById('ar-scale-hint').style.display='none';
             });
             
-            scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); group=new THREE.Group(); scene.add(group);
+            scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); 
+            group=new THREE.Group(); 
+            scene.add(group);
             build();
-            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
-            reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
-            ray=new THREE.Raycaster(); ren.setAnimationLoop(loop);
             
-            window.addEventListener('touchstart', e => { if(e.touches.length===2) touchDist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); });
+            // Reticle para detección de plano en AR
+            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
+            reticle.visible=false; 
+            reticle.matrixAutoUpdate=false; 
+            scene.add(reticle);
+            
+            ray=new THREE.Raycaster(); 
+            ren.setAnimationLoop(loop);
+            
+            // Gestos Pinch-to-Zoom para escalar en AR
+            window.addEventListener('touchstart', e => { 
+                if(e.touches.length===2) touchDist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); 
+            });
             window.addEventListener('touchmove', e => {
                 if(e.touches.length===2 && placed && ren.xr.isPresenting) {
                     const newDist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY);
                     const delta = (newDist - touchDist) * 0.01;
-                    let ns = currentScale + delta; if(ns<0.2) ns=0.2; if(ns>3.0) ns=3.0;
-                    currentScale = ns; group.scale.set(ns,ns,ns); touchDist = newDist;
+                    let ns = currentScale + delta; 
+                    if(ns<0.1) ns=0.1; 
+                    if(ns>5.0) ns=5.0;
+                    currentScale = ns; 
+                    group.scale.set(ns,ns,ns); 
+                    touchDist = newDist;
                     update({scale: ns});
                 }
             });
 
+            // Detección de clicks en puntos (Raycasting)
             window.addEventListener('pointerdown', (e)=>{
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return;
                 const m=new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
-                ray.setFromCamera(m,cam); const h=ray.intersectObjects(group.children,true);
-                const obj=h.find(x=>x.object.parent && x.object.parent.userData.id!==undefined); if(obj) clickPt(obj.object.parent.userData.id);
+                ray.setFromCamera(m,cam); 
+                const h=ray.intersectObjects(group.children,true);
+                // Buscar el objeto cuya 'parent' tenga la ID de punto (hitbox)
+                const obj=h.find(x=>x.object.parent && x.object.parent.userData.id!==undefined); 
+                if(obj) clickPt(obj.object.parent.userData.id);
             });
-            controls=new OrbitControls(cam,ren.domElement); recenter();
+            
+            // Controles de órbita (Modo 3D)
+            controls=new OrbitControls(cam,ren.domElement); 
+            recenter();
         }
 
         function build() {
-            pts=[]; const geo=new THREE.SphereGeometry(0.04,32,32); const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:2}); const hGeo=new THREE.SphereGeometry(0.15); const hMat=new THREE.MeshBasicMaterial({visible:false});
+            pts=[]; 
+            const geo=new THREE.SphereGeometry(0.04,32,32); 
+            const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:2}); 
+            const hGeo=new THREE.SphereGeometry(0.15); // Hitbox Aumentado
+            const hMat=new THREE.MeshBasicMaterial({visible:false});
+            
             S.data.points.forEach((p,i)=>{
-                const m=new THREE.Mesh(geo,mat.clone()); m.position.set(p.x,p.y,p.z); m.userData.id=i;
-                const h=new THREE.Mesh(hGeo,hMat); m.add(h); const glow=new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})); m.add(glow);
-                group.add(m); pts.push(m);
+                const m=new THREE.Mesh(geo,mat.clone()); 
+                m.position.set(p.x,p.y,p.z); 
+                m.userData.id=i;
+                
+                // Hitbox para mejor precisión en móvil
+                const h=new THREE.Mesh(hGeo,hMat); 
+                m.add(h); 
+                
+                // Efecto de glow en el punto
+                const glow=new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})); 
+                m.add(glow);
+                
+                group.add(m); 
+                pts.push(m);
             });
         }
-        window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); currentScale=1.0; group.scale.set(1,1,1); }
-        function highlight(id,on) { const m=pts[id]; if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); } else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); } }
+        
+        // Función para re-centrar la escena (Modo 3D)
+        window.recenter = () => { 
+            group.visible=true; 
+            placed=true; 
+            group.position.set(0,0,0); 
+            group.rotation.set(0,0,0); 
+            cam.position.set(0,2.0,0.1); 
+            cam.lookAt(0,0,0); 
+            currentScale=1.0; 
+            group.scale.set(1,1,1); 
+            if(S.room && S.room !== 'CPU') update({scale: 1.0}); // Sincronizar escala inicial
+        }
+        
+        // Resaltar punto seleccionado
+        function highlight(id,on) { 
+            const m=pts[id]; 
+            if(on) { 
+                m.scale.set(1.5,1.5,1.5); 
+                m.material.emissive.setHex(0xffffff); 
+            } else { 
+                m.scale.set(1,1,1); 
+                m.material.emissive.setHex(0x00f3ff); 
+            } 
+        }
 
         function draw() {
             if(!S.data || !group) return;
+            // Limpiar líneas y triángulos existentes
             for(let i=group.children.length-1;i>=0;i--) if(group.children[i].userData.t) group.remove(group.children[i]);
+            
+            // Dibujar líneas
             S.data.lines.forEach(l=>{
-                const p=l.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff';
+                const p=l.own==='host'?S.data.p1:S.data.p2; 
+                const c=p?new THREE.Color(p.c):new THREE.Color('#fff');
                 const p1=pts[l.s].position; const p2=pts[l.e].position;
-                const g=new THREE.CylinderGeometry(0.012,0.012,p1.distanceTo(p2),8); const m=new THREE.MeshBasicMaterial({color:c}); const o=new THREE.Mesh(g,m);
-                o.position.copy(p1).lerp(p2,0.5); o.lookAt(p2); o.rotateX(Math.PI/2); o.userData.t=true; group.add(o);
+                const g=new THREE.CylinderGeometry(0.012,0.012,p1.distanceTo(p2),8); 
+                const m=new THREE.MeshBasicMaterial({color:c, emissive:c, emissiveIntensity:1.5}); 
+                const o=new THREE.Mesh(g,m);
+                o.position.copy(p1).lerp(p2,0.5); 
+                o.lookAt(p2); 
+                o.rotateX(Math.PI/2); 
+                o.userData.t=true; 
+                group.add(o);
             });
+            
+            // Dibujar triángulos (Tris)
             S.data.tris.forEach(t=>{
-                const p=t.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff'; const i=p?p.i:'gem';
-                const v=new Float32Array([pts[t.p1].position.x,pts[t.p1].position.y,pts[t.p1].position.z,pts[t.p2].position.x,pts[t.p2].position.y,pts[t.p2].position.z,pts[t.p3].position.x,pts[t.p3].position.y,pts[t.p3].position.z]);
-                const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(v,3));
+                const p=t.own==='host'?S.data.p1:S.data.p2; 
+                const c=p?p.c:'#fff'; 
+                const i=p?p.i:'gem';
+                
+                // Geometría del triángulo
+                const v=new Float32Array([
+                    pts[t.p1].position.x,pts[t.p1].position.y,pts[t.p1].position.z,
+                    pts[t.p2].position.x,pts[t.p2].position.y,pts[t.p2].position.z,
+                    pts[t.p3].position.x,pts[t.p3].position.y,pts[t.p3].position.z
+                ]);
+                const g=new THREE.BufferGeometry(); 
+                g.setAttribute('position',new THREE.BufferAttribute(v,3));
+                
+                // Malla semi-transparente del área conquistada
                 const m=new THREE.MeshBasicMaterial({color:c, opacity:0.3, transparent:true, side:THREE.DoubleSide, depthWrite:false});
-                const o=new THREE.Mesh(g,m); o.userData.t=true;
-                let ig; if(i==='atom') ig=new THREE.IcosahedronGeometry(0.05,0); else if(i==='star') ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); else ig=new THREE.IcosahedronGeometry(0.04,0); 
-                const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false})); 
+                const o=new THREE.Mesh(g,m); 
+                o.userData.t=true;
+                
+                // Icono (Marca) en el centro del triángulo
+                let ig; 
+                if(i==='atom') ig=new THREE.IcosahedronGeometry(0.05,0); 
+                else if(i==='star') ig=new THREE.OctahedronGeometry(0.05,0); 
+                else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); 
+                else ig=new THREE.IcosahedronGeometry(0.04,0); // gem
+                
+                const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false, emissive:c, emissiveIntensity:0.5})); 
+                
+                // Centroide
                 const ce=new THREE.Vector3().add(pts[t.p1].position).add(pts[t.p2].position).add(pts[t.p3].position).divideScalar(3);
-                im.position.copy(ce); im.position.y+=0.08; 
-                const frame = Date.now() * 0.001; im.rotation.y = frame; im.position.y += Math.sin(frame * 2) * 0.01;
-                o.add(im); group.add(o);
+                im.position.copy(ce); 
+                im.position.y+=0.08; 
+                
+                // Animación simple del icono
+                const frame = Date.now() * 0.001; 
+                im.rotation.y = frame; 
+                im.position.y += Math.sin(frame * 2) * 0.01;
+                
+                o.add(im); 
+                group.add(o);
             });
         }
 
+        // Bucle principal de animación (para 3D y AR)
         function loop(t, frame) {
             if(controls) controls.update();
+            
+            // Lógica de AR (Detección de plano y colocación)
             if(ren.xr.isPresenting && !placed) {
                 const s=ren.xr.getSession();
+                
+                // Solicitud de HitTest Source (necesario para AR en Three.js)
                 if(frame) {
-                    s.requestReferenceSpace('viewer').then(r=>s.requestHitTestSource({space:r}).then(h=>arHit=h));
+                    if (!arHit) {
+                        s.requestReferenceSpace('viewer').then(r=>s.requestHitTestSource({space:r}).then(h=>arHit=h));
+                    }
                     if(arHit) {
                         const h=frame.getHitTestResults(arHit);
-                        if(h.length) { reticle.visible=true; reticle.matrix.fromArray(h[0].getPose(ren.xr.getReferenceSpace()).transform.matrix); document.getElementById('ar-hint').style.display='flex'; }
+                        if(h.length) { 
+                            reticle.visible=true; 
+                            // Colocar reticle en el plano detectado
+                            reticle.matrix.fromArray(h[0].getPose(ren.xr.getReferenceSpace()).transform.matrix); 
+                            document.getElementById('ar-hint').style.display='flex'; 
+                        }
                         else reticle.visible=false;
                     }
                 }
+                
+                // Colocación al hacer tap/select
                 const c=ren.xr.getController(0);
-                c.addEventListener('select',()=>{ if(reticle.visible){ group.position.setFromMatrixPosition(reticle.matrix); group.visible=true; placed=true; reticle.visible=false; document.getElementById('ar-hint').style.display='none'; } },{once:true});
+                // Usamos un listener de 'select' en el controlador de XR para detectar el toque
+                c.addEventListener('select',()=>{ 
+                    if(reticle.visible){ 
+                        group.position.setFromMatrixPosition(reticle.matrix); 
+                        group.visible=true; 
+                        placed=true; 
+                        reticle.visible=false; 
+                        document.getElementById('ar-hint').style.display='none'; 
+                    } 
+                },{once:true});
             }
             ren.render(scene,cam);
         }
 
+        // Función de Toast para mensajes no intrusivos
         function toast(t,m){const e=document.getElementById('toast');document.getElementById('t-head').innerText=t;document.getElementById('t-body').innerText=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3000);}
-        window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); };
+
     </script>
 </body>
 </html>
