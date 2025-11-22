@@ -3,40 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | Multiplayer</title>
+    <title>3 LINE-AR | Conecta & Conquista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* Estética Cyberpunk / Sci-Fi para 3 LINE-AR */
-        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background-color: #050505; }
+        /* --- ESTÉTICA CYBERPUNK / SCI-FI --- */
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background-color: #050505; color: white; }
         .font-orbitron { font-family: 'Orbitron', sans-serif; }
         
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         .interactive { pointer-events: auto; }
         
-        /* Panel de Cristal Oscuro */
+        /* Cristal Esmerilado Tecnológico */
         .glass {
-            background: rgba(10, 10, 10, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 255, 255, 0.1);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
+            background: rgba(12, 12, 14, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 255, 0.15);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
         }
         
-        /* Efectos de Neón */
-        .neon-text { text-shadow: 0 0 10px rgba(6, 182, 212, 0.7); }
-        .neon-border { box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
+        /* Efectos de Neón y Animaciones */
+        .neon-text { text-shadow: 0 0 10px rgba(6, 182, 212, 0.7), 0 0 20px rgba(6, 182, 212, 0.5); }
+        .neon-box { box-shadow: 0 0 15px rgba(6, 182, 212, 0.2), inset 0 0 10px rgba(6, 182, 212, 0.05); }
         
-        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .fade-in { animation: fadeIn 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         
-        .color-btn { transition: all 0.3s; position: relative; }
-        .color-btn:hover { transform: scale(1.1); }
-        .color-btn.selected { border-color: white; transform: scale(1.25); box-shadow: 0 0 20px currentColor; z-index: 2; }
+        .scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 4px;
+            background: rgba(0, 255, 255, 0.3);
+            opacity: 0.3; animation: scan 6s linear infinite; pointer-events: none; z-index: 999;
+        }
+        @keyframes scan { 0% { top: -10%; } 100% { top: 110%; } }
+
+        /* Botones de Color */
+        .color-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .color-btn:hover { transform: scale(1.15); z-index: 10; }
+        .color-btn.selected { 
+            border-color: white; transform: scale(1.25); 
+            box-shadow: 0 0 25px currentColor; z-index: 2; 
+        }
+
+        /* Logo Glow */
+        .logo-glow { filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.4)); }
         
         #ar-button-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 20; }
     </style>
     
+    <!-- ImportMap para Three.js -->
     <script type="importmap">
         {
             "imports": {
@@ -48,121 +64,171 @@
 </head>
 <body>
 
-    <div id="ui-layer" class="flex flex-col justify-center items-center p-4">
+    <!-- Efecto visual de scanline -->
+    <div class="scanline"></div>
+
+    <div id="ui-layer" class="flex flex-col justify-center items-center p-4 overflow-y-auto">
         
-        <!-- 1. LOGIN SCREEN -->
-        <div id="screen-login" class="interactive glass p-10 rounded-none border-l-4 border-cyan-500 max-w-md w-full text-center fade-in z-50 relative overflow-hidden">
-            <div class="absolute top-0 right-0 p-2 opacity-20 text-cyan-500 text-6xl"><i class="fas fa-network-wired"></i></div>
+        <!-- 1. LOGIN SCREEN (MEJORADO) -->
+        <div id="screen-login" class="interactive glass p-8 md:p-12 rounded-2xl border-t-4 border-cyan-500 max-w-md w-full text-center fade-in z-50 relative overflow-hidden shadow-2xl">
+            <!-- Decoración de fondo -->
+            <div class="absolute -top-20 -right-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
             
-            <div class="mb-8 relative z-10">
-                <h1 class="text-5xl font-orbitron font-black text-white tracking-tighter mb-2 neon-text">3 LINE<span class="text-cyan-500">-AR</span></h1>
-                <p class="text-cyan-300 text-xs tracking-widest uppercase border-t border-cyan-900 pt-2 mt-2">Conexión Segura Requerida</p>
+            <div class="relative z-10">
+                <!-- LOGO INTEGRADO -->
+                <div class="mb-8 flex justify-center">
+                    <div class="relative group">
+                        <div class="absolute inset-0 bg-cyan-500 blur-2xl opacity-20 group-hover:opacity-40 transition duration-1000 rounded-full"></div>
+                        <!-- IMPORTANTE: Asegúrate de que 3line-ar-logo.jpg esté en la carpeta -->
+                        <img src="./3line-ar-logo.jpg" 
+                             onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='block';"
+                             class="w-32 h-32 rounded-2xl object-cover shadow-lg border border-gray-700 logo-glow relative z-10 mx-auto">
+                        <!-- Fallback si la imagen falla -->
+                        <div id="fallback-logo" class="hidden w-32 h-32 bg-black rounded-2xl border border-cyan-500 flex items-center justify-center mx-auto">
+                            <i class="fas fa-cube text-4xl text-cyan-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <h1 class="text-4xl font-orbitron font-black text-white tracking-tighter mb-2 neon-text">
+                    3 LINE<span class="text-cyan-400">-AR</span>
+                </h1>
+                <p class="text-gray-400 text-xs tracking-[0.2em] uppercase mb-8 font-bold border-b border-gray-800 pb-4">
+                    Reality Augmentation Protocol
+                </p>
+                
+                <!-- Botones de Autenticación -->
+                <div class="space-y-3">
+                    <button onclick="loginWithGoogle()" class="w-full bg-white text-gray-900 py-3 px-4 rounded hover:bg-gray-100 active:scale-95 transition-all font-bold flex items-center justify-center gap-3 shadow-lg">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+                        <span>CONTINUAR CON GOOGLE</span>
+                    </button>
+
+                    <button onclick="loginWithFacebook()" class="w-full bg-[#1877F2] text-white py-3 px-4 rounded hover:bg-[#166fe5] active:scale-95 transition-all font-bold flex items-center justify-center gap-3 shadow-lg shadow-blue-900/30">
+                        <i class="fab fa-facebook text-xl"></i>
+                        <span>CONTINUAR CON FACEBOOK</span>
+                    </button>
+                </div>
+
+                <div id="login-status" class="mt-6 text-[10px] font-mono text-gray-500">
+                    <i class="fas fa-shield-alt mr-1"></i> CONEXIÓN ENCRIPTADA
+                </div>
+                <p id="login-error" class="text-red-400 text-xs mt-4 font-mono bg-red-900/20 p-2 rounded border border-red-900/50 hidden"></p>
             </div>
-            
-            <button onclick="loginWithGoogle()" class="w-full bg-white text-black py-4 rounded-sm font-bold mb-4 hover:bg-cyan-50 transition flex items-center justify-center gap-3 shadow-lg group">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5 group-hover:scale-110 transition">
-                INICIAR CON GOOGLE
-            </button>
-            
-            <!-- BOTÓN DE INVITADO ELIMINADO -->
-            
-            <p id="login-error" class="text-red-500 text-xs mt-4 font-mono hidden"></p>
         </div>
 
         <!-- 2. DASHBOARD -->
-        <div id="screen-dashboard" class="interactive glass p-8 rounded-none border-r-4 border-purple-500 max-w-md w-full text-center fade-in hidden z-50">
-            <div class="flex items-center justify-between mb-8 border-b border-gray-800 pb-4">
+        <div id="screen-dashboard" class="interactive glass p-6 md:p-10 rounded-xl border-r-4 border-purple-500 max-w-md w-full text-center fade-in hidden z-50">
+            <div class="flex items-center justify-between mb-8 border-b border-gray-700 pb-4 bg-black/20 p-3 rounded-lg">
                 <div class="flex items-center gap-3">
-                    <img id="user-avatar" src="" class="w-10 h-10 rounded bg-gray-800 object-cover hidden border border-gray-600">
+                    <img id="user-avatar" src="" class="w-12 h-12 rounded-lg bg-gray-800 object-cover border border-gray-600 shadow-sm">
                     <div class="text-left">
-                        <p class="text-[10px] text-gray-500 uppercase">Operador</p>
-                        <span id="user-name" class="font-bold text-white font-orbitron tracking-wide">Jugador</span>
+                        <p class="text-[10px] text-cyan-500 uppercase font-bold tracking-wider">Operador Activo</p>
+                        <span id="user-name" class="font-bold text-white font-orbitron tracking-wide text-sm truncate max-w-[120px] block">Jugador</span>
                     </div>
                 </div>
-                <button onclick="logout()" class="text-xs text-red-500 hover:text-red-400 border border-red-900 px-2 py-1 hover:bg-red-900/20 transition">SALIR</button>
+                <button onclick="logout()" class="text-xs text-red-400 hover:text-white border border-red-900/50 bg-red-900/10 px-3 py-1.5 rounded hover:bg-red-600 transition font-orbitron">
+                    ABORTAR
+                </button>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="showCreateRoom()" class="bg-gradient-to-b from-cyan-900 to-cyan-950 border border-cyan-700 hover:border-cyan-400 text-white py-10 rounded-sm transition group relative overflow-hidden">
-                    <div class="absolute inset-0 bg-cyan-500 opacity-0 group-hover:opacity-10 transition duration-500"></div>
-                    <i class="fas fa-plus text-3xl mb-3 text-cyan-400 group-hover:scale-110 transition"></i>
-                    <span class="block font-orbitron text-sm">CREAR SALA</span>
+                <button onclick="showCreateRoom()" class="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 hover:border-cyan-500 text-white py-12 rounded-lg transition-all duration-300 overflow-hidden shadow-lg">
+                    <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                    <i class="fas fa-plus-circle text-4xl mb-4 text-cyan-500 group-hover:scale-110 group-hover:text-cyan-400 transition transform duration-300"></i>
+                    <span class="block font-orbitron text-sm font-bold tracking-wider">CREAR SALA</span>
                 </button>
-                <button onclick="showJoinRoom()" class="bg-gradient-to-b from-purple-900 to-purple-950 border border-purple-700 hover:border-purple-400 text-white py-10 rounded-sm transition group relative overflow-hidden">
-                    <div class="absolute inset-0 bg-purple-500 opacity-0 group-hover:opacity-10 transition duration-500"></div>
-                    <i class="fas fa-satellite-dish text-3xl mb-3 text-purple-400 group-hover:scale-110 transition"></i>
-                    <span class="block font-orbitron text-sm">UNIRSE</span>
+                
+                <button onclick="showJoinRoom()" class="group relative bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 hover:border-purple-500 text-white py-12 rounded-lg transition-all duration-300 overflow-hidden shadow-lg">
+                    <div class="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                    <i class="fas fa-satellite-dish text-4xl mb-4 text-purple-500 group-hover:scale-110 group-hover:text-purple-400 transition transform duration-300"></i>
+                    <span class="block font-orbitron text-sm font-bold tracking-wider">UNIRSE</span>
                 </button>
             </div>
         </div>
 
         <!-- 3. SETUP -->
-        <div id="screen-setup" class="interactive glass p-8 rounded-none border-t-4 border-green-500 max-w-md w-full text-center fade-in hidden z-50">
-            <div class="flex justify-between items-center mb-6">
-                <button onclick="goBackToDashboard()" class="text-gray-500 hover:text-white transition"><i class="fas fa-chevron-left"></i> VOLVER</button>
-                <h2 class="text-lg text-white font-orbitron" id="setup-title">CONFIGURAR</h2>
+        <div id="screen-setup" class="interactive glass p-8 rounded-xl border-l-4 border-green-500 max-w-md w-full text-center fade-in hidden z-50">
+            <div class="flex justify-between items-center mb-8">
+                <button onclick="goBackToDashboard()" class="text-gray-400 hover:text-white transition flex items-center gap-2 text-sm font-orbitron">
+                    <i class="fas fa-chevron-left"></i> ATRÁS
+                </button>
+                <h2 class="text-xl text-white font-orbitron font-bold neon-text" id="setup-title">CONFIGURAR</h2>
             </div>
 
-            <p class="text-gray-400 text-xs mb-4 uppercase tracking-widest">Selecciona tu Firma Energética</p>
-            <div class="flex justify-center gap-4 mb-8 flex-wrap" id="color-picker"></div>
+            <p class="text-gray-400 text-[10px] mb-4 uppercase tracking-widest font-bold">Selecciona Firma Energética</p>
+            
+            <!-- Color Picker mejorado -->
+            <div class="flex justify-center gap-3 mb-10 flex-wrap bg-black/20 p-4 rounded-lg border border-white/5" id="color-picker"></div>
 
-            <div id="join-inputs" class="hidden mb-6 text-left">
-                <label class="text-[10px] text-green-400 uppercase block mb-2 tracking-widest">Código de Frecuencia (ID)</label>
-                <input type="text" id="room-id-input" class="w-full bg-black/50 border border-gray-700 text-white font-orbitron text-2xl text-center p-4 focus:border-green-500 outline-none transition uppercase placeholder-gray-800" placeholder="XXXX">
+            <div id="join-inputs" class="hidden mb-8 text-left animate-pulse-once">
+                <label class="text-[10px] text-green-400 uppercase block mb-2 tracking-widest font-bold">Código de Frecuencia (ID)</label>
+                <div class="relative">
+                    <i class="fas fa-hashtag absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" id="room-id-input" class="w-full bg-black/50 border border-gray-700 text-white font-orbitron text-2xl pl-10 p-4 focus:border-green-500 focus:bg-black/80 outline-none transition uppercase placeholder-gray-800 rounded" placeholder="XXXX">
+                </div>
             </div>
 
-            <button onclick="confirmGameStart()" class="w-full bg-white text-black py-4 rounded-sm font-black font-orbitron hover:bg-green-400 transition shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            <button onclick="confirmGameStart()" class="w-full bg-white text-black py-4 rounded font-black font-orbitron hover:bg-cyan-400 hover:scale-[1.02] transition shadow-[0_0_20px_rgba(255,255,255,0.2)] text-lg tracking-wide">
                 <span id="setup-action-btn">INICIAR SISTEMA</span>
             </button>
         </div>
 
         <!-- 4. WAITING -->
-        <div id="screen-waiting" class="interactive glass p-10 rounded-none border-b-4 border-yellow-500 max-w-md w-full text-center fade-in hidden z-50">
-            <div class="relative w-16 h-16 mx-auto mb-6">
-                <div class="absolute inset-0 border-4 border-yellow-500/30 rounded-full"></div>
+        <div id="screen-waiting" class="interactive glass p-10 rounded-xl border-b-4 border-yellow-500 max-w-md w-full text-center fade-in hidden z-50">
+            <div class="relative w-20 h-20 mx-auto mb-8">
+                <div class="absolute inset-0 border-4 border-yellow-500/20 rounded-full"></div>
                 <div class="absolute inset-0 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                <i class="fas fa-wifi absolute inset-0 flex items-center justify-center text-yellow-500 text-xl animate-pulse"></i>
             </div>
-            <h2 class="text-2xl text-white font-orbitron mb-2">ESPERANDO ENLACE...</h2>
-            <p class="text-gray-400 text-xs mb-6 font-mono">Transmite este código al oponente</p>
+            <h2 class="text-2xl text-white font-orbitron mb-2 font-bold">ESPERANDO ENLACE</h2>
+            <p class="text-gray-400 text-xs mb-8 font-mono bg-black/40 inline-block px-3 py-1 rounded">Transmite este código al oponente</p>
 
-            <div class="bg-black/60 p-6 border border-yellow-500/30 mb-4 flex items-center justify-between group cursor-pointer hover:border-yellow-500 transition" onclick="copyInvite()">
-                <span id="display-room-id" class="text-4xl font-orbitron text-yellow-400 tracking-[0.2em]">...</span>
-                <i class="far fa-copy text-gray-500 group-hover:text-white transition"></i>
+            <div class="bg-black/60 p-6 border border-yellow-500/30 mb-6 flex items-center justify-between group cursor-pointer hover:border-yellow-500 hover:bg-black/80 transition rounded-lg relative overflow-hidden" onclick="copyInvite()">
+                <div class="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition"></div>
+                <span id="display-room-id" class="text-5xl font-orbitron text-yellow-400 tracking-[0.15em] w-full text-center font-bold">...</span>
+                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-600 group-hover:text-yellow-400 transition">
+                    <i class="far fa-copy text-xl"></i>
+                </div>
             </div>
-            <p id="copy-feedback" class="text-green-400 text-xs h-4 font-mono"></p>
+            <p id="copy-feedback" class="text-green-400 text-xs h-4 font-mono font-bold tracking-wide"></p>
         </div>
 
-        <!-- HUD -->
-        <div id="game-hud" class="absolute top-0 left-0 w-full p-4 hidden flex-col z-40 pointer-events-none">
-            <!-- Marcador -->
-            <div class="glass px-6 py-3 rounded-none flex justify-between items-center mx-auto max-w-2xl w-full pointer-events-auto border-b-2 border-cyan-500/50">
-                <div class="flex items-center gap-3">
-                    <div id="hud-p1-color" class="w-3 h-3 rotate-45 border border-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
-                    <div>
-                        <span id="hud-p1-name" class="text-[10px] text-gray-400 block uppercase tracking-wider">Host</span>
-                        <span id="score-p1" class="text-2xl font-orbitron text-white leading-none">0</span>
+        <!-- HUD (Juego) -->
+        <div id="game-hud" class="absolute top-0 left-0 w-full p-2 md:p-4 hidden flex-col z-40 pointer-events-none h-full justify-between">
+            <!-- Marcador Superior -->
+            <div class="glass px-4 py-3 rounded-lg flex justify-between items-center mx-auto max-w-3xl w-full pointer-events-auto border-b-2 border-cyan-500/50 shadow-lg bg-black/80">
+                <div class="flex items-center gap-3 bg-white/5 p-2 rounded pr-4">
+                    <div id="hud-p1-color" class="w-4 h-4 rotate-45 border border-white shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>
+                    <div class="flex flex-col">
+                        <span id="hud-p1-name" class="text-[9px] text-gray-400 block uppercase tracking-wider font-bold">HOST</span>
+                        <span id="score-p1" class="text-2xl font-orbitron text-white leading-none font-bold">0</span>
                     </div>
                 </div>
 
-                <div class="text-center">
-                    <div id="turn-indicator" class="px-6 py-1 bg-black/80 border border-gray-700 text-[10px] font-orbitron tracking-widest text-gray-500 uppercase">
+                <div class="text-center flex-1 px-2">
+                    <div id="turn-indicator" class="px-4 py-1.5 bg-black/90 border border-gray-700 text-[10px] md:text-xs font-orbitron tracking-widest text-gray-500 uppercase rounded shadow-inner">
                         Sincronizando...
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 text-right">
-                    <div>
-                        <span id="hud-p2-name" class="text-[10px] text-gray-400 block uppercase tracking-wider">Guest</span>
-                        <span id="score-p2" class="text-2xl font-orbitron text-white leading-none">0</span>
+                <div class="flex items-center gap-3 bg-white/5 p-2 rounded pl-4 text-right">
+                    <div class="flex flex-col items-end">
+                        <span id="hud-p2-name" class="text-[9px] text-gray-400 block uppercase tracking-wider font-bold">GUEST</span>
+                        <span id="score-p2" class="text-2xl font-orbitron text-white leading-none font-bold">0</span>
                     </div>
-                    <div id="hud-p2-color" class="w-3 h-3 rotate-45 border border-white bg-gray-800"></div>
+                    <div id="hud-p2-color" class="w-4 h-4 rotate-45 border border-white bg-gray-800"></div>
                 </div>
             </div>
             
-            <!-- Mensajes -->
-            <div class="flex justify-center mt-32">
-                 <p id="game-msg" class="text-sm text-cyan-300 font-orbitron drop-shadow-[0_2px_2px_rgba(0,0,0,1)] bg-black/60 border border-cyan-500/30 px-6 py-2 backdrop-blur-md hidden transition-all transform"></p>
+            <!-- Mensajes Centrales (Toasts) -->
+            <div class="flex justify-center items-center flex-1 pointer-events-none">
+                 <p id="game-msg" class="text-base md:text-xl text-cyan-300 font-orbitron font-bold drop-shadow-[0_0_5px_rgba(0,255,255,0.8)] bg-black/80 border-y-2 border-cyan-500/50 px-8 py-4 backdrop-blur-xl hidden transition-all transform scale-110"></p>
             </div>
+
+            <!-- Contenedor Botón AR (solo espacio reservado) -->
+            <div class="h-20 w-full pointer-events-none"></div>
         </div>
 
     </div>
@@ -175,17 +241,15 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, onSnapshot, setDoc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        // NOTA: Se eliminó signInAnonymously de las importaciones
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // AÑADIDO: FacebookAuthProvider y signInWithRedirect para móviles
+        import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, FacebookAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- CONFIGURACIÓN FIREBASE (Extraída de tu imagen) ---
-        // Esta lógica intenta usar la config del entorno (para el chat) si existe,
-        // si no, usa TU configuración para cuando descargues el archivo.
+        // --- 1. CONFIGURACIÓN DE FIREBASE ---
         let firebaseConfig;
         if (typeof __firebase_config !== 'undefined') {
             firebaseConfig = JSON.parse(__firebase_config);
         } else {
-            // TUS CREDENCIALES REALES
+            // Tus credenciales del proyecto 'ar-3lilne'
             firebaseConfig = {
                 apiKey: "AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4",
                 authDomain: "ar-3lilne.firebaseapp.com",
@@ -200,10 +264,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        // Usamos 'ar-3lilne' como fallback si no hay variable de entorno
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne';
 
-        // Paleta Cyberpunk
+        // Paleta 3LINE-AR
         const PALETTE = [
             '#ff0055', // Neon Red
             '#00e5ff', // Cyan
@@ -229,63 +292,114 @@
         let selectedStartPoint = null;
         const SPACING = 0.15; 
 
-        // --- AUTH & NAVIGATION ---
+        // --- 2. LÓGICA DE AUTENTICACIÓN Y NAVEGACIÓN ---
+
+        // Escucha cambios de estado (Login/Logout)
         onAuthStateChanged(auth, (user) => {
             if (user) {
+                // Usuario logueado
                 appState.user = user;
                 showDashboard();
+                
+                // Verificar si viene de una invitación
                 const urlParams = new URLSearchParams(window.location.search);
                 const roomInvite = urlParams.get('room');
                 if (roomInvite) {
                     appState.mode = 'setup';
                     setupJoinRoom(roomInvite);
+                    // Limpiar URL para no re-unirse al refrescar
+                    window.history.replaceState({}, document.title, "/");
                 }
             } else {
+                // Usuario no logueado
                 appState.user = null;
                 showLogin();
             }
         });
 
+        // Verificar resultado de redirección (Móviles)
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result) {
+                    console.log("Regreso exitoso de redirección:", result.user);
+                    // El onAuthStateChanged se encargará del resto
+                }
+            })
+            .catch((error) => {
+                console.error("Error en redirección:", error);
+                showLoginError(error.message);
+            });
+
+        // Función Login con Google (Prefiere Redirect en móviles)
         window.loginWithGoogle = async () => {
             const provider = new GoogleAuthProvider();
             try {
-                await signInWithPopup(auth, provider);
+                await signInWithRedirect(auth, provider); 
             } catch (error) {
-                console.error("Error auth:", error);
-                // Mensaje amigable si falla el popup (común en iframes de vista previa)
-                const errorMsg = document.getElementById('login-error');
-                errorMsg.innerHTML = "Error de seguridad del navegador (Popup bloqueado).<br>Descarga el archivo para probarlo localmente.";
-                errorMsg.classList.remove('hidden');
+                console.error("Google Auth Error:", error);
+                showLoginError("Fallo al iniciar con Google. Intenta de nuevo.");
             }
         };
 
-        // Eliminado loginGuest()
+        // Función Login con Facebook
+        window.loginWithFacebook = async () => {
+            const provider = new FacebookAuthProvider();
+            try {
+                // Usamos redirect para evitar bloqueos de popups en navegadores de FB/Instagram
+                await signInWithRedirect(auth, provider);
+            } catch (error) {
+                console.error("Facebook Auth Error:", error);
+                let msg = "Error de Facebook.";
+                if (error.code === 'auth/account-exists-with-different-credential') {
+                    msg = "Ya existe una cuenta con este email usando otro método (Google).";
+                }
+                showLoginError(msg);
+            }
+        };
 
-        window.logout = () => { signOut(auth); window.location.href = window.location.origin + window.location.pathname; };
+        window.logout = () => {
+            signOut(auth).then(() => {
+                window.location.href = window.location.origin + window.location.pathname;
+            });
+        };
+
+        function showLoginError(msg) {
+            const el = document.getElementById('login-error');
+            el.innerText = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
 
         function hideAllScreens() {
             ['screen-login', 'screen-dashboard', 'screen-setup', 'screen-waiting', 'game-hud'].forEach(id => document.getElementById(id).classList.add('hidden'));
         }
 
-        function showLogin() { hideAllScreens(); document.getElementById('screen-login').classList.remove('hidden'); }
+        function showLogin() { 
+            hideAllScreens(); 
+            document.getElementById('screen-login').classList.remove('hidden'); 
+        }
         
         function showDashboard() {
             hideAllScreens();
             document.getElementById('screen-dashboard').classList.remove('hidden');
             const u = appState.user;
+            const avatarEl = document.getElementById('user-avatar');
             if(u.photoURL) {
-                document.getElementById('user-avatar').src = u.photoURL;
-                document.getElementById('user-avatar').classList.remove('hidden');
+                avatarEl.src = u.photoURL;
+                avatarEl.classList.remove('hidden');
+            } else {
+                avatarEl.src = "https://ui-avatars.com/api/?name=" + (u.displayName || "User") + "&background=0D8ABC&color=fff";
+                avatarEl.classList.remove('hidden');
             }
-            document.getElementById('user-name').innerText = u.displayName || "OPERADOR";
+            document.getElementById('user-name').innerText = u.displayName || "OPERADOR ANÓNIMO";
         }
 
         window.showCreateRoom = () => {
             appState.role = 'host';
             appState.mode = 'setup';
             setupColorPicker();
-            document.getElementById('setup-title').innerText = "NUEVA SESIÓN";
-            document.getElementById('setup-action-btn').innerText = "INICIAR SALA";
+            document.getElementById('setup-title').innerText = "CREAR ZONA DE COMBATE";
+            document.getElementById('setup-action-btn').innerText = "INICIALIZAR SALA";
             document.getElementById('join-inputs').classList.add('hidden');
             hideAllScreens();
             document.getElementById('screen-setup').classList.remove('hidden');
@@ -295,14 +409,17 @@
             appState.role = 'guest';
             appState.mode = 'setup';
             setupColorPicker();
-            document.getElementById('setup-title').innerText = "SINCRONIZAR";
-            document.getElementById('setup-action-btn').innerText = "CONECTAR";
+            document.getElementById('setup-title').innerText = "SINCRONIZAR FRECUENCIA";
+            document.getElementById('setup-action-btn').innerText = "CONECTAR AL NÚCLEO";
             document.getElementById('join-inputs').classList.remove('hidden');
             hideAllScreens();
             document.getElementById('screen-setup').classList.remove('hidden');
         };
 
-        function setupJoinRoom(id) { showJoinRoom(); document.getElementById('room-id-input').value = id; }
+        function setupJoinRoom(id) { 
+            showJoinRoom(); 
+            document.getElementById('room-id-input').value = id; 
+        }
         window.goBackToDashboard = () => showDashboard();
 
         function setupColorPicker() {
@@ -310,9 +427,17 @@
             container.innerHTML = '';
             PALETTE.forEach((color, idx) => {
                 const btn = document.createElement('div');
-                btn.className = `w-12 h-12 rounded-sm cursor-pointer color-btn border-2 border-transparent ${idx === appState.selectedColorIdx ? 'selected' : ''}`;
+                btn.className = `w-10 h-10 md:w-12 md:h-12 rounded-full cursor-pointer color-btn border-2 border-transparent flex items-center justify-center ${idx === appState.selectedColorIdx ? 'selected' : ''}`;
                 btn.style.backgroundColor = color;
-                btn.style.boxShadow = `0 0 10px ${color}aa`;
+                btn.style.boxShadow = `0 0 15px ${color}88`;
+                
+                // Indicador interno si está seleccionado
+                if (idx === appState.selectedColorIdx) {
+                    const inner = document.createElement('div');
+                    inner.className = "w-2 h-2 bg-black rounded-full";
+                    btn.appendChild(inner);
+                }
+
                 btn.onclick = () => {
                     appState.selectedColorIdx = idx;
                     appState.myColor = color;
@@ -322,16 +447,19 @@
             });
         }
 
-        // --- GAME LOGIC ---
+        // --- 3. LÓGICA DE JUEGO (FIRESTORE) ---
         window.confirmGameStart = async () => {
             const btn = document.getElementById('setup-action-btn');
+            const originalText = btn.innerText;
             btn.innerText = "PROCESANDO...";
             btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
             try {
                 if (appState.role === 'host') {
                     const shortId = Math.random().toString(36).substring(2, 6).toUpperCase();
-                    // IMPORTANTE: Usamos la colección 'data' bajo tu appId
                     const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${shortId}`);
+                    
                     await setDoc(docRef, {
                         hostId: appState.user.uid,
                         hostName: appState.user.displayName || "HOST",
@@ -348,13 +476,18 @@
                     initGameListener(shortId);
                 } else {
                     const inputId = document.getElementById('room-id-input').value.trim().toUpperCase();
-                    if (!inputId) throw new Error("ID Requerido");
+                    if (!inputId || inputId.length < 2) throw new Error("ID de Sala Inválido");
+                    
                     const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${inputId}`);
                     const snapshot = await getDoc(docRef);
-                    if (!snapshot.exists()) throw new Error("Sala inexistente");
-                    const data = snapshot.data();
-                    if (data.status !== 'waiting') throw new Error("Sala ocupada");
                     
+                    if (!snapshot.exists()) throw new Error("La sala no existe.");
+                    const data = snapshot.data();
+                    if (data.status !== 'waiting') throw new Error("La sala ya está en combate.");
+                    
+                    // Evitar unirse a tu propia sala
+                    if (data.hostId === appState.user.uid) throw new Error("No puedes unirte a tu propia sala.");
+
                     await updateDoc(docRef, {
                         guestId: appState.user.uid,
                         guestName: appState.user.displayName || "GUEST",
@@ -365,9 +498,10 @@
                     initGameListener(inputId);
                 }
             } catch (e) {
-                alert(e.message);
-                btn.innerText = appState.role === 'host' ? "INICIAR SALA" : "CONECTAR";
+                showLoginError(e.message); // Reutilizamos el toast de error
+                btn.innerText = originalText;
                 btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         };
 
@@ -380,7 +514,7 @@
         window.copyInvite = () => {
             const url = window.location.origin + window.location.pathname + '?room=' + appState.roomId;
             navigator.clipboard.writeText(url).then(() => {
-                document.getElementById('copy-feedback').innerText = "ENLACE COPIADO AL PORTAPAPELES";
+                document.getElementById('copy-feedback').innerText = "ENLACE COPIADO. ¡ENVÍALO!";
                 setTimeout(() => document.getElementById('copy-feedback').innerText = "", 3000);
             });
         };
@@ -388,17 +522,22 @@
         function initGameListener(roomId) {
             if(!scene) init3D();
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${roomId}`);
+            
             onSnapshot(docRef, (snapshot) => {
                 if(!snapshot.exists()) return;
                 const data = snapshot.data();
                 appState.gameData = data;
                 
+                // Transición automática de Waiting -> Game
                 if (appState.role === 'host' && data.status === 'playing' && !document.getElementById('screen-waiting').classList.contains('hidden')) {
                     startGameUI();
                 } else if (appState.role === 'guest' && data.status === 'playing' && document.getElementById('game-hud').classList.contains('hidden')) {
                     startGameUI();
                 }
+                
                 if (data.status === 'playing') updateGameVisuals(data);
+            }, (error) => {
+                console.error("Error en listener:", error);
             });
         }
 
@@ -406,49 +545,62 @@
             hideAllScreens();
             document.getElementById('game-hud').classList.remove('hidden');
             document.getElementById('game-hud').style.display = 'flex';
+            
             const data = appState.gameData;
-            document.getElementById('hud-p1-color').style.backgroundColor = data.hostColor;
-            document.getElementById('hud-p1-color').style.boxShadow = `0 0 10px ${data.hostColor}`;
-            document.getElementById('hud-p1-name').innerText = data.hostName;
-            document.getElementById('hud-p2-color').style.backgroundColor = data.guestColor;
-            document.getElementById('hud-p2-color').style.boxShadow = `0 0 10px ${data.guestColor}`;
-            document.getElementById('hud-p2-name').innerText = data.guestName;
-            showToast("SISTEMA EN LÍNEA. BATALLA INICIADA.");
+            
+            // Configurar HUD
+            const hColor = document.getElementById('hud-p1-color');
+            hColor.style.backgroundColor = data.hostColor;
+            hColor.style.boxShadow = `0 0 10px ${data.hostColor}`;
+            document.getElementById('hud-p1-name').innerText = data.hostName.split(' ')[0]; // Solo primer nombre
+            
+            const gColor = document.getElementById('hud-p2-color');
+            gColor.style.backgroundColor = data.guestColor;
+            gColor.style.boxShadow = `0 0 10px ${data.guestColor}`;
+            document.getElementById('hud-p2-name').innerText = data.guestName.split(' ')[0];
+
+            showToast("CONEXIÓN ESTABLECIDA. INICIA EL COMBATE.", 3000);
         }
 
         function updateGameVisuals(data) {
+            // Actualizar puntuación con animación
             document.getElementById('score-p1').innerText = data.scores.host;
             document.getElementById('score-p2').innerText = data.scores.guest;
+            
             const turnEl = document.getElementById('turn-indicator');
             const isMyTurn = data.currentPlayer === appState.role;
             
             if (isMyTurn) {
-                turnEl.innerText = "TU TURNO // EJECUTA MOVIMIENTO";
-                turnEl.className = "px-6 py-1 bg-green-900/50 border border-green-500 text-[10px] font-orbitron tracking-widest text-green-300 uppercase animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.3)]";
+                turnEl.innerText = "TU TURNO";
+                turnEl.className = "px-6 py-2 bg-green-900/80 border border-green-500 text-xs font-orbitron tracking-widest text-green-300 uppercase animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.4)] font-bold rounded transform scale-105 transition";
             } else {
-                const enemy = appState.role === 'host' ? data.guestName : data.hostName;
-                turnEl.innerText = `ESPERANDO A ${enemy}`;
-                turnEl.className = "px-6 py-1 bg-black/50 border border-gray-700 text-[10px] font-orbitron tracking-widest text-gray-500 uppercase";
+                const enemyName = appState.role === 'host' ? data.guestName : data.hostName;
+                turnEl.innerText = `TURNO DE ${enemyName.split(' ')[0]}`;
+                turnEl.className = "px-6 py-2 bg-gray-900/80 border border-gray-600 text-xs font-orbitron tracking-widest text-gray-500 uppercase rounded";
             }
 
+            // Limpiar y redibujar tablero
             const toRemove = [];
-            gridGroup.children.forEach(child => { if (child.userData.isLine || child.userData.isTriangle) toRemove.push(child); });
+            gridGroup.children.forEach(child => { 
+                if (child.userData.isLine || child.userData.isTriangle) toRemove.push(child); 
+            });
             toRemove.forEach(c => gridGroup.remove(c));
 
+            // Dibujar líneas y triángulos
             data.lines.forEach(l => drawLine3D(l.start, l.end, l.owner === 'host' ? data.hostColor : data.guestColor));
             findAllTriangles(data.lines).forEach(t => drawTriangle3D(t.points, t.owner === 'host' ? data.hostColor : data.guestColor));
         }
 
-        // --- THREE.JS ---
+        // --- 4. MOTOR GRÁFICO (THREE.JS + AR) ---
         function init3D() {
             scene = new THREE.Scene();
-            // Fondo degradado sutil si es posible en AR (generalmente transparente)
-            // Para desktop:
-            scene.background = new THREE.Color(0x050505);
+            // Sin fondo para AR, negro sutil para desktop
             
             camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-            const dl = new THREE.DirectionalLight(0xffffff, 1.5);
+            
+            // Iluminación
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const dl = new THREE.DirectionalLight(0xffffff, 1.2);
             dl.position.set(2, 5, 2);
             scene.add(dl);
 
@@ -458,40 +610,69 @@
             renderer.xr.enabled = true;
             document.body.appendChild(renderer.domElement);
             
+            // Botón AR Personalizado
             const arBtn = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
-            arBtn.style.background = 'rgba(0,255,255,0.2)';
+            arBtn.style.background = 'rgba(10,10,10,0.8)';
             arBtn.style.border = '1px solid #00e5ff';
             arBtn.style.color = '#00e5ff';
             arBtn.style.fontFamily = 'Orbitron';
+            arBtn.style.fontWeight = 'bold';
+            arBtn.style.padding = '12px 24px';
+            arBtn.style.borderRadius = '4px';
+            arBtn.innerHTML = 'ENTRAR EN AR'; // Texto personalizado
             document.getElementById('ar-button-container').appendChild(arBtn);
 
+            // Grupo del tablero
             gridGroup = new THREE.Group();
-            gridGroup.position.set(-0.25, -0.2, -0.8);
+            gridGroup.position.set(0, 0, -1); // Por defecto frente a la cámara en Desktop
             scene.add(gridGroup);
             createGrid();
 
+            // Controles
             controller = renderer.xr.getController(0);
             controller.addEventListener('select', onSelectAR);
             scene.add(controller);
+            
+            // Input Desktop
             window.addEventListener('click', onClickDesktop);
             window.addEventListener('resize', () => {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
-            new OrbitControls(camera, renderer.domElement).target.set(0,0,-1);
-            renderer.setAnimationLoop(() => renderer.render(scene, camera));
+
+            // Controles orbitales para debug en PC
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.target.set(0,0,-1);
+
+            renderer.setAnimationLoop(() => {
+                controls.update();
+                // Rotación suave del tablero solo en menú de espera si se desea, aquí estático
+                renderer.render(scene, camera);
+            });
         }
 
         function createGrid() {
-            const geo = new THREE.SphereGeometry(0.012, 16, 16); // Puntos más pequeños y tecnológicos
-            const mat = new THREE.MeshStandardMaterial({ color: 0x333333, emissive: 0x111111, roughness: 0.2, metalness: 0.9 });
+            const geo = new THREE.IcosahedronGeometry(0.015, 1); 
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: 0x444444, 
+                emissive: 0x111111, 
+                roughness: 0.3, 
+                metalness: 0.8 
+            });
+            
             let idx = 0;
+            // Grid 4x4 Hexagonal-ish offset
             for (let row = 0; row < 4; row++) {
                 for (let col = 0; col < 4; col++) {
                     const m = new THREE.Mesh(geo, mat.clone());
                     const xo = (row % 2) * (SPACING / 2);
-                    m.position.set(col * SPACING + xo - (4*SPACING)/2, 0, row * (SPACING*0.866) - (4*SPACING*0.866)/2);
+                    m.position.set(
+                        col * SPACING + xo - (4*SPACING)/2, 
+                        0, 
+                        row * (SPACING*0.866) - (4*SPACING*0.866)/2
+                    );
                     m.userData = { id: idx, isDot: true };
                     gridGroup.add(m);
                     gridPoints.push(m);
@@ -502,26 +683,52 @@
 
         function handleInput(obj) {
             const data = appState.gameData;
-            if (!data || data.status !== 'playing' || data.currentPlayer !== appState.role) {
-                if(data && data.currentPlayer !== appState.role) showToast("ERROR: TURNO DEL OPONENTE");
+            
+            // Validaciones de turno
+            if (!data || data.status !== 'playing') return;
+            if (data.currentPlayer !== appState.role) {
+                showToast("NO ES TU TURNO", 1500);
+                // Feedback visual de error (rojo momentáneo)
+                const originalColor = obj.material.emissive.getHex();
+                obj.material.emissive.setHex(0xff0000);
+                setTimeout(() => obj.material.emissive.setHex(originalColor), 300);
                 return;
             }
             
             if (!selectedStartPoint) {
+                // Seleccionar primer punto
                 selectedStartPoint = obj;
-                obj.material.emissive.set(0x00e5ff);
-                obj.material.emissiveIntensity = 1;
-                obj.scale.set(1.5,1.5,1.5);
+                obj.material.emissive.set(0xffffff);
+                obj.material.emissiveIntensity = 2;
+                obj.scale.set(1.8, 1.8, 1.8);
+                // Sonido UI simple podría ir aquí
             } else {
-                if (selectedStartPoint === obj) { resetSelection(); return; }
+                // Intentar conectar
+                if (selectedStartPoint === obj) { 
+                    resetSelection(); 
+                    return; 
+                }
+                
                 const startId = selectedStartPoint.userData.id;
                 const endId = obj.userData.id;
+                
+                // Validar distancia (solo vecinos inmediatos)
                 if (selectedStartPoint.position.distanceTo(obj.position) > SPACING * 1.2) {
-                    showToast("ERROR: ENLACE FUERA DE RANGO");
-                    resetSelection(); return;
+                    showToast("DEMASIADO LEJOS", 1500);
+                    resetSelection(); 
+                    return;
                 }
-                const exists = data.lines.some(l => (l.start===startId && l.end===endId) || (l.start===endId && l.end===startId));
-                if (exists) { showToast("ERROR: ENLACE YA EXISTE"); resetSelection(); return; }
+                
+                // Validar si ya existe la línea
+                const exists = data.lines.some(l => 
+                    (l.start===startId && l.end===endId) || (l.start===endId && l.end===startId)
+                );
+                
+                if (exists) { 
+                    showToast("ENLACE YA OCUPADO", 1500); 
+                    resetSelection(); 
+                    return; 
+                }
                 
                 submitMove(startId, endId);
                 resetSelection();
@@ -540,60 +747,100 @@
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', `room_${appState.roomId}`);
             const newLine = { start: s, end: e, owner: appState.role };
             const newLines = [...appState.gameData.lines, newLine];
-            const newTris = detectNewTriangles(newLine, newLines);
-            let next = appState.gameData.currentPlayer === 'host' ? 'guest' : 'host';
-            let scoreUp = {};
             
+            // Detectar triángulos cerrados
+            const newTris = detectNewTriangles(newLine, newLines);
+            
+            let nextPlayer = appState.gameData.currentPlayer === 'host' ? 'guest' : 'host';
+            let scoreUpdate = {};
+            
+            // Si cierras triángulo, repites turno (regla clásica de Timbiriche/Dots and Boxes)
+            // O cambiamos turno si queremos juego rápido. En este caso, mantenemos turno.
             if (newTris.length > 0) {
-                next = appState.role;
-                scoreUp = { [`scores.${appState.role}`]: appState.gameData.scores[appState.role] + newTris.length };
-                showToast(`ZONA CAPTURADA (+${newTris.length})`);
+                nextPlayer = appState.role; // Repite turno
+                scoreUpdate = { 
+                    [`scores.${appState.role}`]: appState.gameData.scores[appState.role] + newTris.length 
+                };
+                showToast(`¡ZONA CAPTURADA! (+${newTris.length})`, 2000);
             }
-            await updateDoc(docRef, { lines: newLines, currentPlayer: next, ...scoreUp });
+
+            await updateDoc(docRef, { 
+                lines: newLines, 
+                currentPlayer: nextPlayer, 
+                ...scoreUpdate 
+            });
         }
 
+        // Dibujado de Líneas Neón
         function drawLine3D(s, e, hex) {
             const p1 = gridPoints[s].position;
             const p2 = gridPoints[e].position;
-            const geo = new THREE.CylinderGeometry(0.003, 0.003, p1.distanceTo(p2), 6);
-            const mat = new THREE.MeshBasicMaterial({ color: hex });
+            
+            // Núcleo de la línea (blanco brillante)
+            const geo = new THREE.CylinderGeometry(0.004, 0.004, p1.distanceTo(p2), 6);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const m = new THREE.Mesh(geo, mat);
             m.position.copy(new THREE.Vector3().addVectors(p1,p2).multiplyScalar(0.5));
             m.lookAt(p2); m.rotateX(Math.PI/2);
             m.userData = { isLine: true };
             
-            // Glow effect simple (otro cilindro mas grande transparente)
-            const glowGeo = new THREE.CylinderGeometry(0.008, 0.008, p1.distanceTo(p2), 6);
-            const glowMat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.2 });
+            // Glow externo (color del jugador)
+            const glowGeo = new THREE.CylinderGeometry(0.015, 0.015, p1.distanceTo(p2), 6);
+            const glowMat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending });
             const glow = new THREE.Mesh(glowGeo, glowMat);
             m.add(glow);
             
             gridGroup.add(m);
         }
 
+        // Dibujado de Triángulos (Campos de fuerza)
         function drawTriangle3D(ids, hex) {
             const pts = ids.map(i => gridPoints[i].position);
             const geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
-                pts[0].x, pts[0].y, pts[0].z, pts[1].x, pts[1].y, pts[1].z, pts[2].x, pts[2].y, pts[2].z
+                pts[0].x, pts[0].y, pts[0].z, 
+                pts[1].x, pts[1].y, pts[1].z, 
+                pts[2].x, pts[2].y, pts[2].z
             ]), 3));
-            geo.setIndex([0,1,2, 2,1,0]);
-            const mat = new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: 0.4, side: THREE.DoubleSide });
+            geo.setIndex([0,1,2, 2,1,0]); // Doble cara
+            
+            const mat = new THREE.MeshBasicMaterial({ 
+                color: hex, 
+                transparent: true, 
+                opacity: 0.3, 
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            
             const m = new THREE.Mesh(geo, mat);
             m.userData = { isTriangle: true };
+            
+            // Animación de pulso simple (usando onBeforeRender si fuera complejo, aquí simple)
+            const wiregeo = new THREE.EdgesGeometry(geo); // Bordes
+            const wiremat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+            const wire = new THREE.LineSegments(wiregeo, wiremat);
+            m.add(wire);
+
             gridGroup.add(m);
         }
 
-        function showToast(msg) {
+        function showToast(msg, duration = 2300) {
             const el = document.getElementById('game-msg');
             el.innerText = msg;
             el.classList.remove('hidden');
             el.style.opacity = 1;
-            el.style.transform = 'translateY(0)';
-            setTimeout(() => { el.style.opacity = 0; el.style.transform = 'translateY(10px)'; }, 2000);
-            setTimeout(() => el.classList.add('hidden'), 2300);
+            el.style.transform = 'scale(1.1)';
+            
+            setTimeout(() => { 
+                el.style.opacity = 0; 
+                el.style.transform = 'scale(0.9)'; 
+            }, duration);
+            
+            setTimeout(() => el.classList.add('hidden'), duration + 300);
         }
 
+        // Raycasting AR
         function onSelectAR() {
             const t = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
             raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
@@ -601,12 +848,22 @@
             const i = raycaster.intersectObjects(gridPoints);
             if (i.length > 0) handleInput(i[0].object);
         }
+
+        // Raycasting Mouse
         function onClickDesktop(e) {
-            raycaster.setFromCamera(new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1), camera);
+            // Ignorar si estamos tocando UI
+            if (e.target.closest('.interactive')) return;
+            
+            raycaster.setFromCamera(new THREE.Vector2(
+                (e.clientX/window.innerWidth)*2-1, 
+                -(e.clientY/window.innerHeight)*2+1
+            ), camera);
+            
             const i = raycaster.intersectObjects(gridPoints);
             if (i.length > 0) handleInput(i[0].object);
         }
 
+        // Algoritmos de Grafos
         function findAllTriangles(l) {
             const adj = {}; l.forEach(x => { 
                 if(!adj[x.start]) adj[x.start]=[]; if(!adj[x.end]) adj[x.end]=[];
@@ -625,6 +882,7 @@
             }
             return t;
         }
+        
         function detectNewTriangles(n, al) {
             const adj={}; al.forEach(x=>{ if(!adj[x.start])adj[x.start]=[]; if(!adj[x.end])adj[x.end]=[]; adj[x.start].push(x.end); adj[x.end].push(x.start); });
             const u=n.start, v=n.end, nt=[];
@@ -634,3 +892,4 @@
     </script>
 </body>
 </html>
+
