@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V34.0 HYBRID GESTURES</title>
+    <title>3 LINE-AR | V35.0 MASTER LINK</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; touch-action: none; }
+        body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
         
         /* FONDO */
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #080810 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
@@ -88,7 +88,6 @@
             color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
             border-radius: 6px !important; text-transform: uppercase !important;
         }
-        #ar-zone a { display: none !important; }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -101,10 +100,10 @@
         <!-- 1. LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
-                <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-hand-holding-magic"></i></div>
+                <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V34.0 HYBRID GESTURES</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V35.0 MASTER LINK</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -176,7 +175,6 @@
 
             <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span></div>
 
-            <!-- AR Hint Subido -->
             <div id="ar-hint" class="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none hidden flex-col items-center z-0">
                 <div class="w-20 h-20 border-2 border-cyber rounded-full animate-ping absolute opacity-30"></div>
                 <span class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-4 font-bold tracking-widest backdrop-blur">ESCANEA SUPERFICIE</span>
@@ -193,7 +191,6 @@
             </div>
         </div>
 
-        <!-- WIN SCREEN -->
         <div id="win-screen">
             <h1 id="win-title" class="text-6xl font-black text-cyber mb-2 animate-pulse text-center">VICTORIA</h1>
             <p id="win-msg" class="text-white font-mono mb-8 tracking-widest text-center">AGENTE DOMINANTE</p>
@@ -215,11 +212,12 @@
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        const APP_ID = 'ar-3lilne-flux';
-        const CONF = { apiKey:"AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
+        const defaultConf = { apiKey:"AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
+        const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) ? JSON.parse(__firebase_config) : defaultConf;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne-flux';
         
         let app, auth, db;
-        try { app = initializeApp(CONF); auth = getAuth(app); db = getFirestore(app); } catch(e) { console.error(e); }
+        try { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); } catch(e) { console.error(e); }
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(type) {
@@ -235,9 +233,7 @@
         }
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
-        let pts=[], selPt=null, placed=false, roomUnsub=null, gameStartTime=0;
-        let currentScale = 1.0;
-        
+        let pts=[], selPt=null, placed=false, roomUnsub=null, gameStartTime=0, currentScale=1.0;
         const LOSE_MSGS = ["¡BUEN INTENTO!", "LA PRÓXIMA SERÁ TUYA", "GRAN ESTRATEGIA", "BUENA PARTIDA", "SIGUE ASÍ"];
 
         function genPoints() {
@@ -305,8 +301,7 @@
         }
         
         window.goHome = () => {
-            if(roomUnsub) roomUnsub(); roomUnsub=null; 
-            S.room = null; S.data = null;
+            if(roomUnsub) roomUnsub(); roomUnsub=null; S.room = null; S.data = null;
             nav('s-menu');
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
             toast("SISTEMA", "DESCONECTADO");
@@ -327,10 +322,14 @@
         window.showJoin = () => document.getElementById('join-box').classList.remove('hidden');
         function showLoad(show, txt) { const l = document.getElementById('mini-loader'); if(show) { l.classList.remove('hidden'); document.getElementById('mini-load-txt').innerText=txt; } else l.classList.add('hidden'); }
 
+        // CORRECCION RUTA FIREBASE
+        const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
+
         window.quickMatch = async () => {
+            if(!S.user) return;
             S.cpu=false; showLoad(true,"BUSCANDO...");
             try {
-                const q = await getDocs(collection(db,'artifacts',APP_ID,'rooms'));
+                const q = await getDocs(ROOMS_COLL);
                 let f=null; for(const d of q.docs) { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) { f=d.id; break; } }
                 if(f) join(f); else create(true);
             } catch(e) { showLoad(false); toast("ERROR","Sin Red. Modo CPU."); setTimeout(window.vsCpu,1500); }
@@ -344,25 +343,31 @@
         };
 
         async function create(pub) {
+            if(!S.user) return;
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
             showLoad(true,"CREANDO...");
-            await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
+            await setDoc(docRef, {
                 host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, scale:1.0
             });
             sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
         async function join(c) {
+            if(!S.user) return;
             S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
-            await updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
+            await updateDoc(docRef, { guest:S.user.uid, stat:'play', p2:S.prof });
             sub(c); document.getElementById('room-lbl').innerText=c;
         }
         function sub(c) {
             if(roomUnsub) roomUnsub();
-            roomUnsub = onSnapshot(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), s => {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
+            roomUnsub = onSnapshot(docRef, s => {
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
                     else if(d.stat==='end') endGame(d);
+                    else if(S.role==='host') showLoad(true,"ESPERANDO...");
                 }
             });
         }
@@ -392,25 +397,14 @@
             },500);
         };
         
-        window.claimEnd = () => {
-            const d=S.data; 
-            if(d.turn===S.role) update({stat:'end'}); 
-        };
-        
-        window.skipTurn = () => {
-             const d=S.data; 
-             if(d.turn===S.role) {
-                 const t = d.turn==='host'?'guest':'host'; 
-                 update({movs:0, turn:t, dice:null}); 
-             }
-        }
+        window.claimEnd = () => { const d=S.data; if(d.turn===S.role) update({stat:'end'}); };
+        window.skipTurn = () => { const d=S.data; if(d.turn===S.role) { const t = d.turn==='host'?'guest':'host'; update({movs:0, turn:t, dice:null}); } }
 
         function endGame(d) {
             if(document.getElementById('s-game').classList.contains('hidden')) return;
             nav('win-screen'); playSfx('end');
             const win = d.sc.host > d.sc.guest ? 'HOST' : (d.sc.host < d.sc.guest ? 'GUEST' : 'DRAW');
             const isMe = (win === 'HOST' && S.role === 'host') || (win === 'GUEST' && S.role === 'guest');
-            
             const tit = document.getElementById('win-title'); const msg = document.getElementById('win-msg');
             if(win === 'DRAW') { tit.innerText = "EMPATE"; tit.className = "text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "SIN DOMINIO"; }
             else if(isMe) { tit.innerText = "VICTORIA"; tit.className = "text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL"; }
@@ -421,7 +415,7 @@
 
         function update(o) {
             if(S.cpu) { Object.assign(S.data,o); if(S.data.stat === 'end') endGame(S.data); else ui(); } 
-            else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
+            else updateDoc(doc(db,'artifacts',appId,'public','data','rooms',`room_${S.room}`), o);
         }
 
         function ui() {
@@ -431,13 +425,7 @@
             const b=document.getElementById('mov-hud'); const dv=document.getElementById('dice-vis');
             if(d.turn===S.role && d.movs>0) { b.style.opacity=1; document.getElementById('mov-cnt').innerText=d.movs; dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; }
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#444'; dv.style.color='#555'; }
-            
-            // SYNC SCALE
-            if(group && d.scale) {
-                currentScale = d.scale;
-                group.scale.set(currentScale, currentScale, currentScale);
-            }
-
+            if(group && d.scale) { currentScale = d.scale; group.scale.set(currentScale, currentScale, currentScale); }
             draw();
             if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3, skips:0}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
             if(S.role === 'host') checkStatus();
@@ -455,10 +443,8 @@
             if(v1.distanceTo(v2) > 1.2) return toast("RANGO","Demasiado lejos");
             if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("OCUPADO","Enlace existente");
             if(checkCollision(p1, p2, d.tris)) { playSfx('error'); return toast("BLOQUEADO", "Territorio Protegido"); }
-            
             const nl=[...d.lines,{s:p1,e:p2,own:S.role}]; const nt=checkTri(p1,p2,S.role,nl);
             const sc={...d.sc}; if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); toast("CONQUISTA","¡Nexo Cerrado!"); }
-            
             let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
             update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
         }
@@ -468,12 +454,8 @@
                 if(p3!==p1 && p3!==p2) {
                     if(ls.some(l=>(l.s===p1&&l.e===p3)||(l.s===p3&&l.e===p1)) && ls.some(l=>(l.s===p2&&l.e===p3)||(l.s===p3&&l.e===p2))) {
                         const v1 = pts[p1].position; const v2 = pts[p2].position; const v3 = pts[p3].position;
-                        let valid = true;
-                        for(let i=0; i<pts.length; i++) if(i!==p1 && i!==p2 && i!==p3 && isPointInTriangle(pts[i].position, v1, v2, v3)) { valid=false; break; }
-                        if(valid) {
-                            const v=[p1,p2,p3].sort(); 
-                            if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) f.push({p1:v[0],p2:v[1],p3:v[2],own:o});
-                        }
+                        let valid = true; for(let i=0; i<pts.length; i++) if(i!==p1 && i!==p2 && i!==p3 && isPointInTriangle(pts[i].position, v1, v2, v3)) { valid=false; break; }
+                        if(valid) { const v=[p1,p2,p3].sort(); if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) f.push({p1:v[0],p2:v[1],p3:v[2],own:o}); }
                     }
                 }
             } return f;
@@ -483,14 +465,11 @@
             let m=null; 
             for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) 
                 if(pts[i].position.distanceTo(pts[j].position)<0.8 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !checkCollision(i,j,S.data.tris)) { m={s:i,e:j}; break; }
-            
             if(m) {
                 const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
                 let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
                 update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
-            } else {
-               update({movs:0, turn:'host', dice:null});
-            }
+            } else update({movs:0, turn:'host', dice:null});
         }
 
         let scene, cam, ren, group, ray, reticle, arHit, controls;
@@ -513,7 +492,7 @@
                         document.getElementById('bg-canvas').style.opacity=0; 
                         document.getElementById('btn-rec').style.display='none';
                         document.getElementById('ar-hint').style.display='flex';
-                        document.getElementById('ar-scale-hint').style.display='block'; // PINCH HINT
+                        document.getElementById('ar-scale-hint').style.display='block';
                     });
                 }
             });
@@ -531,26 +510,13 @@
             reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
             ray=new THREE.Raycaster(); ren.setAnimationLoop(loop);
             
-            // PINCH TO ZOOM LOGIC
-            window.addEventListener('touchstart', e => {
-                if(e.touches.length === 2) {
-                    touchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                }
-            });
-            
+            window.addEventListener('touchstart', e => { if(e.touches.length===2) touchDist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); });
             window.addEventListener('touchmove', e => {
-                if(e.touches.length === 2 && placed && ren.xr.isPresenting) {
-                    const newDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                if(e.touches.length===2 && placed && ren.xr.isPresenting) {
+                    const newDist = Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY);
                     const delta = (newDist - touchDist) * 0.01;
-                    
-                    let ns = currentScale + delta;
-                    if(ns < 0.2) ns = 0.2; if(ns > 3.0) ns = 3.0;
-                    
-                    currentScale = ns;
-                    group.scale.set(ns, ns, ns);
-                    touchDist = newDist;
-                    
-                    // Sync Scale
+                    let ns = currentScale + delta; if(ns<0.2) ns=0.2; if(ns>3.0) ns=3.0;
+                    currentScale = ns; group.scale.set(ns,ns,ns); touchDist = newDist;
                     update({scale: ns});
                 }
             });
@@ -573,33 +539,23 @@
             });
         }
         window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); currentScale=1.0; group.scale.set(1,1,1); }
-        function highlight(id,on) {
-            const m=pts[id]; if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); } else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); }
-        }
+        function highlight(id,on) { const m=pts[id]; if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); } else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); } }
 
         function draw() {
             if(!S.data || !group) return;
             for(let i=group.children.length-1;i>=0;i--) if(group.children[i].userData.t) group.remove(group.children[i]);
-            
             S.data.lines.forEach(l=>{
                 const p=l.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff';
                 const p1=pts[l.s].position; const p2=pts[l.e].position;
-                const g=new THREE.CylinderGeometry(0.012,0.012,p1.distanceTo(p2),8); 
-                const m=new THREE.MeshBasicMaterial({color:c}); 
-                const o=new THREE.Mesh(g,m);
+                const g=new THREE.CylinderGeometry(0.012,0.012,p1.distanceTo(p2),8); const m=new THREE.MeshBasicMaterial({color:c}); const o=new THREE.Mesh(g,m);
                 o.position.copy(p1).lerp(p2,0.5); o.lookAt(p2); o.rotateX(Math.PI/2); o.userData.t=true; group.add(o);
             });
-
             S.data.tris.forEach(t=>{
-                const p=t.own==='host'?S.data.p1:S.data.p2; 
-                const c=p?p.c:'#fff'; 
-                const i=p?p.i:'gem';
-                
+                const p=t.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff'; const i=p?p.i:'gem';
                 const v=new Float32Array([pts[t.p1].position.x,pts[t.p1].position.y,pts[t.p1].position.z,pts[t.p2].position.x,pts[t.p2].position.y,pts[t.p2].position.z,pts[t.p3].position.x,pts[t.p3].position.y,pts[t.p3].position.z]);
                 const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(v,3));
                 const m=new THREE.MeshBasicMaterial({color:c, opacity:0.3, transparent:true, side:THREE.DoubleSide, depthWrite:false});
                 const o=new THREE.Mesh(g,m); o.userData.t=true;
-                
                 let ig; if(i==='atom') ig=new THREE.IcosahedronGeometry(0.05,0); else if(i==='star') ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); else ig=new THREE.IcosahedronGeometry(0.04,0); 
                 const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false})); 
                 const ce=new THREE.Vector3().add(pts[t.p1].position).add(pts[t.p2].position).add(pts[t.p3].position).divideScalar(3);
