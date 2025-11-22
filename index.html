@@ -196,9 +196,10 @@
             <span class="bg-black/80 text-cyan-400 font-bold text-xs px-3 py-2 rounded border border-cyan-500/50">TOCA PANTALLA PARA COLOCAR</span>
         </div>
     </div>
+    
+    <!-- Botón AR Original (oculto pero funcional) -->
     <div id="ar-btn"></div>
 
-    <!-- LÓGICA -->
     <script type="module">
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
@@ -294,6 +295,7 @@
 
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; 
+            // CPU tiene color rojo por defecto
             S.data={ 
                 status:'playing', current:'host', 
                 lines:[], tris:[], sc:{host:0,guest:0}, dice:0, movs:0,
@@ -342,6 +344,7 @@
         function launch() {
             nav('s-game'); 
             init3D();
+            // Cargar geometrías de iconos básicas (esferas/cubos simulando iconos por ahora para simplificar sin loaders externos pesados)
             renderState();
         }
 
@@ -378,9 +381,12 @@
                 setDice(d.dice||1);
             } else badge.classList.add('hidden');
 
+            // 3D Render
             if(grid) {
+                // Limpieza
                 grid.children.filter(c=>c.userData.line||c.userData.tri).forEach(c=>grid.remove(c));
                 
+                // Dibujar Líneas y Triángulos con colores personalizados
                 d.lines.forEach(l => {
                     const pData = l.own === 'host' ? d.p1Data : d.p2Data;
                     // Fallback para modo CPU antiguo sin pData
@@ -395,6 +401,7 @@
                 });
             }
 
+            // CPU Logic
             if(S.cpu && d.current==='guest' && d.movs===0) {
                 setTimeout(()=>{
                     const r=Math.floor(Math.random()*3)+1;
@@ -475,6 +482,7 @@
             renderer.xr.enabled = true;
             document.body.appendChild(renderer.domElement);
 
+            // AR BUTTON
             const arBtn = ARButton.createButton(renderer, { 
                 requiredFeatures: ['hit-test'], 
                 optionalFeatures: ['dom-overlay'], 
@@ -484,6 +492,7 @@
 
             grid = new THREE.Group(); scene.add(grid);
             
+            // PUNTOS GRANDES CYAN
             const geo = new THREE.SphereGeometry(0.035, 16, 16); 
             const hitGeo = new THREE.SphereGeometry(0.08, 8, 8); 
             const mat = new THREE.MeshStandardMaterial({ color:0x00e5ff, emissive:0x00e5ff, emissiveIntensity:0.8 });
