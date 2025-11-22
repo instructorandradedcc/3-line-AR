@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V27.0 CLEAN START</title>
+    <title>3 LINE-AR | V29.0 FLOW PERFECT</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -31,7 +31,7 @@
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
         
-        /* UI GENÉRICA */
+        /* PANELES */
         .glass-panel {
             background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 40px rgba(0, 243, 255, 0.15);
@@ -41,7 +41,7 @@
             background: linear-gradient(180deg, rgba(0,243,255,0.1), rgba(0,243,255,0));
             border: 1px solid #00f3ff; color: #00f3ff; font-weight: 800;
             text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s;
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); cursor: pointer;
         }
         .btn-neon:active { transform: scale(0.95); background: #00f3ff; color: #000; }
         .btn-neon.danger { border-color: #ff0055; color: #ff0055; }
@@ -68,18 +68,18 @@
 
         #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
         
-        /* PANTALLA DE VICTORIA - OCULTA POR DEFECTO CSS */
+        /* PANTALLA VICTORIA (BLOQUEADA POR DEFECTO) */
         #win-screen { 
             position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 60; 
-            pointer-events: auto; display: none; /* CRÍTICO: NO MOSTRAR AL INICIO */
+            pointer-events: auto; display: none !important; /* FORZADO OCULTO */
             flex-direction: column; justify-content: center; align-items: center;
         }
-        #win-screen.active { display: flex; } /* Solo mostrar cuando tenga clase active */
+        #win-screen.active { display: flex !important; }
 
         /* SELECTOR */
-        .opt { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: 0.2s; transform: scale(0.9); }
+        .opt { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: 0.2s; transform: scale(0.9); pointer-events: auto; }
         .opt.active { border-color: white; transform: scale(1.2); box-shadow: 0 0 20px currentColor; border-width: 2px; }
-        .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; }
+        .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; pointer-events: auto; }
         .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
         /* AR Button Override */
@@ -100,19 +100,19 @@
         <!-- 1. LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
-                <div class="text-6xl text-cyber animate-pulse-fast drop-shadow-[0_0_20px_rgba(0,243,255,0.6)]"><i class="fas fa-shield-alt"></i></div>
+                <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-brain"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V27.0 CLEAN START</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V29.0 AUTO-ARBITER</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
                 </button>
-                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA EN ESPERA</p>
+                <p id="login-msg" class="text-[9px] text-gray-600">SISTEMA ONLINE</p>
             </div>
         </div>
 
-        <!-- 2. MENÚ PRINCIPAL -->
+        <!-- 2. MENÚ -->
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
             <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
@@ -120,23 +120,24 @@
                     <button onclick="window.logout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
                 </div>
 
-                <div class="bg-white/5 p-4 rounded border border-white/10">
+                <!-- Selectores (Pointer events asegurados) -->
+                <div class="bg-white/5 p-4 rounded border border-white/10 pointer-events-auto">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-[9px] text-gray-400 font-bold">COLOR</span>
                         <div class="flex gap-3" id="c-pick">
-                            <div onclick="window.setProf('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 15px #00f3ff"></div>
-                            <div onclick="window.setProf('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
-                            <div onclick="window.setProf('c','#39ff14',this)" class="opt bg-[#39ff14]"></div>
-                            <div onclick="window.setProf('c','#ffd700',this)" class="opt bg-[#ffd700]"></div>
+                            <div onclick="window.setOpt('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 15px #00f3ff"></div>
+                            <div onclick="window.setOpt('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
+                            <div onclick="window.setOpt('c','#39ff14',this)" class="opt bg-[#39ff14]"></div>
+                            <div onclick="window.setOpt('c','#ffd700',this)" class="opt bg-[#ffd700]"></div>
                         </div>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-[9px] text-gray-400 font-bold">MARCA</span>
                         <div class="flex gap-4 text-lg" id="i-pick">
-                            <i onclick="window.setProf('i','gem',this)" class="opt-i fas fa-gem active"></i>
-                            <i onclick="window.setProf('i','bolt',this)" class="opt-i fas fa-bolt"></i>
-                            <i onclick="window.setProf('i','star',this)" class="opt-i fas fa-star"></i>
-                            <i onclick="window.setProf('i','atom',this)" class="opt-i fas fa-atom"></i>
+                            <i onclick="window.setOpt('i','gem',this)" class="opt-i fas fa-gem active"></i>
+                            <i onclick="window.setOpt('i','bolt',this)" class="opt-i fas fa-bolt"></i>
+                            <i onclick="window.setOpt('i','star',this)" class="opt-i fas fa-star"></i>
+                            <i onclick="window.setOpt('i','atom',this)" class="opt-i fas fa-atom"></i>
                         </div>
                     </div>
                 </div>
@@ -164,7 +165,6 @@
                     <div id="mov-hud" class="bg-black/90 px-3 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[100px] shadow-lg">
                         <div class="flex justify-between items-center gap-2">
                             <div><p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p></div>
-                            <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold">SKIP</button>
                         </div>
                     </div>
                 </div>
@@ -185,7 +185,7 @@
             </div>
         </div>
 
-        <!-- WIN SCREEN (BLOQUEADA POR DEFECTO CSS) -->
+        <!-- WIN SCREEN -->
         <div id="win-screen">
             <h1 id="win-title" class="text-6xl font-black text-cyber mb-2 animate-pulse text-center">VICTORIA</h1>
             <p id="win-msg" class="text-white font-mono mb-8 tracking-widest text-center">AGENTE DOMINANTE</p>
@@ -196,7 +196,7 @@
             <button onclick="window.goHome()" class="btn-neon py-4 px-10 text-lg">VOLVER AL MENÚ</button>
         </div>
 
-        <div id="ar-hint" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden flex-col items-center z-0">
+        <div id="ar-hint" class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden flex-col items-center z-0">
             <div class="w-32 h-32 border-2 border-cyber rounded-full animate-ping absolute opacity-30"></div>
             <span class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-8 font-bold tracking-widest backdrop-blur">DETECTANDO...</span>
         </div>
@@ -224,27 +224,11 @@
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
             const now = audioCtx.currentTime;
-            if(type === 'click') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
-                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                osc.start(now); osc.stop(now + 0.1);
-            } else if(type === 'win') {
-                osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.linearRampToValueAtTime(800, now + 0.2);
-                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3);
-                osc.start(now); osc.stop(now + 0.3);
-            } else if(type === 'roll') {
-                osc.type = 'square'; osc.frequency.setValueAtTime(100, now);
-                gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                osc.start(now); osc.stop(now + 0.1);
-            } else if(type === 'error') {
-                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now + 0.2);
-                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2);
-                osc.start(now); osc.stop(now + 0.2);
-            } else if(type === 'end') {
-                osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(600, now + 0.5);
-                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
-                osc.start(now); osc.stop(now + 1.0);
-            }
+            if(type === 'click') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
+            else if(type === 'win') { osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.linearRampToValueAtTime(800, now + 0.2); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); } 
+            else if(type === 'roll') { osc.type = 'square'; osc.frequency.setValueAtTime(100, now); gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
+            else if(type === 'error') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now + 0.2); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2); osc.start(now); osc.stop(now + 0.2); }
+            else if(type === 'end') { osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(600, now + 0.5); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0); osc.start(now); osc.stop(now + 1.0); }
         }
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
@@ -272,7 +256,7 @@
             } else el.innerText="MODO 3D (PC)";
         }
 
-        // COLLISION
+        // MATH
         function intersect(a, b, c, d) {
             const x1=a.x, y1=a.z, x2=b.x, y2=b.z, x3=c.x, y3=c.z, x4=d.x, y4=d.z;
             const denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1);
@@ -289,8 +273,14 @@
             }
             return false;
         }
+        function isPointInTriangle(p, a, b, c) {
+            const area = 0.5 * (-b.z * c.x + a.z * (-b.x + c.x) + a.x * (b.z - c.z) + b.x * c.z);
+            const sign = area < 0 ? -1 : 1;
+            const s = (a.z * c.x - a.x * c.z + (c.z - a.z) * p.x + (a.x - c.x) * p.z) * sign;
+            const t = (a.x * b.z - a.z * b.x + (a.z - b.z) * p.x + (b.x - a.x) * p.z) * sign;
+            return s > 0 && t > 0 && (s + t) < 2 * area * sign;
+        }
 
-        // AUTH
         onAuthStateChanged(auth, async u => {
             S.user = u;
             if(u) { document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE'; nav('s-menu'); checkAR(); }
@@ -299,22 +289,25 @@
         window.logout = () => { if(confirm("¿Salir?")) signOut(auth).then(()=>location.reload()); };
 
         function nav(id) {
-            ['s-login','s-menu','s-game'].forEach(i => document.getElementById(i).classList.add('hidden'));
-            // Ocultar Win Screen quitando clase active
-            document.getElementById('win-screen').classList.remove('active');
-            
-            document.getElementById(id).classList.remove('hidden');
+            ['s-login','s-menu','s-game','win-screen'].forEach(i => {
+                const el = document.getElementById(i);
+                el.classList.add('hidden');
+                if(i === 'win-screen') el.classList.remove('active');
+            });
+            const target = document.getElementById(id);
+            target.classList.remove('hidden');
+            if(id === 'win-screen') target.classList.add('active');
         }
         
         window.goHome = () => {
             if(roomUnsub) roomUnsub(); roomUnsub=null; 
             S.room = null; S.data = null;
-            if(group) { while(group.children.length>0) group.remove(group.children[0]); }
             nav('s-menu');
+            if(group) { while(group.children.length>0) group.remove(group.children[0]); }
             toast("SISTEMA", "DESCONECTADO");
         }
         
-        window.setProf = (t,v,el) => {
+        window.setOpt = (t,v,el) => {
             S.prof[t]=v; 
             const parent = el.parentNode; 
             Array.from(parent.children).forEach(c=>{ 
@@ -341,7 +334,7 @@
         window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
-            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}};
+            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}};
             start();
         };
 
@@ -349,7 +342,7 @@
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
             showLoad(true,"CREANDO...");
             await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
-                host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof
+                host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
             });
             sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
@@ -365,40 +358,54 @@
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
                     else if(d.stat==='end') endGame(d);
-                    else if(S.role==='host') showLoad(true,"ESPERANDO...");
                 }
             });
         }
         function start() { showLoad(false); nav('s-game'); init3D(); gameStartTime = Date.now(); toast("SISTEMA","LISTO"); }
 
-        // GAMEPLAY
+        // AUTO-ARBITER
+        function checkStatus() {
+            const d = S.data;
+            // Verificar si quedan movimientos válidos para ALGUNO de los jugadores
+            // Si no quedan líneas posibles (por colisiones o distancia), TERMINAR
+            // Simplificación: Si hay más de 10 intentos fallidos seguidos de CPU o un límite de líneas alcanzado
+            // Mejor: Chequear si hay alguna conexión posible menor a 1.2 que no cruce triángulos
+            let movesLeft = 0;
+            for(let i=0;i<pts.length;i++) {
+                for(let j=i+1;j<pts.length;j++) {
+                    if(pts[i].position.distanceTo(pts[j].position) < 1.2 && 
+                       !d.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && 
+                       !checkCollision(i,j,d.tris)) {
+                        movesLeft++;
+                    }
+                }
+            }
+            if(movesLeft === 0) {
+                update({stat: 'end'});
+            }
+        }
+
         window.rollDice = () => {
             const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Rival"); if(d.movs>0) return toast("JUEGA","Usa tus líneas");
             const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
             setTimeout(()=>{
-                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v, skips:0});
+                el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); update({dice:v, movs:v});
                 toast("DADO",`ENERGÍA: ${v}`);
             },500);
         };
         
+        // NO USER SKIP NEEDED WITH AUTO-ARBITER, BUT KEPT AS FALLBACK
         window.skipTurn = () => {
             const d=S.data; 
             if(d.turn===S.role) {
                 const t = d.turn==='host'?'guest':'host'; 
-                const newSkips = (d.skips || 0) + 1;
-                if(newSkips >= 2) update({stat:'end'});
-                else { update({movs:0, turn:t, dice:null, skips:newSkips}); toast("SISTEMA", "TURNO SALTADO"); }
+                update({movs:0, turn:t, dice:null}); toast("SISTEMA", "TURNO SALTADO");
             }
         };
 
         function endGame(d) {
-            // SEGURIDAD: Solo mostrar si el juego ha corrido por al menos 1 segundo
-            if(Date.now() - gameStartTime < 1000) return;
             if(document.getElementById('s-game').classList.contains('hidden')) return;
-            
-            document.getElementById('win-screen').classList.add('active'); // Mostrar pantalla
-            
-            playSfx('end');
+            nav('win-screen'); playSfx('end');
             const win = d.sc.host > d.sc.guest ? 'HOST' : (d.sc.host < d.sc.guest ? 'GUEST' : 'DRAW');
             const isMe = (win === 'HOST' && S.role === 'host') || (win === 'GUEST' && S.role === 'guest');
             
@@ -411,8 +418,11 @@
         }
 
         function update(o) {
-            if(S.cpu) { Object.assign(S.data,o); if(S.data.stat === 'end') endGame(S.data); else ui(); } 
-            else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
+            if(S.cpu) { 
+                Object.assign(S.data,o); 
+                if(S.data.stat === 'end') endGame(S.data);
+                else ui(); 
+            } else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
         }
 
         function ui() {
@@ -423,7 +433,10 @@
             if(d.turn===S.role && d.movs>0) { b.style.opacity=1; document.getElementById('mov-cnt').innerText=d.movs; dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; }
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#444'; dv.style.color='#555'; }
             draw();
-            if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3, skips:0}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
+            if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
+            
+            // CHECK AUTO END EVERY UPDATE
+            if(S.role === 'host') checkStatus();
         }
 
         function clickPt(id) {
@@ -443,14 +456,20 @@
             const sc={...d.sc}; if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); toast("CONQUISTA","¡Nexo Cerrado!"); }
             
             let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
-            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
+            update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di});
         }
 
         function checkTri(p1,p2,o,ls) {
             const f=[]; for(let p3=0; p3<pts.length; p3++) {
                 if(p3!==p1 && p3!==p2) {
                     if(ls.some(l=>(l.s===p1&&l.e===p3)||(l.s===p3&&l.e===p1)) && ls.some(l=>(l.s===p2&&l.e===p3)||(l.s===p3&&l.e===p2))) {
-                        const v=[p1,p2,p3].sort(); if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) f.push({p1:v[0],p2:v[1],p3:v[2],own:o});
+                        const v1 = pts[p1].position; const v2 = pts[p2].position; const v3 = pts[p3].position;
+                        let valid = true;
+                        for(let i=0; i<pts.length; i++) if(i!==p1 && i!==p2 && i!==p3 && isPointInTriangle(pts[i].position, v1, v2, v3)) { valid=false; break; }
+                        if(valid) {
+                            const v=[p1,p2,p3].sort(); 
+                            if(!S.data.tris.some(t=>JSON.stringify([t.p1,t.p2,t.p3].sort())===JSON.stringify(v))) f.push({p1:v[0],p2:v[1],p3:v[2],own:o});
+                        }
                     }
                 }
             } return f;
@@ -464,10 +483,9 @@
             if(m) {
                 const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
                 let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
-                update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
+                update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di});
             } else {
-                const newSkips = (S.data.skips || 0) + 1;
-                if(newSkips >= 2) update({stat:'end'}); else update({movs:0, turn:'host', dice:null, skips:newSkips});
+                update({movs:0, turn:'host', dice:null}); // CPU passes
             }
         }
 
