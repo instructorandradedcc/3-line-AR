@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>3 LINE-AR | Conecta & Conquista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -31,7 +31,6 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
-            overflow: hidden; /* Para contener el patrón */
         }
 
         /* Patrón de Triángulos para Tarjetas */
@@ -66,7 +65,7 @@
         .cyber-check {
             appearance: none; -webkit-appearance: none;
             width: 16px; height: 16px; border: 1px solid #555; border-radius: 2px;
-            background: rgba(0,0,0,0.5); cursor: pointer; position: relative; display: inline-block; top: 3px;
+            background: rgba(0,0,0,0.5); cursor: pointer; position: relative; display: inline-block; top: 3px; flex-shrink: 0;
         }
         .cyber-check:checked { background: #EAB308; border-color: #EAB308; box-shadow: 0 0 8px #EAB308; }
         .cyber-check:checked::after { content: '✔'; position: absolute; top: -4px; left: 1px; color: black; font-size: 12px; font-weight: bold; }
@@ -86,6 +85,7 @@
 
         .color-btn { transition: all 0.3s; }
         .color-btn.selected { border-color: white; transform: scale(1.25); box-shadow: 0 0 25px currentColor; z-index: 2; }
+        #ar-button-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 20; }
         
         #ar-instructions {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -94,14 +94,23 @@
             pointer-events: none; display: none; z-index: 50;
         }
 
-        /* Modal Legal */
+        /* Modal Legal - Ajustado para pantallas pequeñas */
         .legal-modal-content {
-            max-height: 60vh; overflow-y: auto; 
+            max-height: 50vh; overflow-y: auto; 
             scrollbar-width: thin; scrollbar-color: #555 #111;
         }
         .legal-modal-content::-webkit-scrollbar { width: 6px; }
         .legal-modal-content::-webkit-scrollbar-track { background: #111; }
         .legal-modal-content::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+        
+        /* Ajustes de Scroll en tarjetas */
+        .scrollable-card-content {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 5px;
+            scrollbar-width: thin;
+            scrollbar-color: #555 #111;
+        }
     </style>
     
     <script type="importmap">
@@ -112,121 +121,123 @@
 
     <canvas id="bg-canvas"></canvas>
     <div class="scanline"></div>
-    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V5.2.0 NET-RESILIENT</div>
+    <div class="fixed bottom-2 right-3 text-[10px] text-gray-500 font-mono z-50 pointer-events-none font-bold tracking-widest select-none">V5.3.0 LAYOUT-FIX</div>
 
-    <div id="ui-layer" class="flex flex-col justify-center items-center p-4 overflow-y-auto min-h-screen bg-black/40">
+    <div id="ui-layer" class="flex flex-col justify-center items-center p-4 overflow-hidden min-h-screen bg-black/40">
         
         <!-- 1. LOGIN SCREEN -->
-        <div id="screen-login" class="interactive glass glass-pattern p-8 md:p-10 rounded-lg max-w-md w-full text-center fade-in hidden z-50 relative border-t-4 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)]">
-            <div class="relative z-10">
-                <div class="mb-8 flex justify-center relative">
+        <div id="screen-login" class="interactive glass glass-pattern p-6 md:p-10 rounded-lg max-w-md w-full text-center fade-in hidden z-50 relative border-t-4 border-cyan-500 shadow-[0_0_30px_rgba(6,182,212,0.1)] flex flex-col max-h-[90vh]">
+            <div class="relative z-10 flex flex-col h-full justify-center">
+                <div class="mb-4 flex justify-center relative shrink-0">
                     <div class="absolute inset-0 bg-cyan-500 blur-[90px] opacity-20 rounded-full animate-pulse"></div>
                     <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
                          onerror="this.style.display='none'; document.getElementById('fallback-logo').style.display='flex';"
-                         class="w-40 h-40 rounded-2xl object-cover shadow-[0_0_40px_rgba(6,182,212,0.3)] border-2 border-cyan-500/30 relative z-10 mx-auto bg-black">
-                     <div id="fallback-logo" class="hidden w-40 h-40 bg-black/80 rounded-xl border-2 border-cyan-500 flex items-center justify-center mx-auto">
-                        <i class="fas fa-cube text-6xl text-cyan-400"></i>
+                         class="w-32 h-32 md:w-40 md:h-40 rounded-2xl object-cover shadow-[0_0_40px_rgba(6,182,212,0.3)] border-2 border-cyan-500/30 relative z-10 mx-auto bg-black">
+                     <div id="fallback-logo" class="hidden w-32 h-32 bg-black/80 rounded-xl border-2 border-cyan-500 flex items-center justify-center mx-auto">
+                        <i class="fas fa-cube text-5xl text-cyan-400"></i>
                     </div>
                 </div>
 
-                <h2 class="text-cyan-400 text-2xl font-black font-orbitron tracking-[0.2em] uppercase mb-8 neon-title">PARA GANAR</h2>
+                <h2 class="text-cyan-400 text-xl md:text-2xl font-black font-orbitron tracking-[0.2em] uppercase mb-6 neon-title shrink-0">PARA GANAR</h2>
                 
-                <div class="space-y-4 px-2">
-                    <button onclick="handleLogin('google')" id="btn-google" class="w-full btn-cyber btn-google-cyber group text-sm">
+                <div class="space-y-3 px-2 shrink-0">
+                    <button onclick="handleLogin('google')" id="btn-google" class="w-full btn-cyber btn-google-cyber group text-xs md:text-sm py-3">
                         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5 mr-3"> INICIAR CON GOOGLE
                     </button>
-                    <button onclick="handleLogin('facebook')" id="btn-facebook" class="w-full btn-cyber btn-facebook-cyber group text-sm">
+                    <button onclick="handleLogin('facebook')" id="btn-facebook" class="w-full btn-cyber btn-facebook-cyber group text-xs md:text-sm py-3">
                         <i class="fab fa-facebook text-xl mr-3 text-blue-500"></i> INICIAR CON FACEBOOK
                     </button>
                 </div>
 
-                <div class="mt-8 flex items-center justify-center gap-2 text-[10px] text-cyan-700/80 font-orbitron uppercase tracking-widest">
+                <div class="mt-6 flex items-center justify-center gap-2 text-[10px] text-cyan-700/80 font-orbitron uppercase tracking-widest shrink-0">
                     <span class="w-1.5 h-1.5 bg-cyan-500 rounded-full animate-pulse"></span>
                     Enlace Seguro Establecido
                 </div>
                 
-                <div id="login-error" class="hidden mt-4 p-3 bg-red-900/80 border border-red-500 rounded text-white text-xs text-center font-mono"></div>
+                <div id="login-error" class="hidden mt-4 p-3 bg-red-900/80 border border-red-500 rounded text-white text-xs text-center font-mono shrink-0"></div>
             </div>
         </div>
 
         <!-- 2. PANTALLA DE VERIFICACIÓN -->
-        <div id="screen-permissions" class="interactive glass glass-pattern p-8 rounded-lg max-w-md w-full text-left fade-in hidden z-50 relative border-t-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+        <div id="screen-permissions" class="interactive glass glass-pattern p-6 rounded-lg max-w-md w-full text-left fade-in hidden z-50 relative border-t-4 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.1)] flex flex-col max-h-[90vh]">
             
-            <div class="mb-6 flex justify-center">
-                <div class="relative">
-                    <div class="absolute inset-0 bg-yellow-500 blur-[60px] opacity-20 rounded-full"></div>
-                    <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
-                         class="w-24 h-24 rounded-xl object-cover shadow-[0_0_20px_rgba(234,179,8,0.3)] border border-yellow-500/40 relative z-10 mx-auto bg-black">
-                </div>
-            </div>
-
-            <h2 class="text-xl font-orbitron font-bold text-yellow-400 mb-4 flex items-center justify-center gap-3 uppercase tracking-wider border-b border-white/10 pb-4">
-                <i class="fas fa-check-circle"></i> Activación
-            </h2>
-            
-            <p class="text-gray-400 text-xs mb-6 font-mono leading-relaxed text-center">
-                Hola <span id="verify-username" class="text-white font-bold">Operador</span>. Completando sincronización de protocolos de seguridad.
-            </p>
-
-            <div class="space-y-3 mb-6">
-                <div class="flex items-center justify-between bg-black/30 p-3 rounded border border-white/5">
-                    <div class="flex items-center gap-3">
-                        <i class="fas fa-network-wired text-gray-500"></i>
-                        <div class="text-sm font-bold text-gray-200 font-orbitron tracking-wide">Base de Datos</div>
-                    </div>
-                    <div id="check-db" class="text-[10px] font-mono text-yellow-500 flex items-center font-bold uppercase">
-                        <span class="status-dot status-pending"></span> TESTEANDO...
+            <div class="scrollable-card-content flex-1">
+                <div class="mb-4 flex justify-center shrink-0">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-yellow-500 blur-[60px] opacity-20 rounded-full"></div>
+                        <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
+                            class="w-20 h-20 rounded-xl object-cover shadow-[0_0_20px_rgba(234,179,8,0.3)] border border-yellow-500/40 relative z-10 mx-auto bg-black">
                     </div>
                 </div>
-            </div>
 
-            <div id="perm-error" class="hidden mb-6 p-4 bg-red-900/30 border border-red-500/30 rounded text-red-200 text-xs font-mono">
-                <div class="flex items-start gap-3">
-                    <i class="fas fa-exclamation-triangle text-red-500 mt-0.5"></i>
-                    <span id="perm-error-msg">...</span>
+                <h2 class="text-lg font-orbitron font-bold text-yellow-400 mb-4 flex items-center justify-center gap-2 uppercase tracking-wider border-b border-white/10 pb-3 shrink-0">
+                    <i class="fas fa-check-circle"></i> Activación
+                </h2>
+                
+                <p class="text-gray-400 text-[11px] mb-4 font-mono leading-relaxed text-center">
+                    Hola <span id="verify-username" class="text-white font-bold">Operador</span>. Completando sincronización de protocolos.
+                </p>
+
+                <div class="space-y-2 mb-4">
+                    <div class="flex items-center justify-between bg-black/30 p-3 rounded border border-white/5">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-network-wired text-gray-500 text-xs"></i>
+                            <div class="text-xs font-bold text-gray-200 font-orbitron tracking-wide">Base de Datos</div>
+                        </div>
+                        <div id="check-db" class="text-[10px] font-mono text-yellow-500 flex items-center font-bold uppercase">
+                            <span class="status-dot status-pending"></span> TEST
+                        </div>
+                    </div>
                 </div>
-                <button onclick="forceAuthorize()" class="mt-3 text-[10px] underline text-red-300 hover:text-white">
-                    Ignorar error y continuar (Modo Riesgo)
-                </button>
+
+                <div id="perm-error" class="hidden mb-4 p-3 bg-red-900/30 border border-red-500/30 rounded text-red-200 text-[10px] font-mono">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-exclamation-triangle text-red-500 mt-0.5"></i>
+                        <span id="perm-error-msg">...</span>
+                    </div>
+                    <button onclick="forceAuthorize()" class="mt-2 text-[10px] underline text-red-300 hover:text-white block text-center w-full">
+                        Ignorar error y continuar
+                    </button>
+                </div>
+
+                <!-- Checkboxes -->
+                <div class="mb-4 space-y-2 border-t border-white/10 pt-3">
+                    <label class="flex items-start gap-2 cursor-pointer group">
+                        <input type="checkbox" id="check-terms" class="cyber-check mt-1" onchange="checkPermissions()">
+                        <span class="text-[11px] text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
+                            Acepto los <a href="#" onclick="openTerms(event)" class="text-yellow-500 hover:text-yellow-300 underline">Términos de Servicio</a>.
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-2 cursor-pointer group">
+                        <input type="checkbox" id="check-storage" class="cyber-check mt-1" onchange="checkPermissions()">
+                        <span class="text-[11px] text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
+                            Permito guardar mi progreso localmente.
+                        </span>
+                    </label>
+                </div>
             </div>
 
-            <!-- Checkboxes -->
-            <div class="mb-6 space-y-3 border-t border-white/10 pt-4">
-                <label class="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" id="check-terms" class="cyber-check" onchange="checkPermissions()">
-                    <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
-                        Acepto los <a href="#" onclick="openTerms(event)" class="text-yellow-500 hover:text-yellow-300 underline">Términos de Servicio</a>.
-                    </span>
-                </label>
-                <label class="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" id="check-storage" class="cyber-check" onchange="checkPermissions()">
-                    <span class="text-xs text-gray-400 group-hover:text-gray-200 leading-tight font-mono">
-                        Permito guardar mi progreso localmente.
-                    </span>
-                </label>
-            </div>
-
-            <button id="btn-authorize" onclick="completeSetup()" class="w-full btn-cyber border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300" disabled>
+            <button id="btn-authorize" onclick="completeSetup()" class="w-full btn-cyber border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-300 mt-auto py-3 text-xs" disabled>
                 <i class="fas fa-lock mr-2"></i> CONFIRMAR
             </button>
         </div>
 
         <!-- MODAL LEGAL -->
         <div id="modal-terms" class="fixed inset-0 bg-black/90 z-[60] hidden flex justify-center items-center p-4 fade-in">
-            <div class="glass max-w-2xl w-full rounded-lg border border-yellow-500/30 p-6 relative shadow-[0_0_50px_rgba(234,179,8,0.2)] flex flex-col max-h-[90vh]">
-                <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
-                    <h3 class="text-xl font-orbitron font-bold text-yellow-400"><i class="fas fa-file-contract mr-2"></i> PROTOCOLO LEGAL</h3>
-                    <button onclick="closeTerms()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-2xl"></i></button>
+            <div class="glass max-w-2xl w-full rounded-lg border border-yellow-500/30 p-6 relative shadow-[0_0_50px_rgba(234,179,8,0.2)] flex flex-col max-h-[85vh]">
+                <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-3 shrink-0">
+                    <h3 class="text-lg font-orbitron font-bold text-yellow-400"><i class="fas fa-file-contract mr-2"></i> LEGAL</h3>
+                    <button onclick="closeTerms()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
                 </div>
-                <div class="legal-modal-content pr-4 text-gray-300 text-xs font-mono leading-relaxed space-y-4">
+                <div class="legal-modal-content pr-2 text-gray-300 text-[11px] font-mono leading-relaxed space-y-3 flex-1">
                     <p class="text-yellow-500 font-bold">1. ACEPTACIÓN</p>
                     <p>Al usar 3 LINE-AR, aceptas estos términos y condiciones legales.</p>
                     <p class="text-yellow-500 font-bold">2. DATOS Y NUBE</p>
                     <p>Tus datos de juego se almacenan de forma segura en Google Cloud Firestore. Vinculamos tu progreso a tu cuenta para que no lo pierdas.</p>
                     <p class="text-yellow-500 font-bold">3. BLOQUEO DE ANUNCIOS</p>
                     <p>El uso de bloqueadores de anuncios (AdBlock) puede impedir la conexión con nuestra base de datos. Se recomienda desactivarlos para este sitio.</p>
-                    <button onclick="closeTerms()" class="mt-6 w-full btn-cyber border-yellow-500 text-yellow-400 hover:bg-yellow-500/10">ENTENDIDO</button>
                 </div>
+                <button onclick="closeTerms()" class="mt-4 w-full btn-cyber border-yellow-500 text-yellow-400 hover:bg-yellow-500/10 py-2 text-xs shrink-0">ENTENDIDO</button>
             </div>
         </div>
 
@@ -333,7 +344,7 @@
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne';
         
-        // --- FONDO DINÁMICO ---
+        // --- FONDO DINÁMICO (CHAMELEON) ---
         let bgParticles = [], bgContext = null, bgWidth, bgHeight;
         let targetColor = { r: 255, g: 200, b: 0 }, currentColor = { r: 255, g: 200, b: 0 };
 
@@ -402,7 +413,6 @@
                 const userRef = doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'data');
                 
                 try {
-                    // Intento de lectura con timeout para detectar bloqueo
                     const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), 3000));
                     const snapshot = await Promise.race([getDoc(userRef), timeout]);
                     
@@ -413,7 +423,6 @@
                     }
                 } catch (e) {
                     console.error("Profile Check Error:", e);
-                    // Si falla por timeout (adblock), mostramos verificación para que el usuario pueda usar "Ignorar error"
                     showVerificationScreen(user);
                 }
             } else {
@@ -503,7 +512,6 @@
             btn.innerText = "GUARDANDO..."; btn.disabled = true;
             
             try {
-                // Intentamos guardar con timeout para no quedarnos pegados si hay adblock
                 const userRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'profile', 'data');
                 const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("TIMEOUT")), 3000));
                 
@@ -520,7 +528,7 @@
                 authorizeSystem();
             } catch (e) {
                 console.warn("Save terms failed (AdBlock?), proceeding anyway:", e);
-                authorizeSystem(); // Dejamos pasar igual
+                authorizeSystem(); 
             }
         };
 
