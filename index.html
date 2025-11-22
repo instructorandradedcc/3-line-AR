@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V31.0 FULL FIX</title>
+    <title>3 LINE-AR | V34.0 HYBRID GESTURES</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; touch-action: none; }
         
         /* FONDO */
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #080810 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
@@ -68,10 +68,10 @@
 
         #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
         
-        /* PANTALLA VICTORIA (BLOQUEADA POR DEFECTO) */
+        /* PANTALLA VICTORIA */
         #win-screen { 
             position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 60; 
-            pointer-events: auto; display: none !important; /* FORZADO OCULTO */
+            pointer-events: auto; display: none !important; 
             flex-direction: column; justify-content: center; align-items: center;
         }
         #win-screen.active { display: flex !important; }
@@ -88,8 +88,7 @@
             color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
             border-radius: 6px !important; text-transform: uppercase !important;
         }
-        /* Ocultar mensaje feo de ThreeJS */
-        #ar-zone a { display: none !important; } 
+        #ar-zone a { display: none !important; }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -102,10 +101,10 @@
         <!-- 1. LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
-                <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-project-diagram"></i></div>
+                <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-hand-holding-magic"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V31.0 FULL FIX</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V34.0 HYBRID GESTURES</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -122,24 +121,23 @@
                     <button onclick="window.logout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
                 </div>
 
-                <!-- Selectores -->
                 <div class="bg-white/5 p-4 rounded border border-white/10 pointer-events-auto">
                     <div class="flex justify-between items-center mb-4">
                         <span class="text-[9px] text-gray-400 font-bold">COLOR</span>
                         <div class="flex gap-3" id="c-pick">
-                            <div onclick="window.setOpt('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 15px #00f3ff"></div>
-                            <div onclick="window.setOpt('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
-                            <div onclick="window.setOpt('c','#39ff14',this)" class="opt bg-[#39ff14]"></div>
-                            <div onclick="window.setOpt('c','#ffd700',this)" class="opt bg-[#ffd700]"></div>
+                            <div onclick="window.setProf('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 15px #00f3ff"></div>
+                            <div onclick="window.setProf('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
+                            <div onclick="window.setProf('c','#39ff14',this)" class="opt bg-[#39ff14]"></div>
+                            <div onclick="window.setProf('c','#ffd700',this)" class="opt bg-[#ffd700]"></div>
                         </div>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-[9px] text-gray-400 font-bold">MARCA</span>
                         <div class="flex gap-4 text-lg" id="i-pick">
-                            <i onclick="window.setOpt('i','gem',this)" class="opt-i fas fa-gem active"></i>
-                            <i onclick="window.setOpt('i','bolt',this)" class="opt-i fas fa-bolt"></i>
-                            <i onclick="window.setOpt('i','star',this)" class="opt-i fas fa-star"></i>
-                            <i onclick="window.setOpt('i','atom',this)" class="opt-i fas fa-atom"></i>
+                            <i onclick="window.setProf('i','gem',this)" class="opt-i fas fa-gem active"></i>
+                            <i onclick="window.setProf('i','bolt',this)" class="opt-i fas fa-bolt"></i>
+                            <i onclick="window.setProf('i','star',this)" class="opt-i fas fa-star"></i>
+                            <i onclick="window.setProf('i','atom',this)" class="opt-i fas fa-atom"></i>
                         </div>
                     </div>
                 </div>
@@ -164,10 +162,11 @@
                 <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">PUNTAJE</span><span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span></div>
                 <div class="flex flex-col items-center -mt-10 z-20">
                     <div class="dice-wrap" onclick="window.rollDice()"><div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div></div>
-                    <div id="mov-hud" class="bg-black/90 px-3 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[100px] shadow-lg">
-                        <div class="flex justify-between items-center gap-2">
-                            <div><p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p></div>
+                    <div id="mov-hud" class="bg-black/90 px-3 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[120px] shadow-lg flex items-center justify-between gap-2">
+                        <div>
+                            <p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p>
                         </div>
+                        <button onclick="window.claimEnd()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold leading-tight">SIN<br>JUGADAS</button>
                     </div>
                 </div>
                 <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span><span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span></div>
@@ -181,6 +180,7 @@
             <div id="ar-hint" class="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none hidden flex-col items-center z-0">
                 <div class="w-20 h-20 border-2 border-cyber rounded-full animate-ping absolute opacity-30"></div>
                 <span class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-4 font-bold tracking-widest backdrop-blur">ESCANEA SUPERFICIE</span>
+                <span id="ar-scale-hint" class="hidden mt-2 text-[8px] text-white bg-black/50 px-2 rounded">PELLIZCA PARA ESCALAR</span>
             </div>
 
             <div class="flex justify-center items-center flex-grow pointer-events-none">
@@ -205,7 +205,6 @@
         </div>
     </div>
 
-    <!-- Zona AR -->
     <div id="ar-zone" class="absolute bottom-8 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
 
     <script type="module">
@@ -237,6 +236,9 @@
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
         let pts=[], selPt=null, placed=false, roomUnsub=null, gameStartTime=0;
+        let currentScale = 1.0;
+        
+        const LOSE_MSGS = ["¡BUEN INTENTO!", "LA PRÓXIMA SERÁ TUYA", "GRAN ESTRATEGIA", "BUENA PARTIDA", "SIGUE ASÍ"];
 
         function genPoints() {
             const p=[]; const count=16; const minD=0.25;
@@ -310,7 +312,7 @@
             toast("SISTEMA", "DESCONECTADO");
         }
         
-        window.setOpt = (t,v,el) => {
+        window.setProf = (t,v,el) => {
             S.prof[t]=v; 
             const parent = el.parentNode; 
             Array.from(parent.children).forEach(c=>{ 
@@ -337,40 +339,35 @@
         window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
-            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}};
+            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'skull'}, scale: 1.0};
             start();
         };
 
         async function create(pub) {
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
             showLoad(true,"CREANDO...");
-            // FIX: Use correct path with APP_ID
-            await setDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), {
-                host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof
+            await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
+                host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, scale:1.0
             });
             sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
         async function join(c) {
             S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
-            // FIX: Use correct path with APP_ID
-            await updateDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
+            await updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
             sub(c); document.getElementById('room-lbl').innerText=c;
         }
         function sub(c) {
             if(roomUnsub) roomUnsub();
-            // FIX: Use correct path with APP_ID
-            roomUnsub = onSnapshot(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${c}`), s => {
+            roomUnsub = onSnapshot(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), s => {
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
                     else if(d.stat==='end') endGame(d);
-                    else if(S.role==='host') showLoad(true,"ESPERANDO...");
                 }
             });
         }
         function start() { showLoad(false); nav('s-game'); init3D(); gameStartTime = Date.now(); toast("SISTEMA","LISTO"); }
 
-        // AUTO-ARBITER
         function checkStatus() {
             const d = S.data;
             let movesLeft = 0;
@@ -395,15 +392,18 @@
             },500);
         };
         
-        window.skipTurn = () => {
+        window.claimEnd = () => {
             const d=S.data; 
-            if(d.turn===S.role) {
-                const t = d.turn==='host'?'guest':'host'; 
-                const newSkips = (d.skips || 0) + 1;
-                if(newSkips >= 2) update({stat:'end'});
-                else { update({movs:0, turn:t, dice:null, skips:newSkips}); toast("SISTEMA", "TURNO SALTADO"); }
-            }
+            if(d.turn===S.role) update({stat:'end'}); 
         };
+        
+        window.skipTurn = () => {
+             const d=S.data; 
+             if(d.turn===S.role) {
+                 const t = d.turn==='host'?'guest':'host'; 
+                 update({movs:0, turn:t, dice:null}); 
+             }
+        }
 
         function endGame(d) {
             if(document.getElementById('s-game').classList.contains('hidden')) return;
@@ -414,15 +414,14 @@
             const tit = document.getElementById('win-title'); const msg = document.getElementById('win-msg');
             if(win === 'DRAW') { tit.innerText = "EMPATE"; tit.className = "text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "SIN DOMINIO"; }
             else if(isMe) { tit.innerText = "VICTORIA"; tit.className = "text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL"; }
-            else { tit.innerText = "DERROTA"; tit.className = "text-6xl font-black text-hot mb-2 text-center"; msg.innerText = "TERRITORIO PERDIDO"; }
+            else { tit.innerText = "DERROTA"; tit.className = "text-6xl font-black text-hot mb-2 text-center"; msg.innerText = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)]; }
             document.getElementById('final-p1').innerText = S.role==='host' ? d.sc.host : d.sc.guest;
             document.getElementById('final-p2').innerText = S.role==='host' ? d.sc.guest : d.sc.host;
         }
 
         function update(o) {
             if(S.cpu) { Object.assign(S.data,o); if(S.data.stat === 'end') endGame(S.data); else ui(); } 
-            // FIX: Use correct path with APP_ID
-            else updateDoc(doc(db,'artifacts',APP_ID,'public','data','rooms',`room_${S.room}`), o);
+            else updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${S.room}`), o);
         }
 
         function ui() {
@@ -432,6 +431,13 @@
             const b=document.getElementById('mov-hud'); const dv=document.getElementById('dice-vis');
             if(d.turn===S.role && d.movs>0) { b.style.opacity=1; document.getElementById('mov-cnt').innerText=d.movs; dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; }
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor='#444'; dv.style.color='#555'; }
+            
+            // SYNC SCALE
+            if(group && d.scale) {
+                currentScale = d.scale;
+                group.scale.set(currentScale, currentScale, currentScale);
+            }
+
             draw();
             if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>update({dice:3,movs:3, skips:0}),1000); else if(d.movs>0) setTimeout(cpuMove,1000); }
             if(S.role === 'host') checkStatus();
@@ -483,12 +489,13 @@
                 let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
                 update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
             } else {
-                const newSkips = (S.data.skips || 0) + 1;
-                if(newSkips >= 2) update({stat:'end'}); else update({movs:0, turn:'host', dice:null, skips:newSkips});
+               update({movs:0, turn:'host', dice:null});
             }
         }
 
         let scene, cam, ren, group, ray, reticle, arHit, controls;
+        let touchDist = 0;
+
         function init3D() {
             if(!S.data.points) return;
             if(scene) { while(group.children.length>0) group.remove(group.children[0]); pts=[]; build(); return; }
@@ -501,16 +508,53 @@
                 if(supported) {
                     const btn=ARButton.createButton(ren,{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:document.body}});
                     document.getElementById('ar-zone').appendChild(btn);
-                    btn.addEventListener('click',()=>{ placed=false; group.visible=false; document.getElementById('bg-canvas').style.opacity=0; document.getElementById('btn-rec').style.display='none'; });
+                    btn.addEventListener('click',()=>{ 
+                        placed=false; group.visible=false; 
+                        document.getElementById('bg-canvas').style.opacity=0; 
+                        document.getElementById('btn-rec').style.display='none';
+                        document.getElementById('ar-hint').style.display='flex';
+                        document.getElementById('ar-scale-hint').style.display='block'; // PINCH HINT
+                    });
                 }
             });
 
-            ren.xr.addEventListener('sessionend',()=>{ recenter(); document.getElementById('bg-canvas').style.opacity=1; document.getElementById('btn-rec').style.display='flex'; });
+            ren.xr.addEventListener('sessionend',()=>{ 
+                recenter(); 
+                document.getElementById('bg-canvas').style.opacity=1; 
+                document.getElementById('btn-rec').style.display='flex';
+                document.getElementById('ar-hint').style.display='none';
+            });
+            
             scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); group=new THREE.Group(); scene.add(group);
             build();
             reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
             reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
             ray=new THREE.Raycaster(); ren.setAnimationLoop(loop);
+            
+            // PINCH TO ZOOM LOGIC
+            window.addEventListener('touchstart', e => {
+                if(e.touches.length === 2) {
+                    touchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                }
+            });
+            
+            window.addEventListener('touchmove', e => {
+                if(e.touches.length === 2 && placed && ren.xr.isPresenting) {
+                    const newDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                    const delta = (newDist - touchDist) * 0.01;
+                    
+                    let ns = currentScale + delta;
+                    if(ns < 0.2) ns = 0.2; if(ns > 3.0) ns = 3.0;
+                    
+                    currentScale = ns;
+                    group.scale.set(ns, ns, ns);
+                    touchDist = newDist;
+                    
+                    // Sync Scale
+                    update({scale: ns});
+                }
+            });
+
             window.addEventListener('pointerdown', (e)=>{
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return;
                 const m=new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
@@ -528,7 +572,7 @@
                 group.add(m); pts.push(m);
             });
         }
-        window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); }
+        window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); currentScale=1.0; group.scale.set(1,1,1); }
         function highlight(id,on) {
             const m=pts[id]; if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); } else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); }
         }
