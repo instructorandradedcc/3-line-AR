@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V19.0 CONQUEROR</title>
+    <title>3 LINE-AR | V20.0 FLOW MASTER</title>
     
-    <!-- Dependencias Gráficas -->
+    <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { 
@@ -24,17 +24,17 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* FONDO */
+        /* FONDO GENERAL */
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #050510 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
         
         canvas { display: block; outline: none; } 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
         
-        /* UI */
+        /* PANELES UI */
         .glass-panel {
-            background: rgba(8, 12, 18, 0.9); backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 243, 255, 0.2); box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+            background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 40px rgba(0, 243, 255, 0.15);
             border-radius: 12px;
         }
         
@@ -52,38 +52,38 @@
         .dice-cube {
             width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
             transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            background: rgba(0,0,0,0.85); border: 2px solid #00f3ff; border-radius: 12px;
+            background: rgba(0,0,0,0.9); border: 2px solid #00f3ff; border-radius: 12px;
             display: flex; justify-content: center; align-items: center;
             font-size: 36px; color: #00f3ff; text-shadow: 0 0 15px #00f3ff;
         }
         .rolling { animation: shake 0.4s infinite; background: #00f3ff; color: #000; text-shadow: none; }
         @keyframes shake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
 
-        /* TOAST */
+        /* MENSAJES */
         .toast-box {
-            background: rgba(0,0,0,0.95); border: 1px solid #00f3ff; border-left-width: 5px;
+            background: #000; border: 1px solid #00f3ff; border-left-width: 5px;
             padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace';
             transform: translateY(100px); opacity: 0; transition: all 0.4s;
         }
         .toast-box.show { transform: translateY(0); opacity: 1; }
 
         /* LOADER */
-        #loader { position: absolute; inset: 0; background: black; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; }
-        .scanner { width: 200px; height: 2px; background: #00f3ff; box-shadow: 0 0 10px #00f3ff; animation: scan 1.5s infinite ease-in-out; }
+        #loader { position: absolute; inset: 0; background: black; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; pointer-events: auto; }
+        .scanner { width: 200px; height: 2px; background: #00f3ff; box-shadow: 0 0 15px #00f3ff; animation: scan 1.5s infinite ease-in-out; }
         @keyframes scan { 0%,100% { transform: scaleX(0); opacity: 0; } 50% { transform: scaleX(1); opacity: 1; } }
 
-        /* AR BUTTON FIX */
-        #ar-zone button {
-            background: rgba(20, 20, 30, 0.9) !important; border: 1px solid #00f3ff !important;
-            color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
-            border-radius: 6px !important; text-transform: uppercase !important; letter-spacing: 1px !important;
-        }
-        
         /* SELECTOR */
         .opt { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: 0.2s; transform: scale(0.9); }
         .opt.active { border-color: white; transform: scale(1.1); box-shadow: 0 0 15px currentColor; }
         .opt-i { font-size: 20px; color: #555; transition: 0.2s; cursor: pointer; }
         .opt-i.active { color: #00f3ff; transform: scale(1.2); text-shadow: 0 0 10px #00f3ff; }
+
+        /* AR Button Override */
+        #ar-zone button {
+            background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important;
+            color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
+            border-radius: 6px !important; text-transform: uppercase !important; letter-spacing: 1px !important;
+        }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -91,40 +91,49 @@
 <body>
     <canvas id="bg-canvas"></canvas>
 
-    <!-- LOADER -->
-    <div id="loader" class="hidden">
-        <h2 class="text-3xl font-black text-white mb-2 tracking-widest">CARGANDO</h2>
-        <div class="scanner mb-2"></div>
-        <p id="load-msg" class="text-[10px] text-cyber font-mono">INICIALIZANDO...</p>
+    <!-- 1. PANTALLA DE CARGA INICIAL (Visible por defecto) -->
+    <div id="loader">
+        <h2 class="text-4xl font-black text-white mb-4 tracking-widest italic">CARGANDO</h2>
+        <div class="scanner mb-4"></div>
+        <p id="load-msg" class="text-[10px] text-cyber font-mono uppercase tracking-widest">INICIALIZANDO SISTEMA...</p>
     </div>
 
-    <!-- UI -->
+    <!-- CAPA UI -->
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
-        <!-- LOGIN -->
-        <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
+        <!-- 2. LOGIN -->
+        <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50 hidden">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
-                <div class="text-5xl text-cyber animate-pulse-fast"><i class="fas fa-network-wired"></i></div>
+                <div class="text-6xl text-cyber animate-pulse-fast drop-shadow-[0_0_15px_rgba(0,243,255,0.5)]"><i class="fas fa-cube"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-1">V19.0 CONQUEROR</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V20.0 FLOW MASTER</p>
                 </div>
-                <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm"><i class="fab fa-google"></i> INICIAR SISTEMA</button>
-                <p id="login-stat" class="text-[9px] text-gray-600">ESPERANDO CREDENCIALES...</p>
+                <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
+                    <i class="fab fa-google"></i> INICIAR SESIÓN
+                </button>
+                <p class="text-[9px] text-gray-600">ACCESO SEGURO REQUERIDO</p>
             </div>
         </div>
 
-        <!-- MENU -->
+        <!-- 3. MENÚ (PERFIL Y SELECCIÓN) -->
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
             <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
+                <!-- Cabecera -->
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
-                    <div><span class="text-[9px] text-cyber block tracking-widest">OPERADOR</span><span id="u-name" class="text-white font-bold text-lg">...</span></div>
-                    <button onclick="window.logout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
+                    <div>
+                        <span class="text-[9px] text-cyber block tracking-widest">AGENTE ACTIVO</span>
+                        <span id="u-name" class="text-white font-bold text-lg">...</span>
+                    </div>
+                    <button onclick="window.logout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition">
+                        <i class="fas fa-power-off"></i>
+                    </button>
                 </div>
 
+                <!-- Personalización -->
                 <div class="bg-white/5 p-4 rounded border border-white/10">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-[9px] text-gray-400 font-bold">COLOR DE NEXO</span>
+                        <span class="text-[9px] text-gray-400 font-bold">COLOR NEXO</span>
                         <div class="flex gap-2" id="c-pick">
                             <div onclick="window.setProf('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 10px #00f3ff"></div>
                             <div onclick="window.setProf('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
@@ -133,7 +142,7 @@
                         </div>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[9px] text-gray-400 font-bold">TU FICHA</span>
+                        <span class="text-[9px] text-gray-400 font-bold">ICONO</span>
                         <div class="flex gap-4 text-lg" id="i-pick">
                             <i onclick="window.setProf('i','gem',this)" class="opt-i fas fa-gem active"></i>
                             <i onclick="window.setProf('i','bolt',this)" class="opt-i fas fa-bolt"></i>
@@ -143,26 +152,43 @@
                     </div>
                 </div>
 
-                <button onclick="window.quickMatch()" class="btn-neon py-5 text-lg shadow-lg"><i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA</button>
+                <!-- Botones -->
+                <button onclick="window.quickMatch()" class="btn-neon py-5 text-lg shadow-lg">
+                    <i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA
+                </button>
+                
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="window.createRoom()" class="btn-neon py-3 text-xs">CREAR</button>
+                    <button onclick="window.createRoom()" class="btn-neon py-3 text-xs">CREAR SALA</button>
                     <button onclick="window.showJoin()" class="btn-neon py-3 text-xs">UNIRSE</button>
                 </div>
+                
                 <div id="join-box" class="hidden flex gap-2 mt-1 animate-fade-in">
                     <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CÓDIGO" maxlength="4">
                     <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
-                <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> PRÁCTICA (CPU)</button>
-                <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO SENSORES...</div>
+
+                <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2">
+                    <i class="fas fa-microchip mr-2"></i> PRÁCTICA (CPU)
+                </button>
+                
+                <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
             </div>
         </div>
 
-        <!-- GAME HUD -->
+        <!-- 4. JUEGO HUD -->
         <div id="s-game" class="hidden flex flex-col justify-between h-full pointer-events-none relative z-10">
+            <!-- Top Bar -->
             <div class="interactive glass-panel p-3 flex justify-between items-center mt-2 mx-2 backdrop-blur-md">
-                <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">TÚ</span><span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span></div>
+                <div class="text-center w-20">
+                    <span class="text-[8px] text-gray-400 block tracking-widest">PUNTAJE</span>
+                    <span id="sc-p1" class="text-3xl text-white font-black leading-none drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">0</span>
+                </div>
+                
+                <!-- DADO CENTRAL -->
                 <div class="flex flex-col items-center -mt-10 z-20">
-                    <div class="dice-wrap" onclick="window.rollDice()"><div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div></div>
+                    <div class="dice-wrap" onclick="window.rollDice()">
+                        <div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div>
+                    </div>
                     <div id="mov-hud" class="bg-black/90 px-3 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[100px] shadow-lg">
                         <div class="flex justify-between items-center gap-2">
                             <div><p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p></div>
@@ -170,21 +196,39 @@
                         </div>
                     </div>
                 </div>
-                <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span><span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span></div>
+
+                <div class="text-center w-20">
+                    <span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span>
+                    <span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span>
+                </div>
             </div>
             
-            <div class="text-center mt-2 pointer-events-none"><span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">SALA: <span id="room-lbl" class="text-white">--</span></span></div>
-
-            <div class="flex justify-center items-center flex-grow pointer-events-none">
-                <div id="toast" class="toast-box text-center"><p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">INFO</p><p id="t-body" class="text-sm tracking-wide">Mensaje</p></div>
+            <div class="text-center mt-2 pointer-events-none">
+                <span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">
+                    SALA: <span id="room-lbl" class="text-white">--</span>
+                </span>
             </div>
 
+            <!-- Mensajes -->
+            <div class="flex justify-center items-center flex-grow pointer-events-none">
+                <div id="toast" class="toast-box text-center">
+                    <p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">SISTEMA</p>
+                    <p id="t-body" class="text-sm tracking-wide">Mensaje</p>
+                </div>
+            </div>
+
+            <!-- Botones Juego -->
             <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end">
-                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition"><i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span></button>
-                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
+                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition">
+                    <i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span>
+                </button>
+                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2">
+                    <i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR
+                </button>
             </div>
         </div>
 
+        <!-- AR Hint -->
         <div id="ar-hint" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden flex-col items-center z-0">
             <div class="w-32 h-32 border-2 border-cyber rounded-full animate-ping absolute opacity-30"></div>
             <div class="w-4 h-4 bg-cyber rounded-full shadow-[0_0_20px_#00f3ff]"></div>
@@ -192,8 +236,10 @@
         </div>
     </div>
 
+    <!-- AR Button Zone -->
     <div id="ar-zone" class="absolute bottom-8 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
 
+    <!-- SCRIPT -->
     <script type="module">
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
@@ -204,6 +250,7 @@
 
         const APP_ID = 'ar-3lilne-flux';
         const CONF = { apiKey:"AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
+        
         let app, auth, db;
         try { app = initializeApp(CONF); auth = getAuth(app); db = getFirestore(app); } catch(e) { console.error(e); }
 
@@ -232,7 +279,6 @@
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
         let pts=[], selPt=null, placed=false, roomUnsub=null;
 
-        // GENERADOR PUNTOS
         function genPoints() {
             const p=[]; const count=16; const minD=0.25;
             for(let i=0;i<count;i++){
@@ -255,18 +301,40 @@
             } else el.innerText="MODO 3D (PC)";
         }
 
+        // --- LOGICA DE ESTADO (CORREGIDA) ---
+        
+        // 1. Fallback de Seguridad: Si en 3 segundos Firebase no responde, ir a Login
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if(!loader.classList.contains('hidden') && !S.user) {
+                nav('s-login'); // Forzar login si se traba
+            }
+        }, 3000);
+
         onAuthStateChanged(auth, async u => {
             S.user = u;
-            if(u) { document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE'; nav('s-menu'); checkAR(); } else nav('s-login');
+            if(u) {
+                // SI HAY USUARIO -> IR A MENU
+                document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : 'AGENTE';
+                nav('s-menu'); // Ocultar loader y login, mostrar menu
+                checkAR();
+            } else {
+                // NO HAY USUARIO -> IR A LOGIN
+                nav('s-login');
+            }
         });
 
         window.doLogin = async () => { try{ await signInWithPopup(auth, new GoogleAuthProvider()); }catch(e){ alert("Error Auth"); } };
         window.logout = () => { if(confirm("¿Salir?")) signOut(auth).then(()=>location.reload()); };
 
         function nav(id) {
-            ['s-login','s-menu','s-game'].forEach(i=>document.getElementById(i).classList.add('hidden'));
+            // Ocultar Loader siempre que navegamos
+            document.getElementById('loader').classList.add('hidden');
+            
+            ['s-login','s-menu','s-game'].forEach(i => document.getElementById(i).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
+        
         window.goHome = () => {
             if(roomUnsub) roomUnsub(); roomUnsub=null; nav('s-menu');
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
@@ -278,16 +346,22 @@
             el.classList.add('active'); if(t==='c') el.style.boxShadow=`0 0 15px ${v}`; else el.style.color='#00f3ff';
         }
         window.showJoin = () => document.getElementById('join-box').classList.remove('hidden');
-        function loading(s,t) { const l=document.getElementById('loader'); if(s) { l.classList.remove('hidden'); document.getElementById('load-msg').innerText=t; } else l.classList.add('hidden'); }
+        
+        // Nueva función de loading interno (solo texto overlay)
+        function showLoad(show, txt) {
+            const l = document.getElementById('loader');
+            if(show) { l.classList.remove('hidden'); document.getElementById('load-msg').innerText=txt; } 
+            else l.classList.add('hidden');
+        }
 
         // ROOMS
         window.quickMatch = async () => {
-            S.cpu=false; loading(true,"BUSCANDO SEÑAL...");
+            S.cpu=false; showLoad(true,"BUSCANDO RIVAL...");
             try {
                 const q = await getDocs(collection(db,'artifacts',APP_ID,'rooms'));
                 let f=null; for(const d of q.docs) { const v=d.data(); if(v.stat==='wait' && v.host!==S.user.uid) { f=d.id; break; } }
                 if(f) join(f); else create(true);
-            } catch(e) { loading(false); toast("ERROR","Sin Red. Modo CPU."); setTimeout(window.vsCpu,1500); }
+            } catch(e) { showLoad(false); toast("ERROR","Sin Red. Modo CPU."); setTimeout(window.vsCpu,1500); }
         };
         window.createRoom = () => create(false);
         window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) join(c); };
@@ -299,14 +373,14 @@
 
         async function create(pub) {
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
-            loading(true,"CALIBRANDO...");
+            showLoad(true,"CALIBRANDO...");
             await setDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), {
                 host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, p1:S.prof
             });
             sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
         }
         async function join(c) {
-            S.role='guest'; S.room=c; loading(true,"SINCRONIZANDO...");
+            S.role='guest'; S.room=c; showLoad(true,"SINCRONIZANDO...");
             await updateDoc(doc(db,'artifacts',APP_ID,'rooms',`room_${c}`), { guest:S.user.uid, stat:'play', p2:S.prof });
             sub(c); document.getElementById('room-lbl').innerText=c;
         }
@@ -316,11 +390,11 @@
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) start(); ui(); }
-                    else if(S.role==='host') loading(true,"ESPERANDO RIVAL...");
+                    else if(S.role==='host') showLoad(true,"ESPERANDO RIVAL...");
                 }
             });
         }
-        function start() { loading(false); nav('s-game'); init3D(); toast("SISTEMA","RED NEURONAL ACTIVA"); }
+        function start() { showLoad(false); nav('s-game'); init3D(); toast("SISTEMA","RED NEURONAL ACTIVA"); }
 
         // GAMEPLAY
         window.rollDice = () => {
@@ -443,22 +517,14 @@
                 
                 const v=new Float32Array([pts[t.p1].position.x,pts[t.p1].position.y,pts[t.p1].position.z,pts[t.p2].position.x,pts[t.p2].position.y,pts[t.p2].position.z,pts[t.p3].position.x,pts[t.p3].position.y,pts[t.p3].position.z]);
                 const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(v,3));
-                // RELLENO CON TRANSPARENCIA DEL COLOR DE JUGADOR
                 const m=new THREE.MeshBasicMaterial({color:c, opacity:0.3, transparent:true, side:THREE.DoubleSide, depthWrite:false});
                 const o=new THREE.Mesh(g,m); o.userData.t=true;
                 
-                // ICONO FLOTANTE
-                let ig; if(i==='atom') ig=new THREE.IcosahedronGeometry(0.05,0); else if(i==='star') ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); else ig=new THREE.IcosahedronGeometry(0.04,0); // Gem default
-                const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false})); // Solido
-                
+                let ig; if(i==='atom') ig=new THREE.IcosahedronGeometry(0.05,0); else if(i==='star') ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); else ig=new THREE.IcosahedronGeometry(0.04,0); 
+                const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false})); 
                 const ce=new THREE.Vector3().add(pts[t.p1].position).add(pts[t.p2].position).add(pts[t.p3].position).divideScalar(3);
                 im.position.copy(ce); im.position.y+=0.08; 
-                
-                // Animacion simple
-                const frame = Date.now() * 0.001;
-                im.rotation.y = frame;
-                im.position.y += Math.sin(frame * 2) * 0.01;
-
+                const frame = Date.now() * 0.001; im.rotation.y = frame; im.position.y += Math.sin(frame * 2) * 0.01;
                 o.add(im); group.add(o);
             });
         }
@@ -478,9 +544,6 @@
                 const c=ren.xr.getController(0);
                 c.addEventListener('select',()=>{ if(reticle.visible){ group.position.setFromMatrixPosition(reticle.matrix); group.visible=true; placed=true; reticle.visible=false; document.getElementById('ar-hint').style.display='none'; } },{once:true});
             }
-            // Update icons rotation logic if needed per frame here or in draw()
-            // For simple effect, draw() recreates meshes, so better handling inside draw is fine for low count
-            // Ideally we keep references but for this simplicity recreating is acceptable
             ren.render(scene,cam);
         }
 
@@ -489,5 +552,4 @@
     </script>
 </body>
 </html>
-
 
