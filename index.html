@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V37.7 FIX CRITICAL GAME FLOW</title>
+    <title>3 LINE-AR | V37.9 FINAL STABILIZATION</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -181,7 +181,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V37.7 FIX CRITICAL GAME FLOW</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V37.9 FINAL STABILIZATION</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -233,7 +233,7 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V37.7 FIX CRITICAL GAME FLOW</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V37.9 FINAL STABILIZATION</div>
             </div>
         </div>
 
@@ -331,7 +331,7 @@
         // Configuración y variables globales
         setLogLevel('Debug');
         const defaultConf = { apiKey:"AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
-        const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config) ? JSON.parse(__firebase_config) : defaultConf;
+        const firebaseConfig = (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultConf);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne-flux';
         
         let app, auth, db;
@@ -916,6 +916,80 @@
             } else { window.update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1}); }
         }
 
+        // --- FUNCIONES 3D Y AR ---
+
+        window.checkAR = () => {
+            const el = document.getElementById('ar-status');
+            if('xr' in navigator) {
+                navigator.xr.isSessionSupported('immersive-ar')
+                    .then(ok => {
+                        if(ok) {
+                            el.innerHTML='<span class="text-neon font-bold">AR DETECTADO</span>';
+                            if (!arInitialized) { window.init3D(); }
+                        } else el.innerText="MODO 3D (No AR)";
+                    })
+                    .catch(()=>el.innerText="MODO 3D (Error AR)");
+            } else el.innerText="MODO 3D (PC)";
+        }
+
+        window.init3D = () => {
+            if(arInitialized) return; 
+            arInitialized = true;
+            
+            scene=new THREE.Scene(); cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.01,20);
+            ren=new THREE.WebGLRenderer({antialias:true, alpha:true}); ren.setSize(innerWidth,innerHeight); ren.xr.enabled=true;
+            ren.domElement.style.position='absolute'; ren.domElement.style.top='0'; ren.domElement.style.zIndex='1';
+            document.body.appendChild(ren.domElement);
+            
+            navigator.xr?.isSessionSupported('immersive-ar').then(supported => {
+                if(supported) {
+                    const btn = ARButton.createButton(ren, {
+                        requiredFeatures: ['hit-test', 'local'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body }
+                    });
+                    document.getElementById('ar-zone').appendChild(btn);
+                    btn.addEventListener('click', ()=>{ document.getElementById('bg-canvas').style.opacity=0; });
+                }
+            });
+
+            ren.xr.addEventListener('sessionstart', async (e)=>{
+                try {
+                    const session = ren.xr.getSession(); arRefSpace = await session.requestReferenceSpace('local');
+                    session.requestHitTestSource({space: arRefSpace}).then(h => { arHit = h; window.systemToast("AR", "Detección de superficie activada."); })
+                    .catch(e => { console.error("Hit test request failed:", e); window.systemToast("AR ERROR", "Fallo al iniciar detección de plano."); });
+                } catch (e) { console.error("Failed to get AR reference space:", e); }
+
+                placed = false; group.visible = false; reticle.visible = true; 
+                document.getElementById('ar-hint').style.display = 'flex'; document.getElementById('ar-scan-text').innerText = "ESCANEA SUPERFICIE";
+                document.getElementById('btn-rec').style.display='none';
+                
+                const controller = ren.xr.getController(0); controller.addEventListener('select', window.onControllerSelect);
+            });
+
+            ren.xr.addEventListener('sessionend',()=>{ 
+                const controller = ren.xr.getController(0); controller.removeEventListener('select', window.onControllerSelect);
+                window.recenter(); document.getElementById('bg-canvas').style.opacity=1; document.getElementById('btn-rec').style.display='flex';
+                document.getElementById('ar-hint').style.display='none'; document.getElementById('ar-scale-hint').style.display='none';
+                hideArControls(); placed = false; reticle.visible = false; arHit = null; 
+            });
+            
+            scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); group=new THREE.Group(); scene.add(group);
+            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
+            reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
+            ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
+            
+            window.addEventListener('pointerdown', (e)=>{
+                if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return;
+                if(ren.xr.isPresenting) return;
+
+                const m=new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
+                ray.setFromCamera(m,cam); 
+                const h=ray.intersectObjects(group.children,true);
+                const obj=h.find(x=>x.object.parent && x.object.parent.userData.id!==undefined); 
+                if(obj) window.clickPt(obj.object.parent.userData.id);
+            });
+
+            controls=new OrbitControls(cam,ren.domElement); window.recenter();
+        }
 
         window.draw = () => { 
             if(!S.data || !group) return;
