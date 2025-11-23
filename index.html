@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V36.7 FIX END GAME SYNC</title>
+    <title>3 LINE-AR | V36.8 FIX END FLOW & TOAST HUD</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,12 +60,26 @@
         @keyframes shake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
 
         /* TOAST & LOADERS */
+        /* CORRECCIÓN: MOVER EL TOAST DE CONQUISTA/LÍNEA AL HUD SUPERIOR */
         .toast-box {
             background: #000; border: 1px solid #00f3ff; border-left-width: 5px;
             padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace';
             transform: translateY(100px); opacity: 0; transition: all 0.4s;
         }
         .toast-box.show { transform: translateY(0); opacity: 1; }
+        
+        #game-toast {
+            background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(8px);
+            border: 1px solid #00f3ff; border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+            min-width: 200px; max-width: 90%;
+            padding: 8px 12px;
+            opacity: 0;
+            transform: translateY(-5px);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        #game-toast.show { opacity: 1; transform: translateY(0); }
+
 
         #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
         
@@ -134,7 +148,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.7 FIX END GAME SYNC</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.8 FIX END FLOW & TOAST HUD</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -185,16 +199,28 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.7 FIX END GAME SYNC</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.8 FIX END FLOW & TOAST HUD</div>
             </div>
         </div>
 
         <!-- 3. JUEGO HUD -->
         <div id="s-game" class="hidden flex flex-col justify-between h-full pointer-events-none relative z-10">
-            <div class="interactive glass-panel p-3 flex justify-between items-center mt-2 mx-2 backdrop-blur-md">
-                <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">PUNTAJE</span><span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span></div>
+            <!-- HUD SUPERIOR -->
+            <div class="interactive glass-panel p-3 flex justify-between items-start mt-2 mx-2 backdrop-blur-md">
+                <div class="text-center w-20">
+                    <span class="text-[8px] text-gray-400 block tracking-widest">PUNTAJE</span>
+                    <span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span>
+                </div>
+                
                 <div class="flex flex-col items-center -mt-10 z-20">
                     <div class="dice-wrap" onclick="window.rollDice()"><div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div></div>
+                    
+                    <!-- Mensaje de estado del juego (CONQUISTA/LÍNEA) -->
+                    <div id="game-toast" class="text-center mt-2 interactive">
+                        <p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">SISTEMA</p>
+                        <p id="t-body" class="text-sm tracking-wide">Mensaje</p>
+                    </div>
+
                     <div id="mov-hud" class="bg-black/90 px-3 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[120px] shadow-lg flex items-center justify-between gap-2">
                         <div>
                             <p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p>
@@ -203,7 +229,10 @@
                         <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold leading-tight">SIN<br>JUGADAS</button>
                     </div>
                 </div>
-                <div class="text-center w-20"><span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span><span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span></div>
+                <div class="text-center w-20">
+                    <span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span>
+                    <span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span>
+                </div>
             </div>
             
             <div class="text-center mt-2 pointer-events-none"><span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">SALA: <span id="room-lbl" class="text-white">--</span></span></div>
@@ -216,8 +245,9 @@
                 <span id="ar-scale-hint" class="hidden mt-2 text-[8px] text-white bg-black/50 px-2 rounded">PELLIZCA PARA ESCALAR</span>
             </div>
 
-            <div class="flex justify-center items-center flex-grow pointer-events-none">
-                <div id="toast" class="toast-box text-center"><p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">SISTEMA</p><p id="t-body" class="text-sm tracking-wide">Mensaje</p></div>
+            <!-- Toast inferior (Mantener para mensajes de sistema o errores) -->
+            <div class="flex justify-center items-center flex-grow pointer-events-none absolute bottom-1/2 left-1/2 -translate-x-1/2 translate-y-1/2">
+                <div id="toast" class="toast-box text-center"><p id="s-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">SISTEMA</p><p id="s-body" class="text-sm tracking-wide">Mensaje</p></div>
             </div>
 
             <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end">
@@ -241,7 +271,8 @@
                 <div><span class="text-gray-500 text-xs block">TU PUNTAJE</span><span id="final-p1" class="text-4xl font-bold text-white">0</span></div>
                 <div><span class="text-gray-500 text-xs block">RIVAL</span><span id="final-p2" class="text-4xl font-bold text-white">0</span></div>
             </div>
-            <button onclick="window.goHome()" class="btn-neon py-4 px-10 text-lg">VOLVER AL MENÚ</button>
+            <!-- CORRECCIÓN: Volver al menú después de la pantalla de victoria -->
+            <button onclick="window.goHomeAfterWin()" class="btn-neon py-4 px-10 text-lg">VOLVER AL MENÚ</button>
         </div>
     </div>
 
@@ -270,8 +301,7 @@
             auth = getAuth(app); 
             db = getFirestore(app); 
 
-            // ** CORRECCIÓN DE AUTENTICACIÓN **
-            // Esto asegura que si el token existe, se usa. Si no, se queda en el login
+            // ** CORRECCIÓN DE AUTENTICACIÓN: Usar Custom Token si está disponible **
             if (typeof __initial_auth_token !== 'undefined') {
                 signInWithCustomToken(auth, __initial_auth_token).catch(e => console.error("Custom token sign in failed:", e));
             } else {
@@ -440,6 +470,7 @@
         window.doLogin = async () => { 
             try{ 
                 showLoad(true, "INGRESANDO...");
+                // Autenticación con Google
                 await signInWithPopup(auth, new GoogleAuthProvider()); 
             } catch(e) { 
                 showLoad(false);
@@ -451,7 +482,9 @@
             // Usamos confirm() porque está fuera del loop de juego y es una acción destructiva.
             if (confirm("¿Cerrar sesión?")) {
                 if (S.room && S.room !== 'CPU') {
+                    // Si es Host, termina la sala antes de cerrar sesión
                     if (S.role === 'host') update({ stat: 'end' }).finally(() => signOut(auth).then(() => location.reload()));
+                    // Si es Guest, simplemente vuelve a casa y luego cierra sesión
                     else goHome().finally(() => signOut(auth).then(() => location.reload()));
                 } else {
                     signOut(auth).then(() => location.reload());
@@ -479,9 +512,16 @@
             hideArControls();
             
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
-            toast("SISTEMA", "DESCONECTADO");
+            // CORRECCIÓN: Usar el toast de sistema (el inferior) para mensajes generales
+            systemToast("SISTEMA", "DESCONECTADO");
         }
         
+        // CORRECCIÓN: Función para volver al menú después de la pantalla de victoria
+        window.goHomeAfterWin = () => {
+            // Espera un momento para que el usuario vea la pantalla de victoria
+            setTimeout(window.goHome, 500);
+        }
+
         window.setProf = (t,v,el) => {
             S.prof[t]=v; 
             const parent = el.parentNode; 
@@ -516,7 +556,7 @@
         const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
         window.quickMatch = async () => {
-            if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para jugar online.");
+            if(!S.user || !S.user.uid) return systemToast("ERROR","Debe iniciar sesión para jugar online.");
             S.cpu=false; showLoad(true,"BUSCANDO PARTIDA PÚBLICA...");
             try {
                 const roomSnapshot = await getDocs(ROOMS_COLL);
@@ -536,7 +576,7 @@
             } catch(e) { 
                 console.error("QuickMatch error:", e); 
                 showLoad(false); 
-                toast("ERROR","Fallo al buscar/crear sala pública."); 
+                systemToast("ERROR","Fallo al buscar/crear sala pública."); 
             }
         };
 
@@ -544,7 +584,7 @@
         window.joinRoom = () => { 
             const c=document.getElementById('code-in').value.toUpperCase(); 
             if(c.length===4) join(c);
-            else toast("ERROR", "Código inválido (4 letras)");
+            else systemToast("ERROR", "Código inválido (4 letras)");
         };
         
         // Lógica de selección de color para la CPU (Asegura color diferente)
@@ -588,8 +628,9 @@
             start();
         };
 
+        // CORRECCIÓN: Asegurar que se utiliza el UID del usuario registrado para `host`
         async function create(pub) {
-            if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para crear una sala.");
+            if(!S.user || !S.user.uid) return systemToast("ERROR","Debe iniciar sesión para crear una sala.");
             S.role='host'; 
             const c=Math.random().toString(36).substring(2,6).toUpperCase(); 
             S.room=c;
@@ -597,7 +638,7 @@
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             try {
                 await setDoc(docRef, {
-                    host:S.user.uid, 
+                    host:S.user.uid, // Usar el UID del usuario logueado
                     stat:'wait', 
                     pub:pub, 
                     turn:'host', 
@@ -617,12 +658,12 @@
             } catch (e) {
                 console.error("Create Room error:", e);
                 showLoad(false);
-                toast("ERROR", "Fallo al crear la sala. Verifique permisos.");
+                systemToast("ERROR", "Fallo al crear la sala. Verifique permisos.");
             }
         }
 
         async function join(c) {
-            if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para unirse a una sala.");
+            if(!S.user || !S.user.uid) return systemToast("ERROR","Debe iniciar sesión para unirse a una sala.");
             S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
             const docId = `room_${c}`;
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', docId);
@@ -632,18 +673,25 @@
                 
                 if (!roomSnap.exists()) {
                     showLoad(false);
-                    toast("ERROR", "Sala no encontrada o código incorrecto.");
+                    systemToast("ERROR", "Sala no encontrada o código incorrecto.");
                     S.room = null;
                     return;
                 }
 
                 const roomData = roomSnap.data();
                 
+                // CRUCIAL: Asegurar que el guest no se una si ya hay uno diferente
                 if (roomData.guest && roomData.guest !== S.user.uid) {
                     showLoad(false);
-                    toast("ERROR", "La sala ya está llena.");
+                    systemToast("ERROR", "La sala ya está llena.");
                     S.room = null;
                     return;
+                }
+                
+                // Si el guest ya estaba en la sala (recarga), no hace falta updatear, solo subscribir
+                if (roomData.host === S.user.uid) {
+                     systemToast("ERROR", "Ya eres el Host de esta sala.");
+                     S.role = 'host';
                 }
 
                 let updateData = { guest:S.user.uid, stat:'play', p2:S.prof };
@@ -659,7 +707,7 @@
 
             } catch(e) { 
                 showLoad(false);
-                toast("ERROR", "Fallo al intentar unirse.");
+                systemToast("ERROR", "Fallo al intentar unirse.");
                 S.room = null;
                 console.error("Join error:", e);
             }
@@ -681,12 +729,12 @@
                     // CORRECCIÓN: Si el estado cambia a 'end' por cualquier razón (incluyendo el botón de finalizar del rival), llamamos a endGame.
                     else if(d.stat==='end') endGame(d);
                 } else if(S.room) {
-                    toast("FIN", "Sala eliminada.");
+                    systemToast("FIN", "Sala eliminada.");
                     window.goHome();
                 }
             }, err => {
                 console.error("Firestore snapshot error:", err);
-                toast("ERROR", "Pérdida de sincronización.");
+                systemToast("ERROR", "Pérdida de sincronización.");
             });
         }
 
@@ -696,7 +744,7 @@
             init3D(); // 1. Set up THREE.js scene, renderer, etc.
             buildBoard(); // 2. Ensure game objects are created and placed
             gameStartTime = Date.now(); 
-            toast("SISTEMA","PARTIDA INICIADA"); 
+            systemToast("SISTEMA","PARTIDA INICIADA"); 
 
             // Lógica de AR Host/Guest
             isArHost = !S.cpu && S.role === 'host';
@@ -707,9 +755,10 @@
         }
 
         // El botón de finalizar juego ahora activa la función `update` para cambiar el estado a 'end'.
-        // En modo CPU, update llama directamente a endGame. En modo Online, el onSnapshot detecta el cambio.
         window.finishGame = () => {
              if (confirm("¿Estás seguro de que quieres finalizar el juego ahora?")) {
+                // Esto fuerza el estado a 'end', lo que activa endGame() en ambos lados (online)
+                // o directamente en el modo CPU.
                 update({stat: 'end'});
             }
         }
@@ -733,13 +782,13 @@
         }
 
         window.rollDice = () => {
-            const d=S.data; if(d.turn!==S.role) return toast("ESPERA","Turno Rival"); if(d.movs>0) return toast("JUEGA","Usa tus líneas");
+            const d=S.data; if(d.turn!==S.role) return gameToast("ESPERA","Turno Rival"); if(d.movs>0) return gameToast("JUEGA","Usa tus líneas");
             const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
             setTimeout(()=>{
                 el.classList.remove('rolling'); 
                 const v=Math.ceil(Math.random()*6); 
                 update({dice:v, movs:v, skips:0});
-                toast("DADO",`ENERGÍA: ${v} líneas disponibles.`);
+                gameToast("DADO",`ENERGÍA: ${v} líneas disponibles.`);
             },500);
         };
         
@@ -753,7 +802,7 @@
                 } else {
                     const t = d.turn==='host'?'guest':'host'; 
                     update({movs:0, turn:t, dice:null, skips: newSkips}); 
-                    toast("TURNO SALTADO", "Sin jugadas válidas. Pasa el turno.");
+                    gameToast("TURNO SALTADO", "Sin jugadas válidas. Pasa el turno.");
                 }
             } 
         }
@@ -807,7 +856,7 @@
             } else {
                 updateDoc(doc(db,'artifacts',appId,'public','data','rooms',`room_${S.room}`), {...o, lastUpdate: Date.now()}).catch(e => {
                     console.error("Firestore update failed:", e);
-                    toast("ERROR","No se pudo guardar la jugada.");
+                    systemToast("ERROR","No se pudo guardar la jugada.");
                 });
                 // En modo online, el onSnapshot se encarga de llamar a endGame en ambos clientes
             }
@@ -909,9 +958,9 @@
         }
 
         function clickPt(id) {
-            const d=S.data; if(d.turn!==S.role || d.movs<=0) return toast("ERROR","Lanza el dado o espera tu turno");
+            const d=S.data; if(d.turn!==S.role || d.movs<=0) return gameToast("ERROR","Lanza el dado o espera tu turno");
             // En AR, solo se puede jugar si la colocación ha sido aceptada por el host.
-            if(ren.xr.isPresenting && !placementAccepted && !S.cpu) return toast("AR SYNC", "Espera a que el Host acepte la posición.");
+            if(ren.xr.isPresenting && !placementAccepted && !S.cpu) return gameToast("AR SYNC", "Espera a que el Host acepte la posición.");
             
             playSfx('click');
             if(selPt===null) { selPt=id; highlight(id,true); }
@@ -928,9 +977,9 @@
 
         function tryLine(p1,p2) {
             const d=S.data; const v1=pts[p1].position; const v2=pts[p2].position;
-            if(v1.distanceTo(v2) * currentScale > 1.2 * currentScale) return toast("RANGO","Demasiado lejos"); // Rango basado en escala
-            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return toast("OCUPADO","Enlace existente");
-            if(checkCollision(p1, p2, d.tris)) { playSfx('error'); return toast("BLOQUEADO", "Territorio Protegido"); }
+            if(v1.distanceTo(v2) * currentScale > 1.2 * currentScale) return gameToast("RANGO","Demasiado lejos"); // Rango basado en escala
+            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return gameToast("OCUPADO","Enlace existente");
+            if(checkCollision(p1, p2, d.tris)) { playSfx('error'); return gameToast("BLOQUEADO", "Territorio Protegido"); }
             
             // Intentar trazar línea y chequear triángulos
             const nl=[...d.lines,{s:p1,e:p2,own:S.role}]; 
@@ -940,9 +989,9 @@
             if(nt.length) { 
                 sc[S.role]+=nt.length; 
                 playSfx('win'); 
-                toast("CONQUISTA",`¡Nexo Cerrado! (+${nt.length} tris)`); 
+                gameToast("CONQUISTA",`¡Nexo Cerrado! (+${nt.length} tris)`); 
             } else {
-                toast("LÍNEA", "Enlace establecido.");
+                gameToast("LÍNEA", "Enlace establecido.");
             }
             
             let m=d.movs-1; 
@@ -1307,7 +1356,7 @@
         // --- Funciones de Sincronización AR ---
 
         window.acceptScaleAndPosition = () => {
-            if (!ren.xr.isPresenting || !isArHost || !placed || placementAccepted) return toast("ERROR", "No es tu turno de colocar.");
+            if (!ren.xr.isPresenting || !isArHost || !placed || placementAccepted) return gameToast("ERROR", "No es tu turno de colocar.");
             
             // Guardar posición, rotación y escala actual del grupo
             const pos = group.position.toArray();
@@ -1320,7 +1369,7 @@
                 arScale: scale, 
                 arAccepted: true
             });
-            toast("AR SYNC", "Posición del tablero fijada y sincronizada.");
+            gameToast("AR SYNC", "Posición del tablero fijada y sincronizada.");
         }
 
         window.recalibrate = () => {
@@ -1337,14 +1386,30 @@
                 arScale: 1.0,
                 arAccepted: false
             });
-            toast("RECALIBRAR", "Vuelve a escanear la superficie para colocar.");
+            gameToast("RECALIBRAR", "Vuelve a escanear la superficie para colocar.");
             hideArControls(); // Ocultar hasta la nueva colocación
         }
         
         // --- Fin Funciones de Sincronización AR ---
 
-        // Función de Toast para mensajes no intrusivos
-        function toast(t,m){const e=document.getElementById('toast');document.getElementById('t-head').innerText=t;document.getElementById('t-body').innerText=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3000);}
+        // Función de Toast para mensajes no intrusivos (MENSAJES DEL JUEGO: Conquista, Línea, Rango)
+        function gameToast(t,m){
+            const e=document.getElementById('game-toast');
+            document.getElementById('t-head').innerText=t;
+            document.getElementById('t-body').innerText=m;
+            e.classList.add('show');
+            // La notificación se oculta después de 3 segundos
+            setTimeout(()=>e.classList.remove('show'),3000);
+        }
+        
+        // Función de Toast para mensajes de sistema (LOGIN, RED, ERROR FATAL)
+        function systemToast(t,m){
+            const e=document.getElementById('toast');
+            document.getElementById('s-head').innerText=t;
+            document.getElementById('s-body').innerText=m;
+            e.classList.add('show');
+            setTimeout(()=>e.classList.remove('show'),3000);
+        }
 
         // Aseguramos que init3D se llama en el onload para tener el canvas.
         window.onload = () => {
