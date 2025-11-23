@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V36.6 FIX CPU COLOR & END GAME</title>
+    <title>3 LINE-AR | V36.7 FIX END GAME SYNC</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -134,7 +134,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.6 FIX CPU COLOR & END GAME</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.7 FIX END GAME SYNC</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -185,7 +185,7 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.6 FIX CPU COLOR & END GAME</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.7 FIX END GAME SYNC</div>
             </div>
         </div>
 
@@ -547,7 +547,7 @@
             else toast("ERROR", "Código inválido (4 letras)");
         };
         
-        // CORRECCIÓN 1: Lógica de selección de color para la CPU
+        // Lógica de selección de color para la CPU (Asegura color diferente)
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
             
@@ -678,6 +678,7 @@
                     else if(d.stat==='wait') {
                         if(S.role==='host') showLoad(true,"ESPERANDO RIVAL...");
                     }
+                    // CORRECCIÓN: Si el estado cambia a 'end' por cualquier razón (incluyendo el botón de finalizar del rival), llamamos a endGame.
                     else if(d.stat==='end') endGame(d);
                 } else if(S.room) {
                     toast("FIN", "Sala eliminada.");
@@ -705,11 +706,9 @@
             document.getElementById('btn-rec').style.display = S.cpu ? 'flex' : 'none';
         }
 
-        // CORRECCIÓN 2: El botón de finalizar juego estaba llamando a la función correcta, pero
-        // el mensaje de confirmación debe usar window.confirm() o un modal, y la acción debe
-        // ser llamar a `update` con el estado 'end'. Esto ya estaba implementado, pero reconfirmo el uso de confirm().
+        // El botón de finalizar juego ahora activa la función `update` para cambiar el estado a 'end'.
+        // En modo CPU, update llama directamente a endGame. En modo Online, el onSnapshot detecta el cambio.
         window.finishGame = () => {
-             // Usamos confirm() porque es una acción rápida dentro del juego que no interfiere con el flujo de AR/3D
              if (confirm("¿Estás seguro de que quieres finalizar el juego ahora?")) {
                 update({stat: 'end'});
             }
@@ -799,14 +798,18 @@
         function update(o) {
             if(S.cpu) { 
                 Object.assign(S.data,o); 
-                // CORRECCIÓN 3: Reaseguramos que si el estado es 'end', se llama a endGame
-                if(S.data.stat === 'end') endGame(S.data); 
-                else ui(); 
+                // Lógica de terminación de juego CPU (solo llama a ui si no ha terminado)
+                if(S.data.stat === 'end') {
+                    endGame(S.data); 
+                } else {
+                    ui(); 
+                }
             } else {
                 updateDoc(doc(db,'artifacts',appId,'public','data','rooms',`room_${S.room}`), {...o, lastUpdate: Date.now()}).catch(e => {
                     console.error("Firestore update failed:", e);
                     toast("ERROR","No se pudo guardar la jugada.");
                 });
+                // En modo online, el onSnapshot se encarga de llamar a endGame en ambos clientes
             }
         }
 
