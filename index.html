@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V37.4 FINAL FIX ALL</title>
+    <title>3 LINE-AR | V37.5 FIX BUILD BOARD FN</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -181,7 +181,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V37.4 FINAL FIX ALL</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V37.5 FIX BUILD BOARD FN</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -233,7 +233,7 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V37.4 FINAL FIX ALL</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V37.5 FIX BUILD BOARD FN</div>
             </div>
         </div>
 
@@ -340,7 +340,6 @@
             auth = getAuth(app); 
             db = getFirestore(app); 
 
-            // ** CORRECCIÓN DE AUTENTICACIÓN: Usar Custom Token si está disponible **
             if (typeof __initial_auth_token !== 'undefined') {
                 signInWithCustomToken(auth, __initial_auth_token).catch(e => console.error("Custom token sign in failed:", e));
             } else {
@@ -363,10 +362,8 @@
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
         let pts=[], selPt=null, placed=false, roomUnsub=null, gameStartTime=0, currentScale=1.0;
-        // Mensajes aleatorios motivadores
         const LOSE_MSGS = ["¡BUEN INTENTO!", "LA PRÓXIMA SERÁ TUYA", "GRAN ESTRATEGIA", "BUENA PARTIDA", "SIGUE ASÍ", "TE ESPERO EN LA REVANCHA", "CASI LO LOGRAS, CAMPEÓN"];
 
-        // Variables para sincronización AR
         let arInitialized = false;
         let isArHost = false; 
         let placementAccepted = false; 
@@ -435,7 +432,7 @@
             return s > 0.001 && t > 0.001 && (s + t) < 2 * area * sign - 0.001;
         }
 
-        function buildBoard() {
+        window.buildBoard = () => {
             if(!S.data || !S.data.points || !group) {
                 console.error("No se puede construir el tablero: Datos de juego o escena 3D faltantes.");
                 return;
@@ -464,7 +461,7 @@
                 pts.push(m);
             });
             
-            draw();
+            window.draw();
             
             if (ren && !ren.xr.isPresenting) {
                 group.visible = true;
@@ -480,7 +477,7 @@
                 if (!document.getElementById('s-login').classList.contains('hidden')) {
                     document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
                     nav('s-menu'); 
-                    checkAR(); 
+                    window.checkAR(); 
                 }
             } else {
                 nav('s-login'); 
@@ -493,7 +490,7 @@
                 await signInWithPopup(auth, new GoogleAuthProvider()); 
             } catch(e) { 
                 showLoad(false);
-                systemToast("ERROR","Inicio de sesión fallido. Habilite popups."); 
+                window.systemToast("ERROR","Inicio de sesión fallido. Habilite popups."); 
                 console.error("Google Sign-In Error:", e);
             } 
         };
@@ -785,7 +782,7 @@
             if(S.role === 'host' && !S.cpu) window.checkStatus();
         }
 
-        window.checkStatus = () => { /* Lógica de checkStatus */
+        window.checkStatus = () => { 
             const d = S.data;
             if (d.stat !== 'play') return;
             let movesLeft = 0;
@@ -801,7 +798,7 @@
             if(movesLeft === 0) window.update({stat: 'end'});
         }
 
-        window.cpuMove = () => { /* Lógica de cpuMove */
+        window.cpuMove = () => { 
             let m=null; 
             for(let i=0; i<pts.length; i++) {
                 for(let j=i+1; j<pts.length; j++) {
@@ -825,7 +822,7 @@
             } else { window.update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1}); }
         }
 
-        window.checkCollision = (p1, p2, tris) => { /* Lógica de checkCollision */
+        window.checkCollision = (p1, p2, tris) => { 
             const A = pts[p1].position; const B = pts[p2].position;
             for (let t of tris) {
                 const v1=pts[t.p1].position; const v2=pts[t.p2].position; const v3=pts[t.p3].position;
@@ -834,7 +831,7 @@
             return false;
         }
 
-        window.checkTri = (p1,p2,o,ls) => { /* Lógica de checkTri */
+        window.checkTri = (p1,p2,o,ls) => { 
             const f=[]; 
             for(let p3=0; p3<pts.length; p3++) {
                 if(p3!==p1 && p3!==p2) {
@@ -847,7 +844,7 @@
             } return f;
         }
 
-        window.isPointInTriangle = (p, a, b, c) => { /* Lógica de isPointInTriangle */
+        window.isPointInTriangle = (p, a, b, c) => { 
             const area = 0.5 * (-b.z * c.x + a.z * (-b.x + c.x) + a.x * (b.z - c.z) + b.x * c.z);
             const sign = area < 0 ? -1 : 1;
             const s = (a.z * c.x - a.x * c.z + (c.z - a.z) * p.x + (a.x - c.x) * p.z) * sign;
@@ -855,7 +852,7 @@
             return s > 0.001 && t > 0.001 && (s + t) < 2 * area * sign - 0.001;
         }
 
-        window.intersect = (a, b, c, d) => { /* Lógica de intersect */
+        window.intersect = (a, b, c, d) => { 
             const x1=a.x, y1=a.z, x2=b.x, y2=b.z, x3=c.x, y3=c.z, x4=d.x, y4=d.z;
             const denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1);
             if (denom === 0) return false;
@@ -941,7 +938,7 @@
             controls=new OrbitControls(cam,ren.domElement); window.recenter();
         }
 
-        window.draw = () => { /* Lógica de dibujo 3D se mantiene */
+        window.draw = () => { 
             if(!S.data || !group) return;
             for(let i=group.children.length-1;i>=0;i--) if(group.children[i].userData.t) group.remove(group.children[i]);
             S.data.lines.forEach(l=>{
@@ -1049,10 +1046,9 @@
 
         // Aseguramos que init3D se llama en el onload para tener el canvas.
         window.onload = () => { 
-             // Como init3D ahora se llama desde checkAR() después de onAuthStateChanged,
-             // esta llamada ya no es necesaria y se puede dejar vacía.
+             // Dejamos vacío ya que se llama desde onAuthStateChanged -> checkAR
         };
 
     </script>
 </body>
-
+</html>
