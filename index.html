@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V36.8 FIX END FLOW & TOAST HUD</title>
+    <title>3 LINE-AR | V37.0 FIX ALL</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,7 +60,6 @@
         @keyframes shake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
 
         /* TOAST & LOADERS */
-        /* CORRECCIÓN: MOVER EL TOAST DE CONQUISTA/LÍNEA AL HUD SUPERIOR */
         .toast-box {
             background: #000; border: 1px solid #00f3ff; border-left-width: 5px;
             padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace';
@@ -148,7 +147,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.8 FIX END FLOW & TOAST HUD</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V37.0 FIX ALL</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -199,7 +198,7 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.8 FIX END FLOW & TOAST HUD</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V37.0 FIX ALL</div>
             </div>
         </div>
 
@@ -405,15 +404,14 @@
             return s > 0.001 && t > 0.001 && (s + t) < 2 * area * sign - 0.001;
         }
 
-        // Construye o reconstruye el tablero de juego (puntos)
+        // CORRECCIÓN 1: Asegurar que buildBoard limpia y reconstruye el tablero.
         function buildBoard() {
-            // Si no hay datos o el grupo no existe, no hacemos nada
             if(!S.data || !S.data.points || !group) {
                 console.error("No se puede construir el tablero: Datos de juego o escena 3D faltantes.");
                 return;
             }
 
-            // Limpiamos y reconstruimos el tablero
+            // Limpiamos y reconstruimos el tablero: CRUCIAL para cada nueva partida
             while(group.children.length > 0) group.remove(group.children[0]);
             pts = [];
             
@@ -439,13 +437,15 @@
                 pts.push(m);
             });
             
+            // Forzar draw() para que dibuje líneas y triángulos si existen datos.
+            draw();
+            
             // Aseguramos que el grupo es visible en modo 3D (si no estamos en sesión AR)
             if (ren && !ren.xr.isPresenting) {
                 group.visible = true;
                 placed = true;
                 recenter(); // Asegura la posición y escala inicial para 3D
             }
-            draw(); // Dibujar líneas y triángulos iniciales
         }
 
         // --- FIN FUNCIONES DE JUEGO ---
@@ -474,7 +474,7 @@
                 await signInWithPopup(auth, new GoogleAuthProvider()); 
             } catch(e) { 
                 showLoad(false);
-                toast("ERROR","Inicio de sesión fallido. Habilite popups."); 
+                systemToast("ERROR","Inicio de sesión fallido. Habilite popups."); 
                 console.error("Google Sign-In Error:", e);
             } 
         };
@@ -511,7 +511,9 @@
             placementAccepted = false;
             hideArControls();
             
+            // Limpiamos los objetos 3D del grupo
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
+            
             // CORRECCIÓN: Usar el toast de sistema (el inferior) para mensajes generales
             systemToast("SISTEMA", "DESCONECTADO");
         }
@@ -589,6 +591,8 @@
         
         // Lógica de selección de color para la CPU (Asegura color diferente)
         window.vsCpu = () => {
+            if(!S.user) return systemToast("ERROR", "Debe iniciar sesión para jugar.");
+            
             S.cpu=true; S.role='host'; S.room='CPU';
             
             // Colores disponibles para la CPU
@@ -625,12 +629,17 @@
                 arScale: null, 
                 arAccepted: false
             };
+            // CORRECCIÓN 1: Iniciar el juego, lo cual llama a buildBoard()
             start();
         };
 
-        // CORRECCIÓN: Asegurar que se utiliza el UID del usuario registrado para `host`
+        // CORRECCIÓN 2: Crear Sala. Asegura uso del UID y manejo de errores.
         async function create(pub) {
             if(!S.user || !S.user.uid) return systemToast("ERROR","Debe iniciar sesión para crear una sala.");
+            
+            // Esto asegura que si ya está en una sala como host, la abandone primero.
+            if (S.room && S.role === 'host') window.goHome();
+
             S.role='host'; 
             const c=Math.random().toString(36).substring(2,6).toUpperCase(); 
             S.room=c;
@@ -662,6 +671,7 @@
             }
         }
 
+        // CORRECCIÓN 2: Unirse a Sala. Asegura uso del UID y manejo de errores.
         async function join(c) {
             if(!S.user || !S.user.uid) return systemToast("ERROR","Debe iniciar sesión para unirse a una sala.");
             S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
@@ -680,18 +690,16 @@
 
                 const roomData = roomSnap.data();
                 
-                // CRUCIAL: Asegurar que el guest no se una si ya hay uno diferente
+                if (roomData.host === S.user.uid) {
+                     systemToast("ERROR", "Ya eres el Host de esta sala.");
+                     S.role = 'host';
+                }
+
                 if (roomData.guest && roomData.guest !== S.user.uid) {
                     showLoad(false);
                     systemToast("ERROR", "La sala ya está llena.");
                     S.room = null;
                     return;
-                }
-                
-                // Si el guest ya estaba en la sala (recarga), no hace falta updatear, solo subscribir
-                if (roomData.host === S.user.uid) {
-                     systemToast("ERROR", "Ya eres el Host de esta sala.");
-                     S.role = 'host';
                 }
 
                 let updateData = { guest:S.user.uid, stat:'play', p2:S.prof };
@@ -700,7 +708,13 @@
                     updateData = {...updateData, dice: roomData.dice || 6, movs: roomData.movs || 6, skips: 0, turn: roomData.turn || 'host', lastUpdate: Date.now()};
                 }
                 
-                await updateDoc(docRef, updateData);
+                // Solo si el usuario es Guest o el campo guest estaba vacío, actualizamos.
+                if (S.role === 'guest' || !roomData.guest) {
+                     await updateDoc(docRef, updateData);
+                } else if (S.role === 'host') {
+                     // Si es host, solo suscribimos
+                     showLoad(false);
+                }
 
                 sub(c); 
                 document.getElementById('room-lbl').innerText=c;
@@ -742,7 +756,7 @@
             showLoad(false); 
             nav('s-game'); 
             init3D(); // 1. Set up THREE.js scene, renderer, etc.
-            buildBoard(); // 2. Ensure game objects are created and placed
+            buildBoard(); // 2. Ensure game objects are created and placed (CORRECCIÓN 1)
             gameStartTime = Date.now(); 
             systemToast("SISTEMA","PARTIDA INICIADA"); 
 
@@ -1131,7 +1145,21 @@
             });
 
             ren.xr.addEventListener('sessionstart', async (e)=>{
-                arRefSpace = await ren.xr.getSession().requestReferenceSpace('local');
+                // CORRECCIÓN 3: Aseguramos que arRefSpace y arHit se inicialicen para HitTest.
+                try {
+                    const session = ren.xr.getSession();
+                    arRefSpace = await session.requestReferenceSpace('local');
+                    // Solicitamos HitTestSource usando el espacio de referencia local
+                    session.requestHitTestSource({space: arRefSpace}).then(h => {
+                         arHit = h;
+                         systemToast("AR", "Detección de superficie activada.");
+                    }).catch(e => {
+                        console.error("Hit test request failed:", e);
+                        systemToast("AR ERROR", "Fallo al iniciar detección de plano.");
+                    });
+                } catch (e) {
+                    console.error("Failed to get AR reference space:", e);
+                }
 
                 placed = false;
                 group.visible = false; 
@@ -1160,6 +1188,7 @@
                 
                 placed = false;
                 reticle.visible = false;
+                arHit = null; // Limpiar hit source
             });
             
             scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); 
@@ -1311,17 +1340,14 @@
                 const s=ren.xr.getSession();
                 
                 if (frame && arRefSpace) {
-                    // Inicializar HitTest si es necesario
-                    if (!arHit) {
-                        s.requestHitTestSource({space: arRefSpace.getOffsetMatrix(new THREE.Matrix4())}).then(h=>arHit=h).catch(e => console.error("Hit test setup failed:", e));
-                    }
-
+                    // Si arHit existe, intentamos obtener resultados
                     if(arHit) {
                         const h=frame.getHitTestResults(arHit);
                         
                         if(!placed && h.length && isArHost && !placementAccepted) {
                             // Colocar reticle y mover el grupo si el Host está escaneando y no ha colocado
                             reticle.visible=true; 
+                            // CORRECCIÓN 3: Usamos arRefSpace en getPose
                             reticle.matrix.fromArray(h[0].getPose(arRefSpace).transform.matrix);
                             
                             // Mover el grupo visualmente al reticle mientras se escanea
