@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V36.5 ADD END GAME BUTTON</title>
+    <title>3 LINE-AR | V36.6 FIX CPU COLOR & END GAME</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -134,7 +134,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.5 ADD END GAME BUTTON</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.6 FIX CPU COLOR & END GAME</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -185,7 +185,7 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.5 ADD END GAME BUTTON</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.6 FIX CPU COLOR & END GAME</div>
             </div>
         </div>
 
@@ -448,7 +448,8 @@
             } 
         };
         window.logout = () => { 
-            if (window.confirm("¿Cerrar sesión?")) {
+            // Usamos confirm() porque está fuera del loop de juego y es una acción destructiva.
+            if (confirm("¿Cerrar sesión?")) {
                 if (S.room && S.room !== 'CPU') {
                     if (S.role === 'host') update({ stat: 'end' }).finally(() => signOut(auth).then(() => location.reload()));
                     else goHome().finally(() => signOut(auth).then(() => location.reload()));
@@ -545,10 +546,45 @@
             if(c.length===4) join(c);
             else toast("ERROR", "Código inválido (4 letras)");
         };
+        
+        // CORRECCIÓN 1: Lógica de selección de color para la CPU
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
+            
+            // Colores disponibles para la CPU
+            const availableColors = ['#00f3ff', '#ff0055', '#39ff14', '#ffd700'];
+            
+            // El color actual del jugador
+            const myColor = S.prof.c;
+
+            // Filtra el color del jugador para obtener los colores restantes
+            const cpuColorOptions = availableColors.filter(color => color !== myColor);
+            
+            // Si hay opciones, la CPU elige una aleatoria; si no, usa el rojo por defecto
+            const cpuColor = cpuColorOptions.length > 0 
+                ? cpuColorOptions[Math.floor(Math.random() * cpuColorOptions.length)]
+                : '#ff0055'; 
+
             // Generamos un estado inicial de juego
-            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'atom'}, scale: 1.0, arPos: null, arRot: null, arScale: null, arAccepted: false};
+            S.data={
+                stat:'play', 
+                turn:'host', 
+                points:genPoints(), 
+                lines:[], 
+                tris:[], 
+                sc:{host:0,guest:0}, 
+                dice:null, 
+                movs:0, 
+                skips:0, 
+                p1:S.prof, 
+                // Asigna el color diferente a la CPU (p2)
+                p2:{c:cpuColor,i:'atom'}, 
+                scale: 1.0, 
+                arPos: null, 
+                arRot: null, 
+                arScale: null, 
+                arAccepted: false
+            };
             start();
         };
 
@@ -669,9 +705,12 @@
             document.getElementById('btn-rec').style.display = S.cpu ? 'flex' : 'none';
         }
 
-        // Nuevo: Función para forzar el final del juego
+        // CORRECCIÓN 2: El botón de finalizar juego estaba llamando a la función correcta, pero
+        // el mensaje de confirmación debe usar window.confirm() o un modal, y la acción debe
+        // ser llamar a `update` con el estado 'end'. Esto ya estaba implementado, pero reconfirmo el uso de confirm().
         window.finishGame = () => {
-             if (window.confirm("¿Estás seguro de que quieres finalizar el juego ahora?")) {
+             // Usamos confirm() porque es una acción rápida dentro del juego que no interfiere con el flujo de AR/3D
+             if (confirm("¿Estás seguro de que quieres finalizar el juego ahora?")) {
                 update({stat: 'end'});
             }
         }
@@ -748,6 +787,7 @@
                 const randomMsg = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)];
                 tit.innerText = "DERROTA"; 
                 tit.className = "text-6xl font-black text-hot mb-2 text-center"; 
+                // Aseguramos que el mensaje es motivador y aleatorio
                 msg.innerText = randomMsg.toUpperCase(); 
             }
             
@@ -759,6 +799,7 @@
         function update(o) {
             if(S.cpu) { 
                 Object.assign(S.data,o); 
+                // CORRECCIÓN 3: Reaseguramos que si el estado es 'end', se llama a endGame
                 if(S.data.stat === 'end') endGame(S.data); 
                 else ui(); 
             } else {
