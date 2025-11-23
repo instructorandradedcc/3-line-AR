@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V36.1 FIX</title>
+    <title>3 LINE-AR | V36.2 FIX - AUTH</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -107,7 +107,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.1 FIX</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.2 FIX - AUTH</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -157,7 +157,7 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.1 FIX</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.2 FIX - AUTH</div>
             </div>
         </div>
 
@@ -232,10 +232,13 @@
             app = initializeApp(firebaseConfig); 
             auth = getAuth(app); 
             db = getFirestore(app); 
+
+            // ** CORRECCIÓN DE AUTENTICACIÓN: SOLO INTENTAR CUSTOM TOKEN, SINO DEJAR EN LOGIN **
             if (typeof __initial_auth_token !== 'undefined') {
                 signInWithCustomToken(auth, __initial_auth_token).catch(e => console.error("Custom token sign in failed:", e));
             } else {
-                signInAnonymously(auth).catch(e => console.error("Anonymous sign in failed:", e));
+                // No llamamos a signInAnonymously si falla el token, forzamos el inicio de sesión manual
+                console.log("Esperando inicio de sesión manual...");
             }
         } catch(e) { console.error("Firebase initialization failed:", e); }
 
@@ -303,16 +306,24 @@
         onAuthStateChanged(auth, async u => {
             S.user = u;
             if(u) { 
+                // Si la autenticación es exitosa (Google Sign-In o Custom Token)
                 document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
                 nav('s-menu'); 
                 checkAR(); 
             } else {
-                // Si la sesión es anónima/cerrada, mostramos login o esperamos
-                if (!auth.currentUser) nav('s-login'); 
+                // Si no hay usuario logueado o la sesión expira/falla, mostramos Login
+                nav('s-login'); 
             }
         });
-        // Simplificado a Google Sign-In como se pide en el informe
-        window.doLogin = async () => { try{ await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { toast("ERROR","Inicio de sesión fallido."); } };
+        
+        window.doLogin = async () => { 
+            try{ 
+                await signInWithPopup(auth, new GoogleAuthProvider()); 
+            } catch(e) { 
+                toast("ERROR","Inicio de sesión fallido. Habilite popups."); 
+                console.error("Google Sign-In Error:", e);
+            } 
+        };
         window.logout = () => { if(confirm("¿Cerrar sesión?")) signOut(auth).then(()=>location.reload()); };
 
         function nav(id) {
@@ -346,9 +357,15 @@
             if(t==='c') { 
                 el.style.boxShadow=`0 0 15px ${v}`; 
                 el.style.borderColor='#fff'; 
+                // Actualizar el color del icono seleccionado si ya existe
+                const activeIcon = document.querySelector('#i-pick .opt-i.active');
+                if(activeIcon) {
+                    activeIcon.style.color=v;
+                    activeIcon.style.textShadow=`0 0 10px ${v}`;
+                }
             }
             else { 
-                // Aseguramos que el icono activo tome el color del perfil actual (S.prof.c)
+                // Aplicar el color del perfil actual (S.prof.c) al icono activo
                 const currentProfileColor = S.prof.c;
                 el.style.color=currentProfileColor; 
                 el.style.textShadow=`0 0 10px ${currentProfileColor}`; 
@@ -363,7 +380,7 @@
 
         // Búsqueda de sala pública o creación
         window.quickMatch = async () => {
-            if(!S.user) return toast("ERROR","Debe iniciar sesión.");
+            if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para jugar online.");
             S.cpu=false; showLoad(true,"BUSCANDO...");
             try {
                 // Modificado para usar getDocs en la colección, que es el uso correcto para buscar
@@ -378,7 +395,7 @@
             } catch(e) { 
                 console.error("QuickMatch error:", e); 
                 showLoad(false); 
-                toast("ERROR","Error de red. Intente de nuevo."); 
+                toast("ERROR","Fallo de red o permisos insuficientes."); 
             }
         };
 
@@ -396,7 +413,7 @@
         };
 
         async function create(pub) {
-            if(!S.user) return;
+            if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para crear una sala.");
             S.role='host'; 
             // Generar código único de 4 letras
             const c=Math.random().toString(36).substring(2,6).toUpperCase(); 
@@ -424,13 +441,13 @@
             } catch (e) {
                 console.error("Create Room error:", e);
                 showLoad(false);
-                toast("ERROR", "Fallo al crear la sala.");
+                toast("ERROR", "Fallo al crear la sala. Verifique permisos.");
             }
         }
 
         // Blindaje de conexión (V36.0/V36.1)
         async function join(c) {
-            if(!S.user) return;
+            if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para unirse a una sala.");
             S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
             const docId = `room_${c}`;
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', docId);
@@ -447,6 +464,15 @@
                 }
 
                 const roomData = roomSnap.data();
+                
+                // Validación adicional: Evitar unirse si ya hay invitado
+                if (roomData.guest && roomData.guest !== S.user.uid) {
+                    showLoad(false);
+                    toast("ERROR", "La sala ya está llena.");
+                    S.room = null;
+                    return;
+                }
+
                 let updateData = { guest:S.user.uid, stat:'play', p2:S.prof };
 
                 // Si la sala estaba en 'wait', iniciamos el dado.
@@ -930,6 +956,7 @@
                 else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); 
                 else ig=new THREE.IcosahedronGeometry(0.04,0); // gem
                 
+                // Usamos el color c del perfil (p.c) para el icono 3D
                 const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false, emissive:c, emissiveIntensity:0.5})); 
                 
                 // Centroide
