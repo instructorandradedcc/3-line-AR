@@ -46,6 +46,7 @@
         }
         .btn-neon:active { transform: scale(0.95); background: #00f3ff; color: #000; }
         .btn-neon.danger { border-color: #ff0055; color: #ff0055; }
+        .btn-disabled { opacity: 0.5; pointer-events: none; }
 
         /* DADO */
         .dice-wrap { perspective: 800px; width: 70px; height: 70px; pointer-events: auto; cursor: pointer; }
@@ -221,17 +222,17 @@
                     </div>
                 </div>
 
-                <button onclick="window.quickMatch()" class="btn-neon py-5 text-lg shadow-lg"><i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA</button>
+                <button id="btn-quick-match" onclick="window.quickMatch()" class="btn-neon py-5 text-lg shadow-lg"><i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA</button>
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="window.createRoom()" class="btn-neon py-3 text-xs">CREAR SALA</button>
-                    <button onclick="window.showJoin()" class="btn-neon py-3 text-xs">UNIRSE</button>
+                    <button id="btn-create-room" onclick="window.createRoom()" class="btn-neon py-3 text-xs">CREAR SALA</button>
+                    <button id="btn-join-room" onclick="window.showJoin()" class="btn-neon py-3 text-xs">UNIRSE</button>
                 </div>
                 <div id="join-box" class="hidden flex gap-2 mt-1 animate-fade-in">
                     <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CÓDIGO" maxlength="4">
                     <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
-                <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
+                <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
                 <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V37.9 FINAL STABILIZATION</div>
             </div>
@@ -571,13 +572,29 @@
                 if (!document.getElementById('s-login').classList.contains('hidden')) {
                     document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
                     nav('s-menu'); 
-                    window.checkAR(); 
                 }
+                window.checkAR(); // Inicia la verificación AR solo si está autenticado
+                window.updateMenuButtons(true); // Habilita botones
             } else {
                 nav('s-login'); 
+                window.updateMenuButtons(false); // Deshabilita botones
             }
         });
         
+        window.updateMenuButtons = (enabled) => {
+            const btns = ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'];
+            btns.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    if (enabled) {
+                        btn.classList.remove('btn-disabled');
+                    } else {
+                        btn.classList.add('btn-disabled');
+                    }
+                }
+            });
+        };
+
         window.doLogin = async () => { 
             try{ 
                 showLoad(true, "INGRESANDO...");
@@ -616,16 +633,26 @@
             };
         }
 
-        // Llamada para cerrar sesión
+        // Llamada para cerrar sesión (CORRECCIÓN: Usando try/catch para promesa de update)
         window.confirmLogout = () => {
             showConfirmModal("3 LINE-AR", "¿Estás seguro de que quieres cerrar la sesión?", 
-                () => {
+                async () => {
+                    const performLogout = () => signOut(auth).then(() => location.reload()).catch(e => console.error("Logout failed:", e));
+
                     if (S.room && S.room !== 'CPU') {
-                        if (S.role === 'host') window.update({ stat: 'end' }).finally(() => signOut(auth).then(() => location.reload()));
-                        else window.goHome().finally(() => signOut(auth).then(() => location.reload()));
-                    } else {
-                        signOut(auth).then(() => location.reload());
+                        // Si hay partida online, intentar terminar la sala primero.
+                        try {
+                            if (S.role === 'host') {
+                                await window.update({ stat: 'end' });
+                            } else {
+                                // Si es guest, simplemente salir y dejar que el host lo maneje.
+                                window.goHome();
+                            }
+                        } catch (e) {
+                            console.warn("Failed to update Firestore status on logout, proceeding with logout:", e);
+                        }
                     }
+                    performLogout();
                 }
             );
         };
