@@ -1,10 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V36.3 FIX - AUTH & AR SYNC</title>
+    <title>3 LINE-AR | V36.4 FIX CPU & AR INIT</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -122,7 +123,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.3 FIX - AUTH & AR SYNC</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.4 FIX CPU & AR INIT</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -173,7 +174,7 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.3 FIX - AUTH & AR SYNC</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.4 FIX CPU & AR INIT</div>
             </div>
         </div>
 
@@ -257,13 +258,11 @@
             auth = getAuth(app); 
             db = getFirestore(app); 
 
-            // ** CORRECCIÓN DE AUTENTICACIÓN PARA CERRAR EL BUCLE DE LOGIN/MENU **
+            // ** CORRECCIÓN DE AUTENTICACIÓN **
             // Esto asegura que si el token existe, se usa. Si no, se queda en el login
-            // onAuthStateChanged se encargará de la navegación.
             if (typeof __initial_auth_token !== 'undefined') {
                 signInWithCustomToken(auth, __initial_auth_token).catch(e => console.error("Custom token sign in failed:", e));
             } else {
-                // En un entorno Canvas sin token, esperamos el login manual de Google.
                 console.log("Esperando inicio de sesión manual...");
             }
         } catch(e) { console.error("Firebase initialization failed:", e); }
@@ -289,6 +288,36 @@
         let isArHost = false; // Indica si este usuario está a cargo de la colocación inicial
         let placementAccepted = false; // El host ya aceptó la colocación
 
+        // THREE.JS & AR SETUP
+        let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace;
+        let touchDist = 0;
+        
+        // Handler único para el evento 'select' (tap/click en AR)
+        const onControllerSelect = () => {
+            if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
+                // Solo ejecutamos la lógica de colocación si es Host, no está colocado y el reticle es visible
+                placed = true; 
+                reticle.visible = false;
+                
+                // Aplicar la transformación del reticle al grupo
+                group.position.setFromMatrixPosition(reticle.matrix); 
+                group.rotation.setFromRotationMatrix(reticle.matrix);
+                group.visible = true;
+
+                // Actualizar UI
+                document.getElementById('ar-hint').style.display='flex';
+                document.getElementById('ar-scan-text').innerText = "TAP para Fijar, Pellizcar para Escalar";
+                document.getElementById('ar-scale-hint').style.display = 'block';
+
+                // Mostrar controles de AR para el Host
+                showArControls();
+                document.getElementById('btn-ar-accept').innerText = "ACEPTAR POSICIÓN";
+                document.getElementById('btn-ar-recal').style.display = 'inline-block';
+            }
+        }
+
+        // --- FUNCIONES DE JUEGO ---
+
         // Generación de puntos (Tablero Caótico)
         function genPoints() {
             const p=[]; const count=16; const minD=0.25;
@@ -310,7 +339,7 @@
             const denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1);
             if (denom === 0) return false;
             const ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom;
-            const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-3)) / denom;
+            const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom;
             return (ua > 0.01 && ua < 0.99 && ub > 0.01 && ub < 0.99); // Excluir extremos
         }
         function checkCollision(p1, p2, tris) {
@@ -332,21 +361,64 @@
             return s > 0.001 && t > 0.001 && (s + t) < 2 * area * sign - 0.001;
         }
 
+        // Construye o reconstruye el tablero de juego (puntos)
+        function buildBoard() {
+            // Si no hay datos o el grupo no existe, no hacemos nada
+            if(!S.data || !S.data.points || !group) {
+                console.error("No se puede construir el tablero: Datos de juego o escena 3D faltantes.");
+                return;
+            }
+
+            // Limpiamos y reconstruimos el tablero
+            while(group.children.length > 0) group.remove(group.children[0]);
+            pts = [];
+            
+            const geo=new THREE.SphereGeometry(0.04,32,32); 
+            const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:2}); 
+            const hGeo=new THREE.SphereGeometry(0.15); // Hitbox Aumentado
+            const hMat=new THREE.MeshBasicMaterial({visible:false});
+            
+            S.data.points.forEach((p,i)=>{
+                const m=new THREE.Mesh(geo,mat.clone()); 
+                m.position.set(p.x,p.y,p.z); 
+                m.userData.id=i;
+                
+                // Hitbox para mejor precisión en móvil
+                const h=new THREE.Mesh(hGeo,hMat); 
+                m.add(h); 
+                
+                // Efecto de glow en el punto
+                const glow=new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})); 
+                m.add(glow);
+                
+                group.add(m); 
+                pts.push(m);
+            });
+            
+            // Aseguramos que el grupo es visible en modo 3D (si no estamos en sesión AR)
+            if (ren && !ren.xr.isPresenting) {
+                group.visible = true;
+                placed = true;
+                recenter(); // Asegura la posición y escala inicial para 3D
+            }
+            draw(); // Dibujar líneas y triángulos iniciales
+        }
+
+        // --- FIN FUNCIONES DE JUEGO ---
+
+
         // AUTH & NAVIGATION
         onAuthStateChanged(auth, async u => {
             S.user = u;
             // Solo navegar si la UI está en la pantalla de login. Esto corrige el error de "bucle"
             if(u) { 
                 if (document.getElementById('s-login').classList.contains('hidden')) {
-                    // Ya estamos en el menú o en juego, no hacemos nada
                     return;
                 }
-                // Si la autenticación es exitosa (Google Sign-In o Custom Token)
                 document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
                 nav('s-menu'); 
-                checkAR(); 
+                checkAR(); // Inicializa el hardware 3D/AR en el menú
             } else {
-                // Si no hay usuario logueado o la sesión expira/falla, mostramos Login
                 nav('s-login'); 
             }
         });
@@ -362,11 +434,8 @@
             } 
         };
         window.logout = () => { 
-            // Usamos modal en lugar de confirm()
             if (window.confirm("¿Cerrar sesión?")) {
-                // Si hay sala activa, intenta salir/eliminar antes de cerrar sesión
                 if (S.room && S.room !== 'CPU') {
-                    // El host elimina, el guest solo abandona
                     if (S.role === 'host') update({ stat: 'end' }).finally(() => signOut(auth).then(() => location.reload()));
                     else goHome().finally(() => signOut(auth).then(() => location.reload()));
                 } else {
@@ -398,7 +467,6 @@
             toast("SISTEMA", "DESCONECTADO");
         }
         
-        // Personalización de perfil (Color y Marca/Icono)
         window.setProf = (t,v,el) => {
             S.prof[t]=v; 
             const parent = el.parentNode; 
@@ -411,7 +479,6 @@
             if(t==='c') { 
                 el.style.boxShadow=`0 0 15px ${v}`; 
                 el.style.borderColor='#fff'; 
-                // Actualizar el color del icono seleccionado si ya existe
                 const activeIcon = document.querySelector('#i-pick .opt-i.active');
                 if(activeIcon) {
                     activeIcon.style.color=v;
@@ -419,7 +486,6 @@
                 }
             }
             else { 
-                // Aplicar el color del perfil actual (S.prof.c) al icono activo
                 const currentProfileColor = S.prof.c;
                 el.style.color=currentProfileColor; 
                 el.style.textShadow=`0 0 10px ${currentProfileColor}`; 
@@ -434,12 +500,10 @@
         // FIREBASE & LOGICA DE SALAS
         const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
-        // Búsqueda de sala pública o creación
         window.quickMatch = async () => {
             if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para jugar online.");
             S.cpu=false; showLoad(true,"BUSCANDO PARTIDA PÚBLICA...");
             try {
-                // Buscamos salas en estado 'wait' y públicas
                 const roomSnapshot = await getDocs(ROOMS_COLL);
                 let foundRoomId = null; 
                 roomSnapshot.forEach(doc => { 
@@ -450,10 +514,8 @@
                 });
                 
                 if(foundRoomId) {
-                    // Encontrada: unirse
                     await join(foundRoomId);
                 } else {
-                    // No encontrada: crear una nueva pública
                     await create(true);
                 }
             } catch(e) { 
@@ -472,14 +534,13 @@
         window.vsCpu = () => {
             S.cpu=true; S.role='host'; S.room='CPU';
             // Generamos un estado inicial de juego
-            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'atom'}, scale: 1.0, arPos: null, arRot: null, arScale: null};
+            S.data={stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ff0055',i:'atom'}, scale: 1.0, arPos: null, arRot: null, arScale: null, arAccepted: false};
             start();
         };
 
         async function create(pub) {
             if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para crear una sala.");
             S.role='host'; 
-            // Generar código único de 4 letras
             const c=Math.random().toString(36).substring(2,6).toUpperCase(); 
             S.room=c;
             showLoad(true, pub ? "CREANDO PÚBLICA..." : "CREANDO SALA...");
@@ -499,12 +560,7 @@
                     skips:0, 
                     p1:S.prof, 
                     scale:1.0,
-                    // Variables AR para sincronización
-                    arPos: null,
-                    arRot: null,
-                    arScale: null,
-                    arAccepted: false,
-                    lastUpdate: Date.now()
+                    arPos: null, arRot: null, arScale: 1.0, arAccepted: false, lastUpdate: Date.now()
                 });
                 sub(c); 
                 document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
@@ -515,7 +571,6 @@
             }
         }
 
-        // Blindaje de conexión (V36.0/V36.1)
         async function join(c) {
             if(!S.user || !S.user.uid) return toast("ERROR","Debe iniciar sesión para unirse a una sala.");
             S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
@@ -523,7 +578,6 @@
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', docId);
             
             try {
-                // Leemos el estado actual para blindar la unión
                 const roomSnap = await getDoc(docRef);
                 
                 if (!roomSnap.exists()) {
@@ -535,7 +589,6 @@
 
                 const roomData = roomSnap.data();
                 
-                // Validación adicional: Evitar unirse si ya hay invitado
                 if (roomData.guest && roomData.guest !== S.user.uid) {
                     showLoad(false);
                     toast("ERROR", "La sala ya está llena.");
@@ -545,9 +598,7 @@
 
                 let updateData = { guest:S.user.uid, stat:'play', p2:S.prof };
 
-                // Si la sala estaba en 'wait', iniciamos el dado.
                 if(roomData.stat === 'wait') {
-                    // Inicializamos dados y movimientos para que el HOST juegue primero
                     updateData = {...updateData, dice: roomData.dice || 6, movs: roomData.movs || 6, skips: 0, turn: roomData.turn || 'host', lastUpdate: Date.now()};
                 }
                 
@@ -587,10 +638,13 @@
                 toast("ERROR", "Pérdida de sincronización.");
             });
         }
+
+        // ** CORRECCIÓN: Aseguramos que init3D y buildBoard se llaman al iniciar el juego **
         function start() { 
             showLoad(false); 
             nav('s-game'); 
-            init3D(); 
+            init3D(); // 1. Set up THREE.js scene, renderer, etc.
+            buildBoard(); // 2. Ensure game objects are created and placed
             gameStartTime = Date.now(); 
             toast("SISTEMA","PARTIDA INICIADA"); 
 
@@ -602,7 +656,9 @@
             document.getElementById('btn-rec').style.display = S.cpu ? 'flex' : 'none';
         }
 
-        // Funciones de juego
+        // Funciones de juego (checkStatus, rollDice, skipTurn, endGame, update, tryLine, checkTri, cpuMove se mantienen igual)
+        // ... [El resto de las funciones de juego se mantiene igual]
+
         function checkStatus() {
             const d = S.data;
             if (d.stat !== 'play') return;
@@ -673,145 +729,6 @@
                 });
             }
         }
-
-        function ui() {
-            const d=S.data;
-            document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
-            document.getElementById('sc-p2').innerText = S.role==='host'?d.sc.guest:d.sc.host;
-            const b=document.getElementById('mov-hud'); const dv=document.getElementById('dice-vis');
-            
-            // Control del HUD y dado
-            if(d.turn===S.role && d.movs>0) { 
-                b.style.opacity=1; 
-                document.getElementById('mov-cnt').innerText=d.movs; 
-                dv.innerText=d.dice; 
-                dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; 
-            }
-            else { 
-                b.style.opacity=0; 
-                dv.innerText=d.dice||"?"; 
-                dv.style.borderColor=d.dice?'#00f3ff':'#444'; // Si hay dado pero no es tu turno, se ve el valor
-                dv.style.color=d.dice?'#00f3ff':'#555'; 
-            }
-
-            // Lógica de Sincronización AR
-            if(ren && ren.xr.isPresenting) {
-                // Sincronización de escala/posición
-                if(d.arPos) {
-                    const pos = new THREE.Vector3().fromArray(d.arPos);
-                    const rot = new THREE.Euler().fromArray(d.arRot);
-
-                    if (!placed || !d.arAccepted) {
-                        // Aplica la posición y rotación del host/primero
-                        group.position.copy(pos);
-                        group.rotation.copy(rot);
-                        group.visible = true;
-                        placed = true;
-                        reticle.visible = false;
-                    }
-                    
-                    // Aplicar escala sincronizada
-                    currentScale = d.arScale || 1.0;
-                    group.scale.set(currentScale, currentScale, currentScale);
-
-                    // Lógica de aceptación
-                    placementAccepted = d.arAccepted;
-                    if (d.arAccepted) {
-                         // Tablero fijo, desactivar recalibrar/aceptar
-                        hideArControls();
-                        document.getElementById('ar-scan-text').innerText = "TABLERO FIJO";
-                        document.getElementById('ar-hint').style.display = 'flex';
-                        document.getElementById('ar-scale-hint').style.display = 'block'; // Mostrar la ayuda de escala
-                    } else {
-                        // Esperando aceptación del host
-                        showArControls();
-                        document.getElementById('ar-scan-text').innerText = "Ajusta y Acepta Escala";
-                        document.getElementById('ar-scale-hint').style.display = 'block'; // Mostrar la ayuda de escala
-                        document.getElementById('btn-ar-accept').innerText = isArHost ? "ACEPTAR POSICIÓN" : "ESPERANDO A HOST...";
-                        document.getElementById('btn-ar-accept').disabled = !isArHost;
-                        document.getElementById('btn-ar-recal').style.display = isArHost ? 'inline-block' : 'none';
-                    }
-
-                } else if (isArHost && !placed) {
-                    // Host esperando colocación
-                    document.getElementById('ar-scan-text').innerText = "ESCANEA SUPERFICIE";
-                    document.getElementById('ar-hint').style.display = 'flex';
-                    document.getElementById('ar-scale-hint').style.display = 'none';
-                    hideArControls();
-                } else if (!isArHost && !d.arPos) {
-                    // Guest esperando posición del Host
-                    document.getElementById('ar-scan-text').innerText = "ESPERANDO POSICIÓN DEL HOST";
-                    document.getElementById('ar-hint').style.display = 'flex';
-                    document.getElementById('ar-scale-hint').style.display = 'none';
-                    hideArControls();
-                }
-
-                // En AR, la rotación de los puntos es controlada por el gesto de pinza (si lo permitimos),
-                // o es fija una vez colocados.
-
-            } else {
-                // Modo 3D: solo aplica escala del grupo si no es AR
-                currentScale = d.scale || 1.0;
-                if(group) group.scale.set(currentScale, currentScale, currentScale);
-            }
-            
-            draw();
-            
-            // Lógica de CPU
-            if(S.cpu && d.turn==='guest') { 
-                if(d.movs===0 && !d.dice) {
-                    // CPU Lanza dado
-                    setTimeout(()=>update({dice:Math.ceil(Math.random()*6),movs:3, skips:0}),1000); 
-                } else if(d.movs>0) {
-                    // CPU Realiza jugada
-                    setTimeout(cpuMove,1500);
-                }
-            }
-            
-            // Arbitro automático (solo el host chequea el estado de fin)
-            if(S.role === 'host' && !S.cpu) checkStatus();
-        }
-
-        // --- Funciones de Sincronización AR ---
-
-        // Función llamada por el Host para aceptar y sincronizar la posición/escala
-        window.acceptScaleAndPosition = () => {
-            if (!ren.xr.isPresenting || !isArHost || !placed || placementAccepted) return toast("ERROR", "No es tu turno de colocar.");
-            
-            // Guardar posición, rotación y escala actual del grupo
-            const pos = group.position.toArray();
-            const rot = group.rotation.toArray().slice(0, 3); // Solo x, y, z
-            const scale = currentScale;
-
-            update({
-                arPos: pos, 
-                arRot: rot, 
-                arScale: scale, 
-                arAccepted: true
-            });
-            toast("AR SYNC", "Posición del tablero fijada y sincronizada.");
-        }
-
-        // Función para recalibrar (solo Host)
-        window.recalibrate = () => {
-            if (!ren.xr.isPresenting || !isArHost) return;
-            placed = false;
-            group.visible = false;
-            reticle.visible = true;
-            placementAccepted = false;
-
-            // Limpiar la posición/escala en la BD para que el Guest también recalibre
-            update({
-                arPos: null,
-                arRot: null,
-                arScale: 1.0,
-                arAccepted: false
-            });
-            toast("RECALIBRAR", "Vuelve a escanear la superficie para colocar.");
-            hideArControls(); // Ocultar hasta la nueva colocación
-        }
-        
-        // --- Fin Funciones de Sincronización AR ---
 
         function clickPt(id) {
             const d=S.data; if(d.turn!==S.role || d.movs<=0) return toast("ERROR","Lanza el dado o espera tu turno");
@@ -894,7 +811,6 @@
             return f;
         }
 
-        // Lógica de movimiento para el oponente CPU
         function cpuMove() {
             let m=null; 
             
@@ -936,9 +852,10 @@
             }
         }
 
-        // THREE.JS & AR SETUP
-        let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace;
-        let touchDist = 0;
+        // --- FIN DE FUNCIONES DE JUEGO ---
+
+
+        // --- FUNCIONES THREE.JS Y AR ---
 
         function checkAR() {
             const el = document.getElementById('ar-status');
@@ -947,9 +864,9 @@
                     .then(ok => {
                         if(ok) {
                             el.innerHTML='<span class="text-neon font-bold">AR DETECTADO</span>';
-                            // Si se detecta AR, inicializar 3D inmediatamente para el botón AR
+                            // Si se detecta AR, inicializar 3D para el botón AR
                             if (!arInitialized) {
-                                init3D(true); // Inicializar solo para obtener el botón
+                                init3D(); 
                             }
                         } else el.innerText="MODO 3D (No AR)";
                     })
@@ -957,18 +874,10 @@
             } else el.innerText="MODO 3D (PC)";
         }
 
-        function init3D(arOnly = false) {
-            if(arInitialized) {
-                if(!arOnly && S.data.points) {
-                    // Si ya está inicializado y tenemos data, reconstruir el tablero
-                    while(group.children.length>0) group.remove(group.children[0]);
-                    pts=[];
-                    build(); 
-                    if (!ren.xr.isPresenting) recenter(); // Solo recentrar en modo 3D
-                }
-                return;
-            } 
-
+        // ** CORRECCIÓN: init3D solo inicializa componentes 3D, no el tablero **
+        function init3D() {
+            if(arInitialized) return; // Salir si ya está inicializado
+            
             arInitialized = true;
             
             scene=new THREE.Scene(); 
@@ -982,38 +891,39 @@
             navigator.xr?.isSessionSupported('immersive-ar').then(supported => {
                 if(supported) {
                     const btn = ARButton.createButton(ren, {
-                        requiredFeatures: ['hit-test', 'local'], // 'local' para asegurar el espacio de referencia
+                        requiredFeatures: ['hit-test', 'local'], 
                         optionalFeatures: ['dom-overlay'],
                         domOverlay: { root: document.body }
                     });
                     document.getElementById('ar-zone').appendChild(btn);
 
-                    // Listener para entrar a la sesión AR
                     btn.addEventListener('click', ()=>{ 
-                        // La lógica de colocación se mueve al loop y select listener
-                        // Ocultamos el canvas de fondo
                         document.getElementById('bg-canvas').style.opacity=0; 
                     });
                 }
             });
 
             ren.xr.addEventListener('sessionstart', async (e)=>{
-                // Referencia espacial local es necesaria para colocar el reticle
                 arRefSpace = await ren.xr.getSession().requestReferenceSpace('local');
 
-                // Asegurar estado de colocación para AR
                 placed = false;
                 group.visible = false; 
                 reticle.visible = true; 
                 document.getElementById('ar-hint').style.display = 'flex';
                 document.getElementById('ar-scan-text').innerText = "ESCANEA SUPERFICIE";
 
-                // Ocultar controles de modo 3D
                 document.getElementById('btn-rec').style.display='none';
+                
+                // Adjuntar listener de select solo una vez
+                const controller = ren.xr.getController(0);
+                controller.addEventListener('select', onControllerSelect);
             });
 
             ren.xr.addEventListener('sessionend',()=>{ 
-                // Al salir de AR, forzamos el modo 3D
+                // Remover listener de select
+                const controller = ren.xr.getController(0);
+                controller.removeEventListener('select', onControllerSelect);
+                
                 recenter(); 
                 document.getElementById('bg-canvas').style.opacity=1; 
                 document.getElementById('btn-rec').style.display='flex';
@@ -1021,7 +931,6 @@
                 document.getElementById('ar-scale-hint').style.display='none';
                 hideArControls();
                 
-                // Reiniciar estado AR (excepto el tablero)
                 placed = false;
                 reticle.visible = false;
             });
@@ -1029,8 +938,6 @@
             scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); 
             group=new THREE.Group(); 
             scene.add(group);
-            
-            if(!arOnly && S.data.points) build(); // Construir solo si hay datos de juego
             
             // Reticle para detección de plano en AR
             reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
@@ -1041,7 +948,7 @@
             ray=new THREE.Raycaster(); 
             ren.setAnimationLoop(loop);
             
-            // Gestos Pinch-to-Zoom para escalar en AR
+            // Gestos Pinch-to-Zoom para escalar en AR (Mantenido igual)
             window.addEventListener('touchstart', e => { 
                 if(e.touches.length===2) touchDist=Math.hypot(e.touches[0].pageX-e.touches[1].pageX, e.touches[0].pageY-e.touches[1].pageY); 
             });
@@ -1063,16 +970,12 @@
 
             // Detección de clicks en puntos (Raycasting)
             window.addEventListener('pointerdown', (e)=>{
-                // Evitar raycasting si se toca un elemento interactivo de la UI (botones, etc.)
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return;
-                
-                // En AR, el raycasting se hace dentro del loop usando select, no pointerdown
                 if(ren.xr.isPresenting) return;
 
                 const m=new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
                 ray.setFromCamera(m,cam); 
                 const h=ray.intersectObjects(group.children,true);
-                // Buscar el objeto cuya 'parent' tenga la ID de punto (hitbox)
                 const obj=h.find(x=>x.object.parent && x.object.parent.userData.id!==undefined); 
                 if(obj) clickPt(obj.object.parent.userData.id);
             });
@@ -1080,31 +983,6 @@
             // Controles de órbita (Modo 3D)
             controls=new OrbitControls(cam,ren.domElement); 
             recenter();
-        }
-
-        function build() {
-            pts=[]; 
-            const geo=new THREE.SphereGeometry(0.04,32,32); 
-            const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:2}); 
-            const hGeo=new THREE.SphereGeometry(0.15); // Hitbox Aumentado
-            const hMat=new THREE.MeshBasicMaterial({visible:false});
-            
-            S.data.points.forEach((p,i)=>{
-                const m=new THREE.Mesh(geo,mat.clone()); 
-                m.position.set(p.x,p.y,p.z); 
-                m.userData.id=i;
-                
-                // Hitbox para mejor precisión en móvil
-                const h=new THREE.Mesh(hGeo,hMat); 
-                m.add(h); 
-                
-                // Efecto de glow en el punto
-                const glow=new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})); 
-                m.add(glow);
-                
-                group.add(m); 
-                pts.push(m);
-            });
         }
         
         // Función para re-centrar la escena (Modo 3D)
@@ -1201,7 +1079,7 @@
         function loop(t, frame) {
             if(controls) controls.update();
             
-            // Lógica de AR (Detección de plano y colocación)
+            // Lógica de AR (Detección de plano)
             if(ren.xr.isPresenting) {
                 const s=ren.xr.getSession();
                 
@@ -1215,49 +1093,27 @@
                         const h=frame.getHitTestResults(arHit);
                         
                         if(!placed && h.length && isArHost && !placementAccepted) {
-                            // Solo el Host que no ha colocado y no ha aceptado usa el reticle
+                            // Colocar reticle y mover el grupo si el Host está escaneando y no ha colocado
                             reticle.visible=true; 
-                            // Colocar reticle en el plano detectado
                             reticle.matrix.fromArray(h[0].getPose(arRefSpace).transform.matrix);
-                        } else {
+                            
+                            // Mover el grupo visualmente al reticle mientras se escanea
+                            group.position.setFromMatrixPosition(reticle.matrix); 
+                            group.rotation.setFromRotationMatrix(reticle.matrix);
+                            group.visible = true;
+                            
+                            // Actualización de UI de escaneo
+                            document.getElementById('ar-scan-text').innerText = "TAP para Fijar, Pellizcar para Escalar";
+                            document.getElementById('ar-hint').style.display='flex';
+                            document.getElementById('ar-scale-hint').style.display = 'block';
+
+                        } else if (!placed && h.length && !isArHost && !placementAccepted && !S.data.arPos) {
+                             // Guest esperando: muestra mensaje
+                            document.getElementById('ar-scan-text').innerText = "ESPERANDO POSICIÓN DEL HOST";
+                        } 
+                        else {
+                            // Reticle oculto si ya se colocó o no se está escaneando
                             reticle.visible=false;
-                        }
-
-                        // Colocación inicial del Host
-                        if(isArHost && !placed) {
-                            // Actualizar la posición del grupo al reticle si el host lo mueve
-                            if(reticle.visible) {
-                                group.position.setFromMatrixPosition(reticle.matrix); 
-                                group.rotation.setFromRotationMatrix(reticle.matrix);
-                                group.visible = true;
-                                
-                                // Esto es solo para la colocación inicial
-                                document.getElementById('ar-hint').style.display='flex';
-                                document.getElementById('ar-scan-text').innerText = "TAP para Fijar, Pellizcar para Escalar";
-                                document.getElementById('ar-scale-hint').style.display = 'block';
-
-                                // Una vez que se ve el reticle, adjuntar el listener de select
-                                const controller = ren.xr.getController(0);
-                                const onSelect = () => {
-                                    if(reticle.visible){ 
-                                        placed = true; 
-                                        reticle.visible = false;
-                                        // Guardar posición inicial en el grupo (se sincroniza con update en acceptScaleAndPosition)
-                                        
-                                        // Mostrar controles de AR para el Host
-                                        showArControls();
-                                        document.getElementById('btn-ar-accept').innerText = "ACEPTAR POSICIÓN";
-                                        document.getElementById('btn-ar-recal').style.display = 'inline-block';
-                                        
-                                        controller.removeEventListener('select', onSelect);
-                                    } 
-                                };
-                                controller.addEventListener('select', onSelect);
-                            } else {
-                                // Si no hay reticle, el usuario no está apuntando a una superficie.
-                                group.visible = false;
-                                document.getElementById('ar-scan-text').innerText = "ESCANEA SUPERFICIE";
-                            }
                         }
                     }
                 }
@@ -1270,13 +1126,51 @@
             ren.render(scene,cam);
         }
 
+        // --- Funciones de Sincronización AR ---
+
+        window.acceptScaleAndPosition = () => {
+            if (!ren.xr.isPresenting || !isArHost || !placed || placementAccepted) return toast("ERROR", "No es tu turno de colocar.");
+            
+            // Guardar posición, rotación y escala actual del grupo
+            const pos = group.position.toArray();
+            const rot = group.rotation.toArray().slice(0, 3); // Solo x, y, z
+            const scale = currentScale;
+
+            update({
+                arPos: pos, 
+                arRot: rot, 
+                arScale: scale, 
+                arAccepted: true
+            });
+            toast("AR SYNC", "Posición del tablero fijada y sincronizada.");
+        }
+
+        window.recalibrate = () => {
+            if (!ren.xr.isPresenting || !isArHost) return;
+            placed = false;
+            group.visible = false;
+            reticle.visible = true;
+            placementAccepted = false;
+
+            // Limpiar la posición/escala en la BD para que el Guest también recalibre
+            update({
+                arPos: null,
+                arRot: null,
+                arScale: 1.0,
+                arAccepted: false
+            });
+            toast("RECALIBRAR", "Vuelve a escanear la superficie para colocar.");
+            hideArControls(); // Ocultar hasta la nueva colocación
+        }
+        
+        // --- Fin Funciones de Sincronización AR ---
+
         // Función de Toast para mensajes no intrusivos
         function toast(t,m){const e=document.getElementById('toast');document.getElementById('t-head').innerText=t;document.getElementById('t-body').innerText=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3000);}
 
         // Aseguramos que init3D se llama en el onload para tener el canvas.
         window.onload = () => {
-             // Solo inicializar si no se ha hecho ya (para WebXRButton)
-            if (!arInitialized) {
+             if (!arInitialized) {
                 init3D();
             }
         };
