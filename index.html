@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V36.4 FIX CPU & AR INIT</title>
+    <title>3 LINE-AR | V36.5 ADD END GAME BUTTON</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -104,6 +103,18 @@
             font-size: 10px; font-weight: bold;
         }
         .ar-sync-btn:active { transform: scale(0.95); background: #ffcc00; color: #000; }
+        
+        .btn-end {
+            background: rgba(255, 0, 85, 0.1); /* hot */
+            border: 1px solid #ff0055;
+            color: #ff0055;
+            font-size: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-end:active { transform: scale(0.95); background: #ff0055; color: #000; }
 
     </style>
 
@@ -123,7 +134,7 @@
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
                     <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.4 FIX CPU & AR INIT</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V36.5 ADD END GAME BUTTON</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -174,7 +185,7 @@
                 <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.4 FIX CPU & AR INIT</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V36.5 ADD END GAME BUTTON</div>
             </div>
         </div>
 
@@ -188,7 +199,7 @@
                         <div>
                             <p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p>
                         </div>
-                        <!-- Modificado a 'SIN JUGADAS' como se especificó -->
+                        <!-- Botón para indicar que no hay jugadas y pasar turno -->
                         <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold leading-tight">SIN<br>JUGADAS</button>
                     </div>
                 </div>
@@ -210,6 +221,7 @@
             </div>
 
             <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end">
+                <button onclick="window.finishGame()" class="btn-end flex items-center gap-1"><i class="fas fa-flag-checkered"></i> FINALIZAR JUEGO</button>
                 <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition"><i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span></button>
                 <!-- Botón de recentrar que se oculta en AR y se usa para el modo 3D -->
                 <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
@@ -282,7 +294,9 @@
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
         let pts=[], selPt=null, placed=false, roomUnsub=null, gameStartTime=0, currentScale=1.0;
-        const LOSE_MSGS = ["¡BUEN INTENTO!", "LA PRÓXIMA SERÁ TUYA", "GRAN ESTRATEGIA", "BUENA PARTIDA", "SIGUE ASÍ"];
+        // Mensajes aleatorios motivadores
+        const LOSE_MSGS = ["¡BUEN INTENTO!", "LA PRÓXIMA SERÁ TUYA", "GRAN ESTRATEGIA", "BUENA PARTIDA", "SIGUE ASÍ", "TE ESPERO EN LA REVANCHA", "CASI LO LOGRAS, CAMPEÓN"];
+
         // Variables para sincronización AR
         let arInitialized = false;
         let isArHost = false; // Indica si este usuario está a cargo de la colocación inicial
@@ -639,7 +653,6 @@
             });
         }
 
-        // ** CORRECCIÓN: Aseguramos que init3D y buildBoard se llaman al iniciar el juego **
         function start() { 
             showLoad(false); 
             nav('s-game'); 
@@ -656,8 +669,12 @@
             document.getElementById('btn-rec').style.display = S.cpu ? 'flex' : 'none';
         }
 
-        // Funciones de juego (checkStatus, rollDice, skipTurn, endGame, update, tryLine, checkTri, cpuMove se mantienen igual)
-        // ... [El resto de las funciones de juego se mantiene igual]
+        // Nuevo: Función para forzar el final del juego
+        window.finishGame = () => {
+             if (window.confirm("¿Estás seguro de que quieres finalizar el juego ahora?")) {
+                update({stat: 'end'});
+            }
+        }
 
         function checkStatus() {
             const d = S.data;
@@ -706,14 +723,36 @@
         function endGame(d) {
             if(document.getElementById('s-game').classList.contains('hidden')) return;
             nav('win-screen'); playSfx('end');
-            const win = d.sc.host > d.sc.guest ? 'HOST' : (d.sc.host < d.sc.guest ? 'GUEST' : 'DRAW');
-            const isMe = (win === 'HOST' && S.role === 'host') || (win === 'GUEST' && S.role === 'guest');
-            const tit = document.getElementById('win-title'); const msg = document.getElementById('win-msg');
-            if(win === 'DRAW') { tit.innerText = "EMPATE"; tit.className = "text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "SIN DOMINIO"; }
-            else if(isMe) { tit.innerText = "VICTORIA"; tit.className = "text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL"; }
-            else { tit.innerText = "DERROTA"; tit.className = "text-6xl font-black text-hot mb-2 text-center"; msg.innerText = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)]; }
-            document.getElementById('final-p1').innerText = S.role==='host' ? d.sc.host : d.sc.guest;
-            document.getElementById('final-p2').innerText = S.role==='host' ? d.sc.guest : d.sc.host;
+            
+            // Determinar si yo soy el ganador
+            const myScore = S.role === 'host' ? d.sc.host : d.sc.guest;
+            const rivalScore = S.role === 'host' ? d.sc.guest : d.sc.host;
+            
+            const win = myScore > rivalScore ? 'WIN' : (myScore < rivalScore ? 'LOSE' : 'DRAW');
+            
+            const tit = document.getElementById('win-title'); 
+            const msg = document.getElementById('win-msg');
+
+            if(win === 'DRAW') { 
+                tit.innerText = "EMPATE"; 
+                tit.className = "text-6xl font-black text-warn mb-2 text-center"; 
+                msg.innerText = "SIN DOMINIO"; 
+            }
+            else if(win === 'WIN') { 
+                tit.innerText = "VICTORIA"; 
+                tit.className = "text-6xl font-black text-neon mb-2 animate-pulse text-center"; 
+                msg.innerText = "DOMINIO TOTAL"; 
+            }
+            else { 
+                // Mensaje motivador aleatorio para el perdedor
+                const randomMsg = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)];
+                tit.innerText = "DERROTA"; 
+                tit.className = "text-6xl font-black text-hot mb-2 text-center"; 
+                msg.innerText = randomMsg.toUpperCase(); 
+            }
+            
+            document.getElementById('final-p1').innerText = myScore;
+            document.getElementById('final-p2').innerText = rivalScore;
             hideArControls();
         }
 
@@ -728,6 +767,101 @@
                     toast("ERROR","No se pudo guardar la jugada.");
                 });
             }
+        }
+
+        function ui() {
+            const d=S.data;
+            document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
+            document.getElementById('sc-p2').innerText = S.role==='host'?d.sc.guest:d.sc.host;
+            const b=document.getElementById('mov-hud'); const dv=document.getElementById('dice-vis');
+            
+            // Control del HUD y dado
+            if(d.turn===S.role && d.movs>0) { 
+                b.style.opacity=1; 
+                document.getElementById('mov-cnt').innerText=d.movs; 
+                dv.innerText=d.dice; 
+                dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; 
+            }
+            else { 
+                b.style.opacity=0; 
+                dv.innerText=d.dice||"?"; 
+                dv.style.borderColor=d.dice?'#00f3ff':'#444'; // Si hay dado pero no es tu turno, se ve el valor
+                dv.style.color=d.dice?'#00f3ff':'#555'; 
+            }
+
+            // Lógica de Sincronización AR
+            if(ren && ren.xr.isPresenting) {
+                // Sincronización de escala/posición
+                if(d.arPos) {
+                    const pos = new THREE.Vector3().fromArray(d.arPos);
+                    const rot = new THREE.Euler().fromArray(d.arRot);
+
+                    if (!placed || !d.arAccepted) {
+                        // Aplica la posición y rotación del host/primero
+                        group.position.copy(pos);
+                        group.rotation.copy(rot);
+                        group.visible = true;
+                        placed = true;
+                        reticle.visible = false;
+                    }
+                    
+                    // Aplicar escala sincronizada
+                    currentScale = d.arScale || 1.0;
+                    group.scale.set(currentScale, currentScale, currentScale);
+
+                    // Lógica de aceptación
+                    placementAccepted = d.arAccepted;
+                    if (d.arAccepted) {
+                         // Tablero fijo, desactivar recalibrar/aceptar
+                        hideArControls();
+                        document.getElementById('ar-scan-text').innerText = "TABLERO FIJO";
+                        document.getElementById('ar-hint').style.display = 'flex';
+                        document.getElementById('ar-scale-hint').style.display = 'block'; // Mostrar la ayuda de escala
+                    } else {
+                        // Esperando aceptación del host
+                        showArControls();
+                        document.getElementById('ar-scan-text').innerText = "Ajusta y Acepta Escala";
+                        document.getElementById('ar-scale-hint').style.display = 'block'; // Mostrar la ayuda de escala
+                        document.getElementById('btn-ar-accept').innerText = isArHost ? "ACEPTAR POSICIÓN" : "ESPERANDO A HOST...";
+                        document.getElementById('btn-ar-accept').disabled = !isArHost;
+                        document.getElementById('btn-ar-recal').style.display = isArHost ? 'inline-block' : 'none';
+                    }
+
+                } else if (isArHost && !placed) {
+                    // Host esperando colocación
+                    document.getElementById('ar-scan-text').innerText = "ESCANEA SUPERFICIE";
+                    document.getElementById('ar-hint').style.display = 'flex';
+                    document.getElementById('ar-scale-hint').style.display = 'none';
+                    hideArControls();
+                } else if (!isArHost && !d.arPos) {
+                    // Guest esperando posición del Host
+                    document.getElementById('ar-scan-text').innerText = "ESPERANDO POSICIÓN DEL HOST";
+                    document.getElementById('ar-hint').style.display = 'flex';
+                    document.getElementById('ar-scale-hint').style.display = 'none';
+                    hideArControls();
+                }
+
+            } else {
+                // Modo 3D: solo aplica escala del grupo si no es AR
+                currentScale = d.scale || 1.0;
+                if(group) group.scale.set(currentScale, currentScale, currentScale);
+            }
+            
+            draw();
+            
+            // Lógica de CPU
+            if(S.cpu && d.turn==='guest') { 
+                if(d.movs===0 && !d.dice) {
+                    // CPU Lanza dado
+                    setTimeout(()=>update({dice:Math.ceil(Math.random()*6),movs:3, skips:0}),1000); 
+                } else if(d.movs>0) {
+                    // CPU Realiza jugada
+                    setTimeout(cpuMove,1500);
+                }
+            }
+            
+            // Arbitro automático (solo el host chequea el estado de fin)
+            if(S.role === 'host' && !S.cpu) checkStatus();
         }
 
         function clickPt(id) {
