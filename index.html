@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V44.0 DRAG & DROP</title>
+    <title>3 LINE-AR | V44.1 FIXED</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -87,7 +87,7 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     
-    <div class="version-tag">V44.0 DRAG & DROP</div>
+    <div class="version-tag">V44.1 FIXED</div>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
@@ -108,7 +108,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V44.0 ARQUITECTURA</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V44.1 FIXED</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
@@ -352,8 +352,6 @@
                 window.gameToast("FIJADO", "Pellizca para escalar o arrastra para mover.");
             }
         }
-
-        window.onControllerSelect = () => { window.doPlace(); }
 
         function genPoints() {
             const p=[]; for(let i=0;i<16;i++){ let v=false, pt, att=0; while(!v && att<100){ pt = { x:(Math.random()-0.5)*1.8, y:0, z:(Math.random()-0.5)*1.8 }; let ok=true; for(let ex of p) if(Math.hypot(ex.x-pt.x, ex.z-pt.z) < 0.35) ok=false; if(ok) v=true; att++; } p.push(pt); } return p;
@@ -701,6 +699,22 @@
             } else el.innerText="MODO PC";
         }
 
+        // --- FUNCIÓN FALTANTE QUE CAUSABA EL ERROR ---
+        window.recenter = () => {
+            if (controls) {
+                controls.reset();
+                controls.target.set(0, 0, 0); // Mirar al centro
+            }
+            if (cam) cam.position.set(0, 2, 3); // Posición ideal
+            if (group) {
+                // En modo No-AR, reiniciamos la rotación del grupo por si acaso
+                if (!ren || !ren.xr.isPresenting) {
+                    group.position.set(0, 0, 0);
+                    group.rotation.set(0, 0, 0);
+                }
+            }
+        }
+
         window.init3D = () => {
             if(arInitialized) return; arInitialized = true;
             scene=new THREE.Scene(); cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.01,20);
@@ -728,7 +742,8 @@
                 document.getElementById('ar-instructions').style.display = 'block';
                 document.getElementById('ar-instr-txt').innerHTML = "ESCANEANDO...";
 
-                const c = ren.xr.getController(0); c.addEventListener('select', window.onControllerSelect);
+                // Eliminamos el listener simple anterior
+                // const c = ren.xr.getController(0); c.addEventListener('select', window.onControllerSelect);
             });
 
             ren.xr.addEventListener('sessionend',()=>{ 
@@ -751,68 +766,94 @@
 
             ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
             
-            // --- GESTIÓN TÁCTIL ARQUITECTURA ---
-            
+            // --- GESTIÓN TÁCTIL ARQUITECTURA MEJORADA ---
+            let isTouchingUI = false;
+
             window.addEventListener('touchstart', (e) => {
-                // 2 Dedos: Escalado
+                // Si toca un botón (clase interactive), ignorar lógica 3D
+                if(e.target.closest('.interactive') || e.target.closest('button')) {
+                    isTouchingUI = true;
+                    return;
+                }
+                isTouchingUI = false;
+
+                // 2 Dedos: Iniciar Escalado
                 if (e.touches.length === 2) {
-                    const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
-                    initialPinchDistance = Math.sqrt(dx * dx + dy * dy); initialScale = currentScale;
+                    const dx = e.touches[0].pageX - e.touches[1].pageX;
+                    const dy = e.touches[0].pageY - e.touches[1].pageY;
+                    initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+                    initialScale = currentScale;
                 }
                 
-                // 1 Dedo: Arrastrar (Si ya está colocado y en AR)
-                if (ren.xr.isPresenting && placed && e.touches.length === 1) {
-                    const touch = e.touches[0];
-                    const mouse = new THREE.Vector2((touch.pageX / window.innerWidth) * 2 - 1, -(touch.pageY / window.innerHeight) * 2 + 1);
-                    
-                    raycaster.setFromCamera(mouse, cam);
-                    dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), group.position);
-                    const target = new THREE.Vector3();
-                    raycaster.ray.intersectPlane(dragPlane, target);
-                    
-                    if (target) {
-                        isDragging = true;
-                        dragOffset.subVectors(group.position, target);
+                // 1 Dedo: Lógica AR (Arrastrar o Colocar)
+                if (ren.xr.isPresenting && e.touches.length === 1) {
+                    // Si NO está colocado, colocarlo
+                    if (!placed) {
+                        window.doPlace();
+                    } 
+                    // Si YA está colocado, preparar arrastre (Drag)
+                    else {
+                        const touch = e.touches[0];
+                        const mouse = new THREE.Vector2((touch.pageX / window.innerWidth) * 2 - 1, -(touch.pageY / window.innerHeight) * 2 + 1);
+                        raycaster.setFromCamera(mouse, cam);
+                        
+                        // Crear un plano infinito a la altura del objeto para arrastrar sobre él
+                        dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), group.position);
+                        
+                        const target = new THREE.Vector3();
+                        raycaster.ray.intersectPlane(dragPlane, target);
+                        
+                        if (target) {
+                            isDragging = true;
+                            // Calculamos el offset para que no "salte" al centro del dedo
+                            dragOffset.subVectors(group.position, target);
+                        }
                     }
-                }
-
-                // 1 Dedo: Colocar (Si NO está colocado)
-                if (ren.xr.isPresenting && !placed && e.touches.length === 1) {
-                    window.doPlace();
                 }
             }, {passive: false});
 
             window.addEventListener('touchmove', (e) => {
-                // Escalado
-                if (e.touches.length === 2) {
-                    const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
+                if(isTouchingUI) return;
+
+                // Escalado (Pinch) - Funciona tanto en AR como en No-AR si se desea
+                if (e.touches.length === 2 && initialPinchDistance > 0) {
+                    const dx = e.touches[0].pageX - e.touches[1].pageX;
+                    const dy = e.touches[0].pageY - e.touches[1].pageY;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (initialPinchDistance > 0) {
-                        const scaleFactor = dist / initialPinchDistance;
-                        currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.05), 5.0);
-                        if(group) group.scale.set(currentScale, currentScale, currentScale);
-                        if(ghostGroup) ghostGroup.scale.set(currentScale, currentScale, currentScale);
-                        window.gameToast("TAMAÑO", `${currentScale.toFixed(2)}x`);
-                    }
-                    e.preventDefault();
+                    
+                    const scaleFactor = dist / initialPinchDistance;
+                    currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.05), 5.0);
+                    
+                    if(group) group.scale.set(currentScale, currentScale, currentScale);
+                    // Feedback visual al usuario
+                    window.gameToast("TAMAÑO", `${(currentScale*100).toFixed(0)}%`);
+                    
+                    e.preventDefault(); // Evitar zoom del navegador
                 }
                 
-                // Arrastre (Move)
+                // Arrastre (Move) - Solo en AR
                 if (ren.xr.isPresenting && placed && isDragging && e.touches.length === 1) {
                     const touch = e.touches[0];
                     const mouse = new THREE.Vector2((touch.pageX / window.innerWidth) * 2 - 1, -(touch.pageY / window.innerHeight) * 2 + 1);
                     raycaster.setFromCamera(mouse, cam);
                     const target = new THREE.Vector3();
+                    
+                    // Intersectar con el plano imaginario de arrastre
                     raycaster.ray.intersectPlane(dragPlane, target);
                     
                     if (target) {
+                        // Mover el grupo
                         const newPos = new THREE.Vector3().addVectors(target, dragOffset);
                         group.position.set(newPos.x, group.position.y, newPos.z);
                     }
+                    e.preventDefault();
                 }
             }, {passive: false});
             
-            window.addEventListener('touchend', () => { isDragging = false; });
+            window.addEventListener('touchend', () => { 
+                isDragging = false; 
+                initialPinchDistance = 0;
+            });
 
             window.addEventListener('pointerdown', (e)=>{
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return; if(ren.xr.isPresenting) return;
@@ -874,6 +915,37 @@
             ren.render(scene,cam);
         }
 
+        // FUNCIONES DE DIBUJO Y LÓGICA VISUAL
+        window.draw = () => {
+            if(!S.data || !pts.length) return;
+            const d=S.data;
+            pts.forEach((m,i)=>{
+                const own = d.lines.filter(l=>l.s===i||l.e===i).map(l=>l.own);
+                const baseCol = i===selPt ? '#ffffff' : (own.includes('host') && own.includes('guest') ? '#ff00ff' : (own.includes('host') ? d.p1.c : (own.includes('guest') ? d.p2.c : '#333')));
+                m.material.color.set(baseCol);
+                m.material.emissive.set(baseCol);
+            });
+            // Limpiar líneas y tris viejos
+            group.children.filter(c=>c.userData.type==='line'||c.userData.type==='tri').forEach(c=>group.remove(c));
+
+            d.lines.forEach(l=>{
+                const ptsLine = [pts[l.s].position, pts[l.e].position];
+                const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ptsLine), 4, 0.02, 8, false);
+                const col = l.own==='host'?d.p1.c:d.p2.c;
+                const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:col}));
+                mesh.userData.type='line'; group.add(mesh);
+            });
+
+            d.tris.forEach(t=>{
+                const g = new THREE.BufferGeometry().setFromPoints([pts[t.p1].position, pts[t.p2].position, pts[t.p3].position]);
+                const col = t.own==='host'?d.p1.c:d.p2.c;
+                const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:col, opacity:0.3, transparent:true, side:THREE.DoubleSide}));
+                mesh.userData.type='tri'; group.add(mesh);
+            });
+        }
+        
+        window.highlight = (id,on) => { if(on) pts[id].scale.set(1.5,1.5,1.5); else pts[id].scale.set(1,1,1); }
+
         window.acceptScaleAndPosition = () => {
             if (!ren.xr.isPresenting || !isArHost || !placed) return;
             const pos = group.position.toArray(); const rot = group.rotation.toArray().slice(0, 3);
@@ -902,3 +974,4 @@
     </script>
 </body>
 </html>
+
