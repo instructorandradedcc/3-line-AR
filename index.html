@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V38.2 PRODUCTION FIX</title>
+    <title>3 LINE-AR | V38.3 STABILITY PATCH</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,120 +25,56 @@
         /* ESTILOS BASE */
         body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; transition: background-color 0.5s; }
         
-        /* AR MODE: Fondo transparente */
+        /* AR MODE */
         body.ar-active { background-color: transparent !important; }
         body.ar-active #bg-canvas { opacity: 0 !important; display: none; }
         
-        /* FONDO ESTELAR */
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #080810 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
         
         canvas { display: block; outline: none; } 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
         
-        /* PANELES UI */
-        .glass-panel {
-            background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(16px);
-            border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 40px rgba(0, 243, 255, 0.15);
-            border-radius: 12px;
-        }
-        .btn-neon {
-            background: linear-gradient(180deg, rgba(0,243,255,0.1), rgba(0,243,255,0));
-            border: 1px solid #00f3ff; color: #00f3ff; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s;
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); cursor: pointer;
-        }
+        .glass-panel { background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 40px rgba(0, 243, 255, 0.15); border-radius: 12px; }
+        .btn-neon { background: linear-gradient(180deg, rgba(0,243,255,0.1), rgba(0,243,255,0)); border: 1px solid #00f3ff; color: #00f3ff; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; transition: all 0.2s; box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); cursor: pointer; }
         .btn-neon:active { transform: scale(0.95); background: #00f3ff; color: #000; }
         .btn-neon.danger { border-color: #ff0055; color: #ff0055; }
         .btn-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); cursor: not-allowed; }
 
-        /* DADO */
         .dice-wrap { perspective: 800px; width: 70px; height: 70px; pointer-events: auto; cursor: pointer; }
-        .dice-cube {
-            width: 100%; height: 100%; position: relative; transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            background: rgba(0,0,0,0.9); border: 2px solid #00f3ff; border-radius: 12px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 36px; color: #00f3ff; text-shadow: 0 0 15px #00f3ff;
-        }
+        .dice-cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); background: rgba(0,0,0,0.9); border: 2px solid #00f3ff; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 36px; color: #00f3ff; text-shadow: 0 0 15px #00f3ff; }
         .rolling { animation: shake 0.4s infinite; background: #00f3ff; color: #000; text-shadow: none; }
         @keyframes shake { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } }
 
-        /* TOASTS */
-        .toast-box {
-            background: #000; border: 1px solid #00f3ff; border-left-width: 5px;
-            padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace';
-            transform: translateY(100px); opacity: 0; transition: all 0.4s;
-        }
+        .toast-box { background: #000; border: 1px solid #00f3ff; border-left-width: 5px; padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace'; transform: translateY(100px); opacity: 0; transition: all 0.4s; }
         .toast-box.show { transform: translateY(0); opacity: 1; }
         
-        #game-toast {
-            background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(8px);
-            border: 1px solid #00f3ff; border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
-            min-width: 200px; max-width: 90%; padding: 8px 12px;
-            opacity: 0; transform: translateY(-5px); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
+        #game-toast { background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(8px); border: 1px solid #00f3ff; border-radius: 8px; box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); min-width: 200px; max-width: 90%; padding: 8px 12px; opacity: 0; transform: translateY(-5px); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
         #game-toast.show { opacity: 1; transform: translateY(0); }
 
         #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
         
-        /* PANTALLA VICTORIA */
-        #win-screen { 
-            position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 60; 
-            pointer-events: auto; display: none !important; 
-            flex-direction: column; justify-content: center; align-items: center;
-        }
+        #win-screen { position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 60; pointer-events: auto; display: none !important; flex-direction: column; justify-content: center; align-items: center; }
         #win-screen.active { display: flex !important; }
 
-        /* SELECTOR */
         .opt { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #333; cursor: pointer; transition: 0.2s; transform: scale(0.9); pointer-events: auto; }
         .opt.active { border-color: white; transform: scale(1.2); box-shadow: 0 0 20px currentColor; border-width: 2px; }
         .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; pointer-events: auto; }
         .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
-        /* AR Button */
-        #ar-zone button {
-            background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important;
-            color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
-            border-radius: 6px !important; text-transform: uppercase !important;
-            transition: background 0.2s; pointer-events: auto !important; 
-            position: relative !important; bottom: auto !important;
-        }
+        #ar-zone button { background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important; color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important; border-radius: 6px !important; text-transform: uppercase !important; transition: background 0.2s; pointer-events: auto !important; position: relative !important; bottom: auto !important; }
 
-        /* AR Sync Buttons */
         #btn-rec { display: flex; }
-        .ar-sync-btn {
-            background: rgba(255, 204, 0, 0.1) !important; border: 1px solid #ffcc00 !important;
-            color: #ffcc00 !important; font-family: 'Orbitron' !important; padding: 8px 16px !important;
-            border-radius: 6px !important; text-transform: uppercase !important;
-            font-size: 10px; font-weight: bold;
-        }
+        .ar-sync-btn { background: rgba(255, 204, 0, 0.1) !important; border: 1px solid #ffcc00 !important; color: #ffcc00 !important; font-family: 'Orbitron' !important; padding: 8px 16px !important; border-radius: 6px !important; text-transform: uppercase !important; font-size: 10px; font-weight: bold; }
         .ar-sync-btn:active { transform: scale(0.95); background: #ffcc00; color: #000; }
         
-        .btn-end {
-            background: rgba(255, 0, 85, 0.1); border: 1px solid #ff0055; color: #ff0055;
-            font-size: 10px; padding: 8px 12px; border-radius: 8px; font-weight: bold; transition: all 0.2s;
-        }
+        .btn-end { background: rgba(255, 0, 85, 0.1); border: 1px solid #ff0055; color: #ff0055; font-size: 10px; padding: 8px 12px; border-radius: 8px; font-weight: bold; transition: all 0.2s; }
         .btn-end:active { transform: scale(0.95); background: #ff0055; color: #000; }
 
-        /* MODAL */
-        #custom-modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100;
-            display: none; justify-content: center; align-items: center;
-        }
-        #modal-content {
-            background: rgba(8, 12, 18, 0.98); backdrop-filter: blur(20px);
-            border: 2px solid #00f3ff; border-radius: 12px;
-            padding: 24px; max-width: 300px; width: 90%;
-            text-align: center; color: white;
-            box-shadow: 0 0 50px rgba(0, 243, 255, 0.3);
-        }
+        #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
+        #modal-content { background: rgba(8, 12, 18, 0.98); backdrop-filter: blur(20px); border: 2px solid #00f3ff; border-radius: 12px; padding: 24px; max-width: 300px; width: 90%; text-align: center; color: white; box-shadow: 0 0 50px rgba(0, 243, 255, 0.3); }
         
-        #room-label-container {
-            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
-            z-index: 10; pointer-events: none;
-        }
+        #room-label-container { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: none; }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -166,9 +102,8 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V38.2 PRODUCTION FIX</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V38.3 STABILITY PATCH</p>
                 </div>
-                <!-- Botón de Login con estado de carga inicial -->
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
                 </button>
@@ -219,7 +154,7 @@
                 </div>
                 <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V38.2 PRODUCTION FIX</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V38.3 STABILITY PATCH</div>
             </div>
         </div>
 
@@ -288,22 +223,17 @@
             import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
             import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-            // CONFIGURACIÓN DE PRODUCCIÓN (IMPORTANTE PARA GITHUB PAGES)
-            // Se han restaurado las credenciales explícitas para que funcione fuera del editor
             const manualConfig = { 
                 apiKey: "AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", 
                 authDomain: "ar-3lilne.firebaseapp.com", 
                 projectId: "ar-3lilne", 
                 appId: "1:382966716480:web:ee244825bb34bc35c667a5" 
             };
-
-            // Intentamos usar config del entorno si existe, sino usamos la manual (GitHub Pages)
             const firebaseConfig = (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig);
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-ar-app';
             
             let app, auth, db;
             
-            // INICIALIZACIÓN ROBUSTA DE FIREBASE
             try { 
                 app = initializeApp(firebaseConfig); 
                 auth = getAuth(app); 
@@ -312,7 +242,6 @@
                 console.log("Firebase initialized successfully");
             } catch(e) { 
                 console.error("CRITICAL: Firebase Init Fail", e); 
-                // Fallback visual si falla la carga
                 window.onload = () => {
                     document.getElementById('login-btn-txt').innerText = "ERROR DE CONFIG";
                     document.getElementById('login-msg').innerText = "CLAVES DE API INVÁLIDAS O DOMINIO NO AUTORIZADO";
@@ -338,16 +267,46 @@
             let arInitialized = false, isArHost = false, placementAccepted = false; 
             let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace;
 
-            // --- AUTH LOGIC (CON PROTECCIÓN DE CRASH) ---
+            // --- FUNCTION NAV SEGURA (FIX PARA PANTALLA NEGRA) ---
+            function nav(id) {
+                // Iteramos por todas las pantallas posibles
+                ['s-login','s-menu','s-game','win-screen'].forEach(i => { 
+                    const el = document.getElementById(i);
+                    // CHECK DE SEGURIDAD: Solo si el elemento existe
+                    if (el) {
+                        el.classList.add('hidden'); 
+                        if(i === 'win-screen') el.classList.remove('active'); 
+                    }
+                });
+                
+                // Mostramos la objetivo
+                const target = document.getElementById(id); 
+                if (target) {
+                    target.classList.remove('hidden'); 
+                    if(id === 'win-screen') target.classList.add('active');
+                } else {
+                    console.error("FATAL: Intentando navegar a pantalla inexistente:", id);
+                }
+            }
+
             if (auth) {
                 onAuthStateChanged(auth, async (u) => {
                     if(u) {
                         S.user = u;
                         document.getElementById('login-btn-txt').innerText = "RECUPERANDO DATOS...";
-                        await registerUserAccess(u);
+                        
+                        // Intentar registrar acceso, si falla por AdBlock avisamos
+                        try {
+                            await registerUserAccess(u);
+                        } catch(e) {
+                            console.warn("User access register failed (AdBlock?):", e);
+                            window.systemToast("AVISO DE RED", "Si el juego no conecta, desactiva tu AdBlock.");
+                        }
+
                         if (!document.getElementById('s-login').classList.contains('hidden')) {
-                            document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
-                            if(u.photoURL) { const img = document.getElementById('u-photo'); img.src = u.photoURL; img.classList.remove('hidden'); }
+                            const uName = document.getElementById('u-name');
+                            if(uName) uName.innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
+                            if(u.photoURL) { const img = document.getElementById('u-photo'); if(img) { img.src = u.photoURL; img.classList.remove('hidden'); }}
                             nav('s-menu'); 
                         }
                         window.checkAR();
@@ -357,16 +316,15 @@
                         S.user = null;
                         nav('s-login');
                         const btn = document.getElementById('btn-login-google');
-                        btn.classList.remove('btn-disabled');
-                        document.getElementById('login-btn-txt').innerText = "INICIAR SESIÓN";
-                        document.getElementById('login-msg').innerText = "INGRESO MANUAL REQUERIDO";
+                        if(btn) btn.classList.remove('btn-disabled');
+                        const txt = document.getElementById('login-btn-txt');
+                        if(txt) txt.innerText = "INICIAR SESIÓN";
+                        const msg = document.getElementById('login-msg');
+                        if(msg) msg.innerText = "INGRESO MANUAL REQUERIDO";
                         window.updateMenuButtons(false);
                     }
                 });
             } else {
-                // Si auth es undefined (falló init), desbloqueamos UI para mostrar error
-                console.error("Auth object undefined - skipping auth state listener");
-                // Esperamos un poco para que el onload fallback no se sobreescriba
                 setTimeout(() => {
                      const btn = document.getElementById('btn-login-google');
                      if(btn) btn.classList.remove('btn-disabled');
@@ -376,10 +334,9 @@
             }
 
             async function registerUserAccess(u) {
-                try {
-                    const userRef = doc(db, 'artifacts', appId, 'users', u.uid);
-                    await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online' }, { merge: true });
-                } catch(e) { console.warn("Could not register user access", e); }
+                // Esta función falla si hay AdBlock
+                const userRef = doc(db, 'artifacts', appId, 'users', u.uid);
+                await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online' }, { merge: true });
             }
 
             window.updateMenuButtons = (enabled) => {
@@ -400,7 +357,7 @@
                     await signInWithPopup(auth, new GoogleAuthProvider()); 
                 } catch(e) { 
                     showLoad(false); 
-                    window.systemToast("ERROR","No se pudo iniciar sesión."); 
+                    window.systemToast("ERROR","No se pudo iniciar sesión (Verifica Popups)."); 
                     console.error(e); 
                 } 
             };
@@ -541,15 +498,11 @@
             
             function showConfirmModal(title, message, onConfirm) {
                 const modal = document.getElementById('custom-modal');
+                if(!modal) return;
                 document.getElementById('modal-title').innerText = title; document.getElementById('modal-message').innerText = message;
                 modal.style.display = 'flex';
                 document.getElementById('modal-confirm').onclick = () => { modal.style.display='none'; onConfirm(); };
                 document.getElementById('modal-cancel').onclick = () => { modal.style.display='none'; };
-            }
-            
-            function nav(id) {
-                ['s-login','s-menu','s-game','win-screen'].forEach(i => { const el = document.getElementById(i); el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); });
-                const target = document.getElementById(id); target.classList.remove('hidden'); if(id === 'win-screen') target.classList.add('active');
             }
             
             window.goHome = () => {
@@ -567,9 +520,9 @@
                 else { const col = S.prof.c; el.style.color=col; el.style.textShadow=`0 0 10px ${col}`; el.style.transform='scale(1.2)'; }
             }
             window.showJoin = () => document.getElementById('join-box').classList.toggle('hidden');
-            function showLoad(show, txt) { const l = document.getElementById('mini-loader'); if(show) { l.classList.remove('hidden'); document.getElementById('mini-load-txt').innerText=txt; } else l.classList.add('hidden'); }
-            function hideArControls() { document.getElementById('ar-controls').classList.add('hidden'); document.getElementById('ar-controls').classList.remove('flex'); }
-            function showArControls() { document.getElementById('ar-controls').classList.remove('hidden'); document.getElementById('ar-controls').classList.add('flex'); }
+            function showLoad(show, txt) { const l = document.getElementById('mini-loader'); if(l) { if(show) { l.classList.remove('hidden'); document.getElementById('mini-load-txt').innerText=txt; } else l.classList.add('hidden'); } }
+            function hideArControls() { const c=document.getElementById('ar-controls'); if(c) { c.classList.add('hidden'); c.classList.remove('flex'); } }
+            function showArControls() { const c=document.getElementById('ar-controls'); if(c) { c.classList.remove('hidden'); c.classList.add('flex'); } }
 
             const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
@@ -637,7 +590,7 @@
                 window.systemToast("GO", "¡Partida iniciada!"); 
                 isArHost = S.cpu || (S.role === 'host'); 
                 placementAccepted = !S.cpu && S.data.arAccepted === true;
-                document.getElementById('btn-rec').style.display = 'flex';
+                const rec = document.getElementById('btn-rec'); if(rec) rec.style.display = 'flex';
             }
 
             window.endGame = (d) => {
