@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V40.0 AR FIX</title>
+    <title>3 LINE-AR | V42.0 FINAL MATCHMAKING</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -21,11 +21,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* FONDO NEGRO POR DEFECTO IMPORTANTE */
         html, body { background-color: #000000; height: 100%; width: 100%; overflow: hidden; }
         body { margin: 0; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        /* CLASE PARA CUANDO AR ESTÁ ACTIVO */
         body.ar-active { background-color: transparent !important; }
         body.ar-active #bg-canvas { display: none !important; }
         
@@ -59,7 +56,6 @@
         .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; pointer-events: auto; }
         .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
-        /* Ocultar botón nativo de Three.js */
         #ar-zone button { display: none !important; }
 
         #btn-rec { display: flex; }
@@ -74,15 +70,28 @@
         
         #btn-start-ar-float { position: absolute; bottom: 180px; left: 50%; transform: translateX(-50%); z-index: 50; width: auto; white-space: nowrap; }
         
-        /* Instrucciones AR mejoradas */
-        #ar-instructions { position: absolute; top: 40%; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 45; display: none; }
-        .instr-card { background: rgba(0,0,0,0.8); border: 2px solid #00f3ff; color: #00f3ff; padding: 15px 30px; border-radius: 30px; display: inline-block; backdrop-filter: blur(8px); font-size: 14px; font-weight: bold; box-shadow: 0 0 25px rgba(0, 243, 255, 0.5); text-transform: uppercase; letter-spacing: 1px; }
+        #ar-instructions { position: absolute; top: 30%; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 45; display: none; }
+        .instr-card { background: rgba(0,0,0,0.6); border: 1px solid #00f3ff; color: #00f3ff; padding: 10px 20px; border-radius: 20px; display: inline-block; backdrop-filter: blur(4px); font-size: 12px; font-weight: bold; box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); }
+
+        /* Estilo para la sala en juego */
+        #room-label-container { position: absolute; top: 70px; right: 10px; z-index: 10; pointer-events: none; }
+        .room-badge { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 2px 6px; font-size: 8px; color: rgba(255,255,255,0.5); font-family: monospace; backdrop-filter: blur(2px); }
+
+        /* Estilo de Versión */
+        .version-tag { position: absolute; top: 10px; right: 10px; font-family: monospace; font-size: 10px; color: #00f3ff; opacity: 0.7; z-index: 60; pointer-events: none; }
+
+        /* PANTALLA DE ESPERA (NUEVA) */
+        #s-waiting { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 55; display: none; flex-direction: column; justify-content: center; align-items: center; }
+        #s-waiting.active { display: flex; }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
 </head>
 <body>
     <canvas id="bg-canvas"></canvas>
+    
+    <!-- VERSIÓN VISIBLE -->
+    <div class="version-tag">V42.0 ONLINE</div>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
@@ -103,7 +112,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V40.0 AR READY</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V42.0 MATCHMAKING</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
@@ -144,17 +153,38 @@
                     </div>
                 </div>
 
-                <button id="btn-quick-match" onclick="window.quickMatch()" class="btn-neon btn-disabled py-5 text-lg shadow-lg"><i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA</button>
+                <button id="btn-quick-match" onclick="window.quickMatch()" class="btn-neon btn-disabled py-5 text-lg shadow-lg relative overflow-hidden group">
+                    <span class="relative z-10"><i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA</span>
+                    <div class="absolute inset-0 bg-cyber/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                </button>
+                
                 <div class="grid grid-cols-2 gap-3">
                     <button id="btn-create-room" onclick="window.createRoom()" class="btn-neon btn-disabled py-3 text-xs">CREAR SALA</button>
                     <button id="btn-join-room" onclick="window.showJoin()" class="btn-neon btn-disabled py-3 text-xs">UNIRSE</button>
                 </div>
+                
                 <div id="join-box" class="hidden flex gap-2 mt-1 animate-fade-in">
                     <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CÓDIGO" maxlength="4">
                     <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
-                <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
+                
+                <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR VS CPU</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE ESPERA (SALA PRIVADA) -->
+        <div id="s-waiting" class="interactive">
+            <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6 relative">
+                <div class="absolute top-4 right-4 cursor-pointer text-gray-500 hover:text-white" onclick="window.goHome()"><i class="fas fa-times"></i></div>
+                <h2 class="text-xl font-bold text-white">SALA PRIVADA</h2>
+                <div class="text-sm text-gray-400">COMPARTE ESTE CÓDIGO:</div>
+                <div id="waiting-code" class="text-5xl font-black text-cyber tracking-widest border-2 border-dashed border-cyber/50 p-4 rounded-lg bg-black/50 select-all">----</div>
+                <div class="flex items-center gap-2 mt-2">
+                    <div class="w-2 h-2 rounded-full bg-neon animate-pulse"></div>
+                    <span class="text-[10px] text-neon font-mono">ESPERANDO JUGADOR...</span>
+                </div>
+                <p class="text-[9px] text-gray-500 mt-2">El juego iniciará automáticamente cuando se unan.</p>
             </div>
         </div>
 
@@ -183,16 +213,13 @@
             </div>
             
             <div id="room-label-container" class="pointer-events-none">
-                 <div class="text-center">
-                    <span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">SALA: <span id="room-lbl" class="text-white">--</span></span>
-                </div>
+                 <span class="room-badge">ID: <span id="room-lbl">--</span></span>
             </div>
 
             <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span></div>
 
-            <!-- INSTRUCCIONES AR NUEVAS -->
             <div id="ar-instructions">
-                <div class="instr-card" id="ar-instr-txt">BUSCANDO PISO...<br><span style="font-size:10px; opacity:0.7">MUEVE EL CELULAR SUAVE</span></div>
+                <div class="instr-card" id="ar-instr-txt"></div>
             </div>
 
             <div class="flex justify-center items-center flex-grow pointer-events-none absolute bottom-1/2 left-1/2 -translate-x-1/2 translate-y-1/2">
@@ -205,12 +232,10 @@
                 <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
             </div>
             
-            <!-- BOTÓN START AR (Flotante) -->
             <div id="btn-start-ar-float" class="hidden interactive">
                 <button onclick="window.startARSession()" class="btn-neon py-3 px-6 text-xs shadow-[0_0_20px_#00f3ff] animate-bounce bg-black/80"><i class="fas fa-cube mr-2"></i> INICIAR MODO AR</button>
             </div>
 
-            <!-- BOTÓN SALIR AR -->
             <div id="btn-exit-ar" class="hidden interactive absolute bottom-8 right-4 z-50">
                 <button onclick="window.goHome()" class="bg-red-600/90 text-white border border-red-400 font-bold py-3 px-6 rounded-lg shadow-lg text-xs backdrop-blur"><i class="fas fa-times-circle mr-2"></i> SALIR AR</button>
             </div>
@@ -276,8 +301,8 @@
         let initialPinchDistance = 0; let initialScale = 0.1;
 
         function nav(id) {
-            ['s-login','s-menu','s-game','win-screen'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); } });
-            const target = document.getElementById(id); if (target) { target.classList.remove('hidden'); if(id === 'win-screen') target.classList.add('active'); }
+            ['s-login','s-menu','s-game','s-waiting','win-screen'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); if(i==='s-waiting') el.classList.remove('active');} });
+            const target = document.getElementById(id); if (target) { target.classList.remove('hidden'); if(id === 'win-screen' || id === 's-waiting') target.classList.add('active'); }
         }
 
         if (auth) {
@@ -289,7 +314,9 @@
                         const uName = document.getElementById('u-name'); if(uName) uName.innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
                         nav('s-menu'); 
                     }
-                    window.checkAR(); window.updateMenuButtons(true);
+                    window.checkAR(); 
+                    // CRÍTICO: Asegurar que se habiliten los botones
+                    setTimeout(() => window.updateMenuButtons(true), 500);
                 } else {
                     S.user = null; nav('s-login'); document.getElementById('login-btn-txt').innerText = "INICIAR SESIÓN"; window.updateMenuButtons(false);
                 }
@@ -297,13 +324,22 @@
         }
 
         async function registerUserAccess(u) { const userRef = doc(db, 'artifacts', appId, 'users', u.uid); await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online' }, { merge: true }); }
-        window.updateMenuButtons = (enabled) => { ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'].forEach(id => { const btn = document.getElementById(id); if (btn) { if(enabled) btn.classList.remove('btn-disabled'); else btn.classList.add('btn-disabled'); } }); };
+        
+        window.updateMenuButtons = (enabled) => { 
+            ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'].forEach(id => { 
+                const btn = document.getElementById(id); 
+                if (btn) { 
+                    if(enabled) btn.classList.remove('btn-disabled'); 
+                    else btn.classList.add('btn-disabled'); 
+                } 
+            }); 
+        };
+        
         window.doLogin = async () => { if(!auth) return; try{ showLoad(true, "CONECTANDO..."); await setPersistence(auth, browserLocalPersistence); await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { showLoad(false); } };
 
         window.startARSession = () => { if(arBtn) arBtn.click(); }
 
         window.onControllerSelect = () => {
-            // SOLO si está el retículo visible, fijamos la posición.
             if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
                 placed = true; reticle.visible = false;
                 group.position.setFromMatrixPosition(reticle.matrix); 
@@ -337,7 +373,7 @@
             pts = [];
             const geo=new THREE.SphereGeometry(0.05,32,32); 
             const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:1.5}); 
-            const ghostMat = new THREE.MeshBasicMaterial({color: 0x00f3ff, transparent: true, opacity: 0.4, wireframe: true});
+            const ghostMat = new THREE.MeshBasicMaterial({color: 0x00f3ff, transparent: true, opacity: 0.5, wireframe: false}); 
 
             S.data.points.forEach((p,i)=>{
                 const m=new THREE.Mesh(geo,mat.clone()); m.position.set(p.x,p.y,p.z); m.userData.id=i;
@@ -379,7 +415,7 @@
             else { window.gameToast("LÍNEA", "Enlace establecido."); }
             
             let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
-            window.update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
+            window.update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
         }
         
         window.checkCollision = (p1, p2) => { 
@@ -419,7 +455,6 @@
             document.getElementById('modal-cancel').onclick = () => { modal.style.display='none'; };
         }
         
-        // SOLUCIÓN PANTALLA BLANCA: Forzar salida limpia
         window.goHome = () => {
             if (ren && ren.xr.isPresenting) { 
                 ren.xr.getSession().end().catch(e => { console.log(e); performGoHome(); }); 
@@ -433,7 +468,6 @@
             nav('s-menu'); isArHost = false; placementAccepted = false; hideArControls();
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
             
-            // Forzar restauración visual
             document.body.classList.remove('ar-active');
             const bg = document.getElementById('bg-canvas');
             if(bg) { bg.style.display = 'block'; bg.style.opacity = '1'; }
@@ -455,14 +489,41 @@
 
         const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
+        // --- MATCHMAKING MEJORADO ---
         window.quickMatch = async () => {
             if(!S.user) return window.systemToast("ERROR","Login requerido.");
-            S.cpu=false; showLoad(true,"BUSCANDO RIVAL...");
+            S.cpu=false; 
+            showLoad(true, "BUSCANDO OPONENTE...");
+            
             try {
-                const q = await getDocs(ROOMS_COLL); let found = null;
-                q.forEach(d => { const r = d.data(); if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest) found = d.id.replace('room_',''); });
-                if(found) await window.join(found); else { window.systemToast("INFO", "Creando sala pública..."); await window.create(true); }
-            } catch(e) { console.error(e); showLoad(false); window.systemToast("ERROR","Error de red."); }
+                // Traer todas las salas (en un entorno real usaríamos where() e índices)
+                const q = await getDocs(ROOMS_COLL); 
+                let found = null;
+                
+                // Filtrar localmente por estado 'wait', pública y reciente (últimos 10 mins)
+                const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+
+                q.forEach(d => { 
+                    const r = d.data(); 
+                    if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest) {
+                         // Verificar si es reciente para evitar salas muertas
+                         if(r.lastUpdate && r.lastUpdate > tenMinutesAgo) {
+                            found = d.id.replace('room_','');
+                         }
+                    }
+                });
+
+                if(found) {
+                     window.systemToast("ÉXITO", "Oponente encontrado.");
+                     await window.join(found); 
+                } else { 
+                     window.systemToast("INFO", "Nadie en línea. Creando sala pública..."); 
+                     await window.create(true); 
+                }
+            } catch(e) { 
+                console.error(e); showLoad(false); 
+                window.systemToast("ERROR","Error de red. Intenta de nuevo."); 
+            }
         };
 
         window.createRoom = () => window.create(false);
@@ -478,11 +539,23 @@
         window.create = async (pub) => {
             if(!S.user) return; if (S.room) window.goHome(); 
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
-            showLoad(true, pub ? "CREANDO PÚBLICA..." : "CREANDO SALA...");
+            
+            showLoad(true, pub ? "CREANDO PÚBLICA..." : "GENERANDO CÓDIGO...");
+            
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             try {
                 await setDoc(docRef, { host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, scale:1.0, arPos: null, arRot: null, arScale: 1.0, arAccepted: false, lastUpdate: Date.now() });
-                window.sub(c); document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
+                
+                // Si es privada, mostrar pantalla de espera
+                if(!pub) {
+                    showLoad(false);
+                    document.getElementById('waiting-code').innerText = c;
+                    nav('s-waiting'); // Mostrar pantalla de espera
+                } else {
+                     document.getElementById('room-lbl').innerText="PÚBLICA";
+                }
+                
+                window.sub(c); 
             } catch (e) { showLoad(false); window.systemToast("ERROR", "Permisos insuficientes."); }
         }
 
@@ -506,8 +579,20 @@
             roomUnsub = onSnapshot(docRef, s => {
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
-                    if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) window.start(); window.ui(); }
-                    else if(d.stat==='wait') { if(S.role==='host') showLoad(true,"ESPERANDO RIVAL..."); }
+                    if(d.stat==='play') { 
+                        // SI EMPIEZA EL JUEGO, QUITAR PANTALLA DE ESPERA
+                        const waitScreen = document.getElementById('s-waiting');
+                        if(waitScreen && waitScreen.classList.contains('active')) {
+                             nav('s-game');
+                             window.systemToast("JUGADOR CONECTADO", "¡La partida comienza!");
+                        } else if(document.getElementById('s-game').classList.contains('hidden')) {
+                             window.start(); 
+                        }
+                        window.ui(); 
+                    }
+                    else if(d.stat==='wait') { 
+                        if(S.role==='host' && d.pub) showLoad(true,"ESPERANDO RIVAL (PÚBLICO)..."); 
+                    }
                     else if(d.stat==='end') window.endGame(d);
                 } else if(S.room) { window.systemToast("FIN", "Sala cerrada."); window.goHome(); }
             });
@@ -544,6 +629,8 @@
             const d=S.data;
             document.getElementById('sc-p1').innerText = S.role==='host'?d.sc.host:d.sc.guest;
             document.getElementById('sc-p2').innerText = S.role==='host'?d.sc.guest:d.sc.host;
+            document.getElementById('room-lbl').innerText = S.room || '--'; 
+            
             const b=document.getElementById('mov-hud'); const dv=document.getElementById('dice-vis');
             if(d.turn===S.role && d.movs>0) { b.style.opacity=1; document.getElementById('mov-cnt').innerText=d.movs; dv.innerText=d.dice; dv.style.borderColor='#00f3ff'; dv.style.color='#00f3ff'; }
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor=d.dice?'#00f3ff':'#444'; dv.style.color=d.dice?'#00f3ff':'#555'; }
@@ -575,7 +662,7 @@
                     }
                 } else if (isArHost && !placed) { 
                     document.getElementById('ar-instructions').style.display='block';
-                    document.getElementById('ar-instr-txt').innerHTML = "ESCANEANDO SUELO...<br><span style='font-size:10px;color:white'>Mueve el móvil lentamente</span>";
+                    document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>MODO ESCANEO</span><br>Fija el juego donde quieras";
                 } 
             } else { 
                 document.getElementById('btn-exit-ar').classList.add('hidden');
@@ -644,24 +731,20 @@
                 
                 placed = false; group.visible = false; reticle.visible = true; 
                 document.getElementById('ar-instructions').style.display = 'block';
-                document.getElementById('ar-instr-txt').innerHTML = "DETECTANDO SUPERFICIE...<br><span style='font-size:10px'>Mueve el teléfono en círculos suaves</span>";
+                document.getElementById('ar-instr-txt').innerHTML = "ESCANEANDO...";
 
                 const c = ren.xr.getController(0); c.addEventListener('select', window.onControllerSelect);
             });
 
-            // LIMPIEZA TOTAL AL SALIR DE AR
             ren.xr.addEventListener('sessionend',()=>{ 
-                // Restaurar body y canvas
                 document.body.classList.remove('ar-active'); 
                 const bg = document.getElementById('bg-canvas'); if(bg) { bg.style.opacity = '1'; bg.style.display = 'block'; }
-                
-                // Forzar navegación al menú si estábamos en juego
                 performGoHome();
             });
             
             scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); group=new THREE.Group(); scene.add(group);
             
-            // RETÍCULO MEJORADO (VISUALIZACIÓN DE PISO) - MÁS GRANDE Y VISIBLE
+            // RETÍCULO MEJORADO
             reticle=new THREE.Group();
             const rRing = new THREE.Mesh(new THREE.RingGeometry(0.2,0.22,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
             const rCross1 = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.02).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color: 0x00f3ff}));
@@ -673,7 +756,6 @@
 
             ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
             
-            // GESTOS PINCH (SCALE)
             window.addEventListener('touchstart', (e) => {
                 if (ren.xr.isPresenting && e.touches.length === 2 && (!placed || !placementAccepted)) {
                     const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
@@ -706,56 +788,52 @@
             controls=new OrbitControls(cam,ren.domElement); window.recenter();
         }
 
-        window.draw = () => { 
-            if(!S.data || !group) return;
-            for(let i=group.children.length-1;i>=0;i--) if(group.children[i].userData.t) group.remove(group.children[i]);
-            S.data.lines.forEach(l=>{
-                const p=l.own==='host'?S.data.p1:S.data.p2; const c=p?new THREE.Color(p.c):new THREE.Color('#fff');
-                const p1=pts[l.s].position; const p2=pts[l.e].position;
-                const g=new THREE.CylinderGeometry(0.015,0.015,p1.distanceTo(p2),8); const m=new THREE.MeshBasicMaterial({color:c}); const o=new THREE.Mesh(g,m);
-                o.position.copy(p1).lerp(p2,0.5); o.lookAt(p2); o.rotateX(Math.PI/2); o.userData.t=true; group.add(o);
-            });
-            S.data.tris.forEach(t=>{
-                const p=t.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff'; const i=p?p.i:'gem';
-                const v=new Float32Array([pts[t.p1].position.x,pts[t.p1].position.y,pts[t.p1].position.z,pts[t.p2].position.x,pts[t.p2].position.y,pts[t.p2].position.z,pts[t.p3].position.x,pts[t.p3].position.y,pts[t.p3].position.z]);
-                const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(v,3));
-                const m=new THREE.MeshBasicMaterial({color:c, opacity:0.3, transparent:true, side:THREE.DoubleSide, depthWrite:false});
-                const o=new THREE.Mesh(g,m); o.userData.t=true;
-                let ig; if(i==='atom') ig=new THREE.IcosahedronGeometry(0.05,0); else if(i==='star') ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); else ig=new THREE.IcosahedronGeometry(0.04,0); 
-                const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false, emissive:c, emissiveIntensity:0.5})); 
-                const ce=new THREE.Vector3().add(pts[t.p1].position).add(pts[t.p2].position).add(pts[t.p3].position).divideScalar(3);
-                im.position.copy(ce); im.position.y+=0.08; 
-                const frame = Date.now() * 0.001; im.rotation.y = frame; im.position.y += Math.sin(frame * 2) * 0.01;
-                o.add(im); group.add(o);
-            });
-        }
-        
-        window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); currentScale=1.0; group.scale.set(1,1,1); }
-        window.highlight = (id,on) => { const m=pts[id]; if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); } else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); } }
-
+        // BUCLE DE AR CON "MODO FLOTANTE" (FALLBACK)
         window.loop = (t, frame) => {
             if(controls) controls.update();
             if(ren.xr.isPresenting) {
-                if (frame && arRefSpace && arHit) {
-                    const h=frame.getHitTestResults(arHit);
-                    if(h.length && isArHost && !placed) { 
-                        // Detección encontrada: Mostrar retículo y fantasma
-                        const hitPose = h[0].getPose(arRefSpace);
-                        reticle.visible=true; 
-                        reticle.matrix.fromArray(hitPose.transform.matrix);
-                        
-                        if(ghostGroup) {
-                            ghostGroup.visible = true;
-                            ghostGroup.position.setFromMatrixPosition(reticle.matrix);
-                            ghostGroup.rotation.setFromRotationMatrix(reticle.matrix);
-                        }
+                if(!placed && isArHost) {
+                    reticle.visible = true;
+                    if(ghostGroup) ghostGroup.visible = true;
 
-                        document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>¡PISO DETECTADO!</span><br>TOCA LA PANTALLA";
-                    } else if (!placed) { 
-                        // No detecta nada
-                        reticle.visible = false; 
-                        if(ghostGroup) ghostGroup.visible = false;
-                        document.getElementById('ar-instr-txt').innerHTML = "BUSCANDO PISO...<br><span style='font-size:10px'>Mueve el móvil</span>";
+                    let hitFound = false;
+                    
+                    // 1. Intentar detectar superficie real
+                    if (frame && arRefSpace && arHit) {
+                        const h = frame.getHitTestResults(arHit);
+                        if(h.length > 0) {
+                            const hitPose = h[0].getPose(arRefSpace);
+                            reticle.matrix.fromArray(hitPose.transform.matrix);
+                            // Color Verde/Cian para indicar éxito
+                            reticle.children.forEach(c => c.material.color.setHex(0x39ff14));
+                            hitFound = true;
+                            document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>PISO DETECTADO</span>";
+                        }
+                    }
+
+                    // 2. Fallback: Si no hay hit, ponerlo flotando frente a cámara (50cm)
+                    if(!hitFound && frame) {
+                        const viewerPose = frame.getViewerPose(arRefSpace);
+                        if(viewerPose) {
+                            const p = viewerPose.transform.position;
+                            const r = viewerPose.transform.orientation;
+                            
+                            // Vector frente a cámara
+                            const dir = new THREE.Vector3(0, 0, -0.5).applyQuaternion(new THREE.Quaternion(r.x, r.y, r.z, r.w));
+                            const targetPos = new THREE.Vector3(p.x, p.y, p.z).add(dir);
+                            
+                            reticle.position.copy(targetPos);
+                            reticle.lookAt(p.x, p.y, p.z); 
+                            reticle.updateMatrix();
+                            
+                            reticle.children.forEach(c => c.material.color.setHex(0xffcc00));
+                            document.getElementById('ar-instr-txt').innerHTML = "<span class='text-warn'>MODO AÉREO</span>";
+                        }
+                    }
+                    
+                    if(ghostGroup) {
+                        ghostGroup.position.setFromMatrixPosition(reticle.matrix);
+                        ghostGroup.rotation.setFromRotationMatrix(reticle.matrix);
                     }
                 }
             }
@@ -790,4 +868,3 @@
     </script>
 </body>
 </html>
-
