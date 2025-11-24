@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- Aseguramos la máxima escalabilidad y compatibilidad AR -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V37.9 FINAL STABILIZATION</title>
+    <title>3 LINE-AR | V38.0 GOLD MASTER</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,9 +23,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* BASE Y AR FIXES */
+        body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; transition: background-color 0.5s; }
         
-        /* FONDO */
+        /* CLASE CRÍTICA PARA AR: Hace el fondo transparente para ver la cámara */
+        body.ar-active { background-color: transparent !important; }
+        body.ar-active #bg-canvas { opacity: 0 !important; display: none; }
+        
+        /* FONDO ESTELAR (Solo visible en modo 3D normal) */
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #080810 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
         
         canvas { display: block; outline: none; } 
@@ -46,7 +51,7 @@
         }
         .btn-neon:active { transform: scale(0.95); background: #00f3ff; color: #000; }
         .btn-neon.danger { border-color: #ff0055; color: #ff0055; }
-        .btn-disabled { opacity: 0.5; pointer-events: none; }
+        .btn-disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
 
         /* DADO */
         .dice-wrap { perspective: 800px; width: 70px; height: 70px; pointer-events: auto; cursor: pointer; }
@@ -80,7 +85,6 @@
         }
         #game-toast.show { opacity: 1; transform: translateY(0); }
 
-
         #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
         
         /* PANTALLA VICTORIA */
@@ -97,19 +101,18 @@
         .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; pointer-events: auto; }
         .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
-        /* AR Button Override: Usamos este selector global para dar estilo al botón creado por Three.js */
+        /* AR Button Override: Three.js WebXR Button styling */
         #ar-zone button {
             background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important;
             color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important;
             border-radius: 6px !important; text-transform: uppercase !important;
-            transition: background 0.2s; /* Aseguramos la transición para iOS/Safari */
-            pointer-events: auto !important; /* Es crucial para que el botón funcione */
+            transition: background 0.2s; 
+            pointer-events: auto !important; 
+            position: relative !important; bottom: auto !important;
         }
 
         /* Estilo para el botón de Recenter en AR (Sustituido por AR-Hint) */
-        #btn-rec {
-            display: flex; /* Mantenemos flex para modo 3D */
-        }
+        #btn-rec { display: flex; }
         .ar-sync-btn {
             background: rgba(255, 204, 0, 0.1) !important; border: 1px solid #ffcc00 !important;
             color: #ffcc00 !important; font-family: 'Orbitron' !important; padding: 8px 16px !important;
@@ -119,14 +122,8 @@
         .ar-sync-btn:active { transform: scale(0.95); background: #ffcc00; color: #000; }
         
         .btn-end {
-            background: rgba(255, 0, 85, 0.1); /* hot */
-            border: 1px solid #ff0055;
-            color: #ff0055;
-            font-size: 10px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            transition: all 0.2s;
+            background: rgba(255, 0, 85, 0.1); border: 1px solid #ff0055; color: #ff0055;
+            font-size: 10px; padding: 8px 12px; border-radius: 8px; font-weight: bold; transition: all 0.2s;
         }
         .btn-end:active { transform: scale(0.95); background: #ff0055; color: #000; }
 
@@ -143,26 +140,21 @@
             box-shadow: 0 0 50px rgba(0, 243, 255, 0.3);
         }
         
-        /* Nueva posición para la etiqueta de SALA */
         #room-label-container {
-            position: absolute;
-            top: 15%; /* Ajustar para que quede debajo del HUD superior */
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10; /* Asegurarse de que esté sobre el canvas 3D */
-            pointer-events: none;
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            z-index: 10; pointer-events: none;
         }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
 </head>
 <body>
-    <!-- Canvas para el fondo estático 3D -->
+    <!-- Canvas para el fondo estático 3D (Se oculta en AR) -->
     <canvas id="bg-canvas"></canvas>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
-        <!-- MODAL DE CONFIRMACIÓN CUSTOM -->
+        <!-- MODAL DE CONFIRMACIÓN -->
         <div id="custom-modal" class="interactive">
             <div id="modal-content">
                 <h3 class="text-lg font-bold text-cyber mb-3" id="modal-title"></h3>
@@ -175,14 +167,12 @@
         </div>
 
         <!-- 1. PANTALLA DE LOGIN -->
-        <!-- Z-index 50 para cubrir todo antes de auth -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6">
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <!-- Versión visible -->
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V37.9 FINAL STABILIZATION</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V38.0 GOLD MASTER</p>
                 </div>
                 <button onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> INICIAR SESIÓN
@@ -192,12 +182,13 @@
         </div>
 
         <!-- 2. PANTALLA DE MENÚ -->
-        <!-- Z-index 40 para ser visible después de auth -->
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
             <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
-                    <div><span class="text-[9px] text-cyber block tracking-widest">AGENTE</span><span id="u-name" class="text-white font-bold text-lg">...</span></div>
-                    <!-- CORRECCIÓN: Llamar a la función modal personalizada -->
+                    <div class="flex items-center gap-2">
+                        <img id="u-photo" src="" class="w-8 h-8 rounded-full border border-cyber hidden">
+                        <div><span class="text-[9px] text-cyber block tracking-widest">AGENTE</span><span id="u-name" class="text-white font-bold text-lg">...</span></div>
+                    </div>
                     <button onclick="window.confirmLogout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
                 </div>
 
@@ -231,10 +222,9 @@
                     <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CÓDIGO" maxlength="4">
                     <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
-                <!-- Texto actualizado a 'JUGAR CONTRA LA MÁQUINA' -->
                 <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V37.9 FINAL STABILIZATION</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V38.0 GOLD MASTER</div>
             </div>
         </div>
 
@@ -250,7 +240,6 @@
                 <div class="flex flex-col items-center -mt-10 z-20">
                     <div class="dice-wrap" onclick="window.rollDice()"><div id="dice-vis" class="dice-cube"><i class="fas fa-dice-d20"></i></div></div>
                     
-                    <!-- Mensaje de estado del juego (CONQUISTA/LÍNEA) -->
                     <div id="game-toast" class="text-center mt-2 interactive">
                         <p id="t-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">3 LINE-AR</p>
                         <p id="t-body" class="text-sm tracking-wide">Mensaje</p>
@@ -260,7 +249,6 @@
                         <div>
                             <p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p>
                         </div>
-                        <!-- Botón para indicar que no hay jugadas y pasar turno -->
                         <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold leading-tight">SIN<br>JUGADAS</button>
                     </div>
                 </div>
@@ -270,7 +258,6 @@
                 </div>
             </div>
             
-            <!-- CONTENEDOR DE LA ETIQUETA DE SALA (Movido arriba) -->
             <div id="room-label-container" class="pointer-events-none">
                  <div class="text-center">
                     <span class="bg-black/60 text-[10px] px-4 py-1 rounded-full text-cyber border border-cyber/30 backdrop-blur font-bold">SALA: <span id="room-lbl" class="text-white">--</span></span>
@@ -279,29 +266,27 @@
 
             <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span></div>
 
+            <!-- HINT AR: Visible cuando se escanea -->
             <div id="ar-hint" class="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none hidden flex-col items-center z-0">
                 <div class="w-20 h-20 border-2 border-cyber rounded-full animate-ping absolute opacity-30"></div>
-                <span id="ar-scan-text" class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-4 font-bold tracking-widest backdrop-blur">ESCANEA SUPERFICIE</span>
+                <div class="w-2 h-2 bg-cyber rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+                <span id="ar-scan-text" class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-4 font-bold tracking-widest backdrop-blur shadow-[0_0_15px_#00f3ff]">BUSCANDO SUPERFICIE...</span>
                 <span id="ar-scale-hint" class="hidden mt-2 text-[8px] text-white bg-black/50 px-2 rounded">PELLIZCA PARA ESCALAR</span>
             </div>
 
-            <!-- Toast inferior (Mensajes de Sistema/Error) -->
             <div class="flex justify-center items-center flex-grow pointer-events-none absolute bottom-1/2 left-1/2 -translate-x-1/2 translate-y-1/2">
                 <div id="toast" class="toast-box text-center"><p id="s-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">3 LINE-AR</p><p id="s-body" class="text-sm tracking-wide">Mensaje</p></div>
             </div>
 
-            <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end">
-                <!-- CORRECCIÓN: Usa la función modal para finalizar juego -->
-                <button onclick="window.confirmFinishGame()" class="btn-end flex items-center gap-1"><i class="fas fa-flag-checkered"></i> FINALIZAR JUEGO</button>
+            <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end w-full px-4">
+                <button onclick="window.confirmFinishGame()" class="btn-end flex items-center gap-1"><i class="fas fa-flag-checkered"></i> RENDIRSE</button>
                 <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition"><i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span></button>
-                <!-- Botón de recentrar que se oculta en AR y se usa para el modo 3D -->
                 <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
             </div>
             
-            <!-- Controles de AR: Solo visibles en sesión AR y después de la colocación -->
-            <div id="ar-controls" class="interactive absolute bottom-4 left-1/2 -translate-x-1/2 hidden justify-center gap-4 z-40">
-                <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn"><i class="fas fa-check mr-2"></i> ACEPTAR POSICIÓN</button>
-                <button onclick="window.recalibrate()" id="btn-ar-recal" class="ar-sync-btn"><i class="fas fa-sync-alt mr-2"></i> RECALIBRAR</button>
+            <div id="ar-controls" class="interactive absolute bottom-4 left-1/2 -translate-x-1/2 hidden justify-center gap-4 z-40 w-full px-4">
+                <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn flex-1"><i class="fas fa-check mr-2"></i> FIJAR</button>
+                <button onclick="window.recalibrate()" id="btn-ar-recal" class="ar-sync-btn flex-1"><i class="fas fa-sync-alt mr-2"></i> MOVER</button>
             </div>
         </div>
 
@@ -312,12 +297,11 @@
                 <div><span class="text-gray-500 text-xs block">TU PUNTAJE</span><span id="final-p1" class="text-4xl font-bold text-white">0</span></div>
                 <div><span class="text-gray-500 text-xs block">RIVAL</span><span id="final-p2" class="text-4xl font-bold text-white">0</span></div>
             </div>
-            <!-- CORRECCIÓN: Volver al menú después de la pantalla de victoria -->
             <button onclick="window.goHomeAfterWin()" class="btn-neon py-4 px-10 text-lg">VOLVER AL MENÚ</button>
         </div>
     </div>
 
-    <!-- Zona de botones AR. Contiene el botón nativo de WebXR creado por Three.js -->
+    <!-- Zona para el botón AR. Three.js inyectará el botón aquí. -->
     <div id="ar-zone" class="absolute bottom-8 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
 
     <script type="module">
@@ -329,11 +313,11 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración y variables globales
-        setLogLevel('Debug');
-        const defaultConf = { apiKey:"AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
+        // --- CONFIGURACIÓN FIREBASE ---
+        setLogLevel('warn'); // Menos ruido en consola
+        const defaultConf = { apiKey:"", authDomain:"ar-3lilne.firebaseapp.com", projectId:"ar-3lilne", appId:"1:382966716480:web:ee244825bb34bc35c667a5" };
         const firebaseConfig = (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : defaultConf);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ar-3lilne-flux';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-ar-app';
         
         let app, auth, db;
         try { 
@@ -344,35 +328,58 @@
             if (typeof __initial_auth_token !== 'undefined') {
                 signInWithCustomToken(auth, __initial_auth_token).catch(e => console.error("Custom token sign in failed:", e));
             } else {
-                console.log("Esperando inicio de sesión manual...");
+                // Autenticación anónima temporal si no hay token (para pruebas)
+                // signInAnonymously(auth); 
             }
         } catch(e) { console.error("Firebase initialization failed:", e); }
 
+        // --- AUDIO SYSTEM ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
             const now = audioCtx.currentTime;
-            if(type === 'click') { osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
-            else if(type === 'win') { osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.linearRampToValueAtTime(800, now + 0.2); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); osc.start(now); osc.stop(now + 0.3); } 
-            else if(type === 'roll') { osc.type = 'square'; osc.frequency.setValueAtTime(100, now); gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
-            else if(type === 'error') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now + 0.2); gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2); osc.start(now); osc.stop(now + 0.2); }
-            else if(type === 'end') { osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(600, now + 0.5); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0); osc.start(now); osc.stop(now + 1.0); }
+            
+            if(type === 'click') { 
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.1); 
+                gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); 
+                osc.start(now); osc.stop(now + 0.1); 
+            } 
+            else if(type === 'win') { 
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(400, now); osc.frequency.linearRampToValueAtTime(800, now + 0.2); 
+                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.3); 
+                osc.start(now); osc.stop(now + 0.3); 
+            } 
+            else if(type === 'roll') { 
+                osc.type = 'square'; osc.frequency.setValueAtTime(100, now); 
+                gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15); 
+                osc.start(now); osc.stop(now + 0.15); 
+            } 
+            else if(type === 'error') { 
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now + 0.2); 
+                gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0, now + 0.2); 
+                osc.start(now); osc.stop(now + 0.2); 
+            }
+            else if(type === 'end') { 
+                osc.type = 'sine'; osc.frequency.setValueAtTime(200, now); osc.frequency.linearRampToValueAtTime(600, now + 0.5); 
+                gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0); 
+                osc.start(now); osc.stop(now + 1.0); 
+            }
         }
 
+        // --- ESTADO DEL JUEGO ---
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
-        let pts=[], selPt=null, placed=false, roomUnsub=null, gameStartTime=0, currentScale=1.0;
-        const LOSE_MSGS = ["¡BUEN INTENTO!", "LA PRÓXIMA SERÁ TUYA", "GRAN ESTRATEGIA", "BUENA PARTIDA", "SIGUE ASÍ", "TE ESPERO EN LA REVANCHA", "CASI LO LOGRAS, CAMPEÓN"];
-
+        let pts=[], selPt=null, placed=false, roomUnsub=null, currentScale=1.0;
+        const LOSE_MSGS = ["¡BUEN INTENTO!", "LA PRÓXIMA SERÁ TUYA", "GRAN ESTRATEGIA", "BUENA PARTIDA", "SIGUE ASÍ", "TE ESPERO EN LA REVANCHA"];
         let arInitialized = false;
         let isArHost = false; 
         let placementAccepted = false; 
 
-        // THREE.JS & AR SETUP
+        // THREE.JS & AR VARS
         let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace;
-        let touchDist = 0;
         
+        // --- INTERACCIÓN TOUCH/CLICK ---
         window.onControllerSelect = () => {
             if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
                 placed = true; 
@@ -382,24 +389,21 @@
                 group.visible = true;
 
                 document.getElementById('ar-hint').style.display='flex';
-                document.getElementById('ar-scan-text').innerText = "TAP para Fijar, Pellizcar para Escalar";
+                document.getElementById('ar-scan-text').innerText = "TABLERO COLOCADO";
                 document.getElementById('ar-scale-hint').style.display = 'block';
 
                 showArControls();
-                document.getElementById('btn-ar-accept').innerText = "ACEPTAR POSICIÓN";
-                document.getElementById('btn-ar-recal').style.display = 'inline-block';
             }
         }
 
-        // --- FUNCIONES DE LÓGICA DE JUEGO PRINCIPALES (Expuestas a Window para accesibilidad de 3D) ---
-
+        // --- LÓGICA DE GEOMETRÍA DEL JUEGO ---
         function genPoints() {
-            const p=[]; const count=16; const minD=0.25;
+            const p=[]; const count=16; 
             for(let i=0;i<count;i++){
                 let v=false, pt, att=0;
                 while(!v && att<100){
                     pt = { x:(Math.random()-0.5)*1.8, y:0, z:(Math.random()-0.5)*1.8 };
-                    let ok=true; for(let ex of p) if(window.intersect(ex, pt)) ok=false; // Usar window.intersect
+                    let ok=true; for(let ex of p) if(Math.hypot(ex.x-pt.x, ex.z-pt.z) < 0.35) ok=false; // Distancia mínima entre puntos
                     if(ok) v=true; att++;
                 }
                 p.push(pt);
@@ -407,10 +411,7 @@
             return p;
         }
 
-        window.intersect = (a, b) => {
-            const minD = 0.25;
-            return Math.hypot(a.x - b.x, a.z - b.z) < minD;
-        }
+        window.intersect = (a, b) => Math.hypot(a.x - b.x, a.z - b.z) < 0.25;
 
         window.isPointInTriangle = (p, a, b, c) => {
             const area = 0.5 * (-b.z * c.x + a.z * (-b.x + c.x) + a.x * (b.z - c.z) + b.x * c.z);
@@ -421,10 +422,7 @@
         }
 
         window.buildBoard = () => {
-            if(!S.data || !S.data.points || !group) {
-                console.error("No se puede construir el tablero: Datos de juego o escena 3D faltantes.");
-                return;
-            }
+            if(!S.data || !S.data.points || !group) return;
 
             while(group.children.length > 0) group.remove(group.children[0]);
             pts = [];
@@ -438,27 +436,17 @@
                 const m=new THREE.Mesh(geo,mat.clone()); 
                 m.position.set(p.x,p.y,p.z); 
                 m.userData.id=i;
-                
-                const h=new THREE.Mesh(hGeo,hMat); 
-                m.add(h); 
-                
-                const glow=new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})); 
-                m.add(glow);
-                
-                group.add(m); 
-                pts.push(m);
+                const h=new THREE.Mesh(hGeo,hMat); m.add(h); 
+                const glow=new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})); m.add(glow);
+                group.add(m); pts.push(m);
             });
-            
             window.draw();
             
             if (ren && !ren.xr.isPresenting) {
-                group.visible = true;
-                placed = true;
-                window.recenter(); 
+                group.visible = true; placed = true; window.recenter(); 
             }
         }
 
-        // CORRECCIÓN: Funciones de interacción del juego (onclick y raycasting)
         window.rollDice = () => {
             const d=S.data; if(d.turn!==S.role) return window.gameToast("ESPERA","Turno Rival"); if(d.movs>0) return window.gameToast("JUEGA","Usa tus líneas");
             const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
@@ -466,7 +454,7 @@
                 el.classList.remove('rolling'); 
                 const v=Math.ceil(Math.random()*6); 
                 window.update({dice:v, movs:v, skips:0});
-                window.gameToast("DADO",`ENERGÍA: ${v} líneas disponibles.`);
+                window.gameToast("DADO",`ENERGÍA: ${v} líneas.`);
             },500);
         };
         
@@ -474,12 +462,12 @@
             const d=S.data; 
             if(d.turn===S.role) { 
                 const newSkips = (d.skips || 0) + 1;
-                if (newSkips >= 2) {
-                    window.update({stat:'end'});
-                } else {
+                // Si ambos saltan, se acaba el juego
+                if (newSkips >= 2) window.update({stat:'end'});
+                else {
                     const t = d.turn==='host'?'guest':'host'; 
                     window.update({movs:0, turn:t, dice:null, skips: newSkips}); 
-                    window.gameToast("TURNO SALTADO", "Sin jugadas válidas. Pasa el turno.");
+                    window.gameToast("PASO", "Turno cedido.");
                 }
             } 
         }
@@ -491,19 +479,15 @@
             playSfx('click');
             if(selPt===null) { selPt=id; window.highlight(id,true); }
             else { 
-                if(selPt===id) { 
-                    window.highlight(id,false); selPt=null; // Deseleccionar
-                } else { 
-                    window.tryLine(selPt,id); 
-                    window.highlight(selPt,false); 
-                    selPt=null; 
-                } 
+                if(selPt===id) { window.highlight(id,false); selPt=null; } 
+                else { window.tryLine(selPt,id); window.highlight(selPt,false); selPt=null; } 
             }
         }
 
         window.tryLine = (p1,p2) => {
             const d=S.data; const v1=pts[p1].position; const v2=pts[p2].position;
-            if(v1.distanceTo(v2) * currentScale > 1.2 * currentScale) return window.gameToast("RANGO","Demasiado lejos"); 
+            // Distancia máxima de conexión
+            if(v1.distanceTo(v2) * currentScale > 1.3 * currentScale) return window.gameToast("RANGO","Demasiado lejos"); 
             if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return window.gameToast("OCUPADO","Enlace existente");
             if(window.checkCollision(p1, p2, d.tris)) { playSfx('error'); return window.gameToast("BLOQUEADO", "Territorio Protegido"); }
             
@@ -512,29 +496,23 @@
             
             const sc={...d.sc}; 
             if(nt.length) { 
-                sc[S.role]+=nt.length; 
-                playSfx('win'); 
-                window.gameToast("CONQUISTA",`¡Nexo Cerrado! (+${nt.length} tris)`); 
+                sc[S.role]+=nt.length; playSfx('win'); window.gameToast("CONQUISTA",`¡Nexo Cerrado! (+${nt.length})`); 
             } else {
                 window.gameToast("LÍNEA", "Enlace establecido.");
             }
             
-            let m=d.movs-1; 
-            let t=d.turn; 
-            let di=d.dice; 
-            if(m===0){ 
-                t=t==='host'?'guest':'host'; 
-                di=null; 
-            }
+            let m=d.movs-1; let t=d.turn; let di=d.dice; 
+            if(m===0){ t=t==='host'?'guest':'host'; di=null; }
             
+            // Comprobar si es el final de la partida inmediatamente
             window.update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
+            // checkStatus se llama en ui()
         }
         
         window.checkCollision = (p1, p2, tris) => { 
             const A = pts[p1].position; const B = pts[p2].position;
             for (let t of tris) {
                 const v1=pts[t.p1].position; const v2=pts[t.p2].position; const v3=pts[t.p3].position;
-                // Usar la función intersect local que comprueba colisiones de líneas.
                 if (window.intersectLine(A, B, v1, v2) || window.intersectLine(A, B, v2, v3) || window.intersectLine(A, B, v3, v1)) return true;
             }
             return false;
@@ -561,128 +539,71 @@
                 }
             } return f;
         }
-        
-        // --- FIN DE LÓGICA DE JUEGO PRINCIPALES ---
 
 
-        // AUTH & NAVIGATION
+        // --- AUTH & NAVIGATION ---
         onAuthStateChanged(auth, async u => {
             S.user = u;
             if(u) { 
                 if (!document.getElementById('s-login').classList.contains('hidden')) {
                     document.getElementById('u-name').innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
+                    if(u.photoURL) {
+                        const img = document.getElementById('u-photo'); img.src = u.photoURL; img.classList.remove('hidden');
+                    }
                     nav('s-menu'); 
                 }
-                window.checkAR(); // Inicia la verificación AR solo si está autenticado
-                window.updateMenuButtons(true); // Habilita botones
+                window.checkAR();
+                window.updateMenuButtons(true);
             } else {
                 nav('s-login'); 
-                window.updateMenuButtons(false); // Deshabilita botones
+                window.updateMenuButtons(false);
             }
         });
         
         window.updateMenuButtons = (enabled) => {
-            const btns = ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'];
-            btns.forEach(id => {
-                const btn = document.getElementById(id);
-                if (btn) {
-                    if (enabled) {
-                        btn.classList.remove('btn-disabled');
-                    } else {
-                        btn.classList.add('btn-disabled');
-                    }
-                }
+            ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'].forEach(id => {
+                const btn = document.getElementById(id); if (btn) enabled ? btn.classList.remove('btn-disabled') : btn.classList.add('btn-disabled');
             });
         };
 
         window.doLogin = async () => { 
-            try{ 
-                showLoad(true, "INGRESANDO...");
-                await signInWithPopup(auth, new GoogleAuthProvider()); 
-            } catch(e) { 
-                showLoad(false);
-                window.systemToast("ERROR","Inicio de sesión fallido. Habilite popups."); 
-                console.error("Google Sign-In Error:", e);
-            } 
+            try{ showLoad(true, "CONECTANDO..."); await signInWithPopup(auth, new GoogleAuthProvider()); } 
+            catch(e) { showLoad(false); window.systemToast("ERROR","Fallo Login."); console.error(e); } 
         };
         
-        // Función de modal de confirmación personalizada
-        function showConfirmModal(title, message, onConfirm, onCancel) {
+        function showConfirmModal(title, message, onConfirm) {
             const modal = document.getElementById('custom-modal');
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-message').innerText = message;
             modal.style.display = 'flex';
-            
-            const confirmBtn = document.getElementById('modal-confirm');
-            const cancelBtn = document.getElementById('modal-cancel');
-            
-            const cleanup = () => {
-                modal.style.display = 'none';
-                confirmBtn.onclick = null;
-                cancelBtn.onclick = null;
-            };
-            
-            confirmBtn.onclick = () => {
-                cleanup();
-                onConfirm();
-            };
-            
-            cancelBtn.onclick = () => {
-                cleanup();
-                if (onCancel) onCancel();
-            };
+            document.getElementById('modal-confirm').onclick = () => { modal.style.display='none'; onConfirm(); };
+            document.getElementById('modal-cancel').onclick = () => { modal.style.display='none'; };
         }
 
-        // Llamada para cerrar sesión (CORRECCIÓN: Usando try/catch para promesa de update)
         window.confirmLogout = () => {
-            showConfirmModal("3 LINE-AR", "¿Estás seguro de que quieres cerrar la sesión?", 
-                async () => {
-                    const performLogout = () => signOut(auth).then(() => location.reload()).catch(e => console.error("Logout failed:", e));
-
-                    if (S.room && S.room !== 'CPU') {
-                        // Si hay partida online, intentar terminar la sala primero.
-                        try {
-                            if (S.role === 'host') {
-                                await window.update({ stat: 'end' });
-                            } else {
-                                // Si es guest, simplemente salir y dejar que el host lo maneje.
-                                window.goHome();
-                            }
-                        } catch (e) {
-                            console.warn("Failed to update Firestore status on logout, proceeding with logout:", e);
-                        }
-                    }
-                    performLogout();
-                }
-            );
+            showConfirmModal("CERRAR SESIÓN", "¿Salir del sistema?", async () => {
+                if (S.room && S.room !== 'CPU' && S.role === 'host') await window.update({ stat: 'end' });
+                signOut(auth).then(() => location.reload());
+            });
         };
 
-        // Llamada para finalizar juego
         window.confirmFinishGame = () => {
-            showConfirmModal("FINALIZAR JUEGO", "¿Estás seguro de que quieres finalizar el juego ahora? Esto terminará la partida para todos.", 
-                () => {
-                    window.update({stat: 'end'});
-                }
-            );
+            showConfirmModal("RENDIRSE", "¿Finalizar la partida?", () => window.update({stat: 'end'}));
         };
         
         function nav(id) {
             ['s-login','s-menu','s-game','win-screen'].forEach(i => {
-                const el = document.getElementById(i);
-                el.classList.add('hidden');
+                const el = document.getElementById(i); el.classList.add('hidden');
                 if(i === 'win-screen') el.classList.remove('active');
             });
-            const target = document.getElementById(id);
-            target.classList.remove('hidden');
+            const target = document.getElementById(id); target.classList.remove('hidden');
             if(id === 'win-screen') target.classList.add('active');
         }
         
         window.goHome = () => {
             if(roomUnsub) roomUnsub(); roomUnsub=null; S.room = null; S.data = null;
-            nav('s-menu');
-            isArHost = false; placementAccepted = false; hideArControls();
+            nav('s-menu'); isArHost = false; placementAccepted = false; hideArControls();
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
-            window.systemToast("DESCONECTADO", "Vuelve al menú principal.");
         }
         
         window.goHomeAfterWin = () => { setTimeout(window.goHome, 500); }
@@ -712,61 +633,60 @@
 
         const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
-        // CORRECCIÓN: Lógica para Partida Pública
+        // --- MATCHMAKING Y SALAS ---
         window.quickMatch = async () => {
-            if(!S.user || !S.user.uid) return window.systemToast("ERROR","Debe iniciar sesión para jugar online.");
-            S.cpu=false; showLoad(true,"BUSCANDO PARTIDA PÚBLICA...");
+            if(!S.user || !S.user.uid) return window.systemToast("ERROR","Debes loguearte.");
+            S.cpu=false; showLoad(true,"BUSCANDO RIVAL...");
+            
             try {
-                const roomSnapshot = await getDocs(ROOMS_COLL);
-                let foundRoomId = null; 
-                roomSnapshot.forEach(doc => { 
-                    const data = doc.data(); 
-                    if(data.stat==='wait' && data.pub === true && data.host !== S.user.uid && !data.guest) { 
-                        foundRoomId = doc.id.replace('room_',''); 
-                    } 
+                // Buscamos partida pública en espera
+                const q = await getDocs(ROOMS_COLL);
+                let found = null;
+                
+                // Iteración para encontrar sala válida (simple y efectiva para prototipos)
+                q.forEach(d => {
+                    const r = d.data();
+                    if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest) {
+                        found = d.id.replace('room_','');
+                    }
                 });
                 
-                if(foundRoomId) {
-                    await window.join(foundRoomId);
+                if(found) {
+                    await window.join(found);
                 } else {
+                    window.systemToast("INFO", "No hay salas. Creando una...");
                     await window.create(true);
                 }
             } catch(e) { 
                 console.error("QuickMatch error:", e); 
                 showLoad(false); 
-                window.systemToast("ERROR","Fallo al buscar/crear sala pública."); 
+                window.systemToast("ERROR","Fallo de red."); 
             }
         };
 
         window.createRoom = () => window.create(false);
         window.joinRoom = () => { 
             const c=document.getElementById('code-in').value.toUpperCase(); 
-            if(c.length===4) window.join(c);
-            else window.systemToast("ERROR", "Código inválido (4 letras)");
+            if(c.length===4) window.join(c); else window.systemToast("ERROR", "Código de 4 letras.");
         };
         
+        // CORRECCIÓN: Jugar contra CPU habilita el flujo para AR
         window.vsCpu = () => {
-            if(!S.user) return window.systemToast("ERROR", "Debe iniciar sesión para jugar.");
+            if(!S.user) return window.systemToast("ERROR", "Login requerido.");
             S.cpu=true; S.role='host'; S.room='CPU';
-            const availableColors = ['#00f3ff', '#ff0055', '#39ff14', '#ffd700'];
-            const myColor = S.prof.c;
-            const cpuColorOptions = availableColors.filter(color => color !== myColor);
-            const cpuColor = cpuColorOptions.length > 0 ? cpuColorOptions[Math.floor(Math.random() * cpuColorOptions.length)] : '#ff0055'; 
-
+            
             S.data={
                 stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, 
-                dice:null, movs:0, skips:0, p1:S.prof, p2:{c:cpuColor,i:'atom'}, scale: 1.0, 
+                dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ffffff',i:'atom'}, scale: 1.0, 
                 arPos: null, arRot: null, arScale: null, arAccepted: false
             };
+            // Iniciamos 3D inmediatamente para que puedan activar AR si quieren
             window.start();
         };
 
-        // CORRECCIÓN: Creación de Sala
         window.create = async (pub) => {
-            if(!S.user || !S.user.uid) return window.systemToast("ERROR","Debe iniciar sesión para crear una sala.");
-            
+            if(!S.user) return;
             if (S.room) window.goHome(); 
-
             S.role='host'; 
             const c=Math.random().toString(36).substring(2,6).toUpperCase(); 
             S.room=c;
@@ -780,37 +700,26 @@
                 });
                 window.sub(c); 
                 document.getElementById('room-lbl').innerText=pub?"PÚBLICA":c;
-            } catch (e) {
-                console.error("Create Room error:", e); showLoad(false); window.systemToast("ERROR", "Fallo al crear la sala. Verifique permisos.");
-            }
+            } catch (e) { showLoad(false); window.systemToast("ERROR", "Permisos insuficientes."); }
         }
 
-        // CORRECCIÓN: Unirse a Sala
         window.join = async (c) => {
-            if(!S.user || !S.user.uid) return window.systemToast("ERROR","Debe iniciar sesión para unirse a una sala.");
-            S.role='guest'; S.room=c; showLoad(true,"UNIENDO...");
-            const docId = `room_${c}`;
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', docId);
+            if(!S.user) return;
+            S.role='guest'; S.room=c; showLoad(true,"CONECTANDO...");
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             
             try {
-                const roomSnap = await getDoc(docRef);
-                if (!roomSnap.exists()) { showLoad(false); window.systemToast("ERROR", "Sala no encontrada o código incorrecto."); S.room = null; return; }
-                const roomData = roomSnap.data();
-                
-                if (roomData.host === S.user.uid) { window.systemToast("ERROR", "Ya eres el Host de esta sala."); S.role = 'host'; }
-                if (roomData.guest && roomData.guest !== S.user.uid) { showLoad(false); window.systemToast("ERROR", "La sala ya está llena."); S.room = null; return; }
+                const s = await getDoc(docRef);
+                if (!s.exists()) { showLoad(false); window.systemToast("ERROR", "Sala no existe."); S.room = null; return; }
+                const d = s.data();
+                if (d.guest && d.guest !== S.user.uid) { showLoad(false); window.systemToast("ERROR", "Sala llena."); S.room = null; return; }
 
-                let updateData = { guest:S.user.uid, stat:'play', p2:S.prof };
-                if(roomData.stat === 'wait') { updateData = {...updateData, dice: roomData.dice || 6, movs: roomData.movs || 6, skips: 0, turn: roomData.turn || 'host', lastUpdate: Date.now()}; }
+                let up = { guest:S.user.uid, stat:'play', p2:S.prof };
+                if(d.stat === 'wait') { up = {...up, dice: 6, movs: 6, skips: 0, turn: 'host', lastUpdate: Date.now()}; }
                 
-                if (S.role === 'guest' || !roomData.guest) { await updateDoc(docRef, updateData); }
-                else if (S.role === 'host') { showLoad(false); }
-
+                await updateDoc(docRef, up);
                 window.sub(c); document.getElementById('room-lbl').innerText=c;
-
-            } catch(e) { 
-                showLoad(false); window.systemToast("ERROR", "Fallo al intentar unirse."); S.room = null; console.error("Join error:", e);
-            }
+            } catch(e) { showLoad(false); window.systemToast("ERROR", "Fallo al unir."); S.room = null; }
         }
         
         window.sub = (c) => {
@@ -822,49 +731,45 @@
                     if(d.stat==='play') { if(document.getElementById('s-game').classList.contains('hidden')) window.start(); window.ui(); }
                     else if(d.stat==='wait') { if(S.role==='host') showLoad(true,"ESPERANDO RIVAL..."); }
                     else if(d.stat==='end') window.endGame(d);
-                } else if(S.room) { window.systemToast("FIN DE PARTIDA", "Sala eliminada."); window.goHome(); }
-            }, err => { console.error("Firestore snapshot error:", err); window.systemToast("ERROR", "Pérdida de sincronización."); });
+                } else if(S.room) { window.systemToast("FIN", "Sala cerrada."); window.goHome(); }
+            });
         }
 
         window.start = () => { 
-            showLoad(false); nav('s-game'); window.init3D(); window.buildBoard(); gameStartTime = Date.now(); 
-            window.systemToast("PARTIDA INICIADA","¡A jugar!"); 
-            isArHost = !S.cpu && S.role === 'host'; placementAccepted = !S.cpu && S.data.arAccepted === true;
-            document.getElementById('btn-rec').style.display = S.cpu ? 'flex' : 'none';
+            showLoad(false); nav('s-game'); window.init3D(); window.buildBoard(); 
+            window.systemToast("GO", "¡Partida iniciada!"); 
+            // Si es CPU, permitimos que el usuario sea "Host AR" localmente
+            isArHost = S.cpu || (S.role === 'host'); 
+            placementAccepted = !S.cpu && S.data.arAccepted === true; // En CPU no sincronizamos placement
+            document.getElementById('btn-rec').style.display = 'flex';
         }
 
         window.endGame = (d) => {
             if(document.getElementById('s-game').classList.contains('hidden')) return;
             nav('win-screen'); playSfx('end');
             
-            const myScore = S.role === 'host' ? d.sc.host : d.sc.guest;
-            const rivalScore = S.role === 'host' ? d.sc.guest : d.sc.host;
-            const win = myScore > rivalScore ? 'WIN' : (myScore < rivalScore ? 'LOSE' : 'DRAW');
+            const myS = S.role === 'host' ? d.sc.host : d.sc.guest;
+            const rivS = S.role === 'host' ? d.sc.guest : d.sc.host;
+            const win = myS > rivS ? 'WIN' : (myS < rivS ? 'LOSE' : 'DRAW');
             
-            const tit = document.getElementById('win-title'); 
-            const msg = document.getElementById('win-msg');
-
-            if(win === 'DRAW') { tit.innerText = "EMPATE"; tit.className = "text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "SIN DOMINIO"; }
+            const tit = document.getElementById('win-title'); const msg = document.getElementById('win-msg');
+            if(win === 'DRAW') { tit.innerText = "EMPATE"; tit.className = "text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "EQUILIBRIO DE FUERZAS"; }
             else if(win === 'WIN') { tit.innerText = "VICTORIA"; tit.className = "text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL"; }
             else { 
-                const randomMsg = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)];
-                tit.innerText = "DERROTA"; tit.className = "text-6xl font-black text-hot mb-2 text-center"; msg.innerText = randomMsg.toUpperCase(); 
+                tit.innerText = "DERROTA"; tit.className = "text-6xl font-black text-hot mb-2 text-center"; 
+                msg.innerText = LOSE_MSGS[Math.floor(Math.random()*LOSE_MSGS.length)]; 
             }
-            
-            document.getElementById('final-p1').innerText = myScore;
-            document.getElementById('final-p2').innerText = rivalScore;
+            document.getElementById('final-p1').innerText = myS; document.getElementById('final-p2').innerText = rivS;
             hideArControls();
         }
 
         window.update = (o) => {
             if(S.cpu) { 
                 Object.assign(S.data,o); 
-                if(S.data.stat === 'end') { window.endGame(S.data); } 
-                else { window.ui(); }
+                if(S.data.stat === 'end') window.endGame(S.data); 
+                else window.ui(); 
             } else {
-                updateDoc(doc(db,'artifacts',appId,'public', 'data', 'rooms',`room_${S.room}`), {...o, lastUpdate: Date.now()}).catch(e => {
-                    console.error("Firestore update failed:", e); window.systemToast("ERROR","No se pudo guardar la jugada.");
-                });
+                updateDoc(doc(db,'artifacts',appId,'public', 'data', 'rooms',`room_${S.room}`), {...o, lastUpdate: Date.now()});
             }
         }
         
@@ -878,124 +783,152 @@
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor=d.dice?'#00f3ff':'#444'; dv.style.color=d.dice?'#00f3ff':'#555'; }
 
             if(ren && ren.xr.isPresenting) {
-                if(d.arPos) {
-                    const pos = new THREE.Vector3().fromArray(d.arPos); const rot = new THREE.Euler().fromArray(d.arRot);
-                    if (!placed || !d.arAccepted) { group.position.copy(pos); group.rotation.copy(rot); group.visible = true; placed = true; reticle.visible = false; }
-                    currentScale = d.arScale || 1.0; group.scale.set(currentScale, currentScale, currentScale);
-                    placementAccepted = d.arAccepted;
-                    if (d.arAccepted) { hideArControls(); document.getElementById('ar-scan-text').innerText = "TABLERO FIJO"; document.getElementById('ar-hint').style.display = 'flex'; document.getElementById('ar-scale-hint').style.display = 'block'; } 
-                    else {
-                        showArControls(); document.getElementById('ar-scan-text').innerText = "Ajusta y Acepta Escala"; document.getElementById('ar-scale-hint').style.display = 'block';
-                        document.getElementById('btn-ar-accept').innerText = isArHost ? "ACEPTAR POSICIÓN" : "ESPERANDO A HOST...";
-                        document.getElementById('btn-ar-accept').disabled = !isArHost; document.getElementById('btn-ar-recal').style.display = isArHost ? 'inline-block' : 'none';
+                if(d.arPos && (!S.cpu || placed)) { // Sincronización AR solo si no es CPU o si ya localmente lo pusimos
+                    if(!S.cpu) {
+                        const pos = new THREE.Vector3().fromArray(d.arPos); const rot = new THREE.Euler().fromArray(d.arRot);
+                        if (!placed || !d.arAccepted) { group.position.copy(pos); group.rotation.copy(rot); group.visible = true; placed = true; reticle.visible = false; }
+                        currentScale = d.arScale || 1.0; group.scale.set(currentScale, currentScale, currentScale);
+                        placementAccepted = d.arAccepted;
                     }
-                } else if (isArHost && !placed) { document.getElementById('ar-scan-text').innerText = "ESCANEA SUPERFICIE"; document.getElementById('ar-hint').style.display = 'flex'; document.getElementById('ar-scale-hint').style.display = 'none'; hideArControls(); } 
-                else if (!isArHost && !d.arPos) { document.getElementById('ar-scan-text').innerText = "ESPERANDO POSICIÓN DEL HOST"; document.getElementById('ar-hint').style.display = 'flex'; document.getElementById('ar-scale-hint').style.display = 'none'; hideArControls(); }
+                    
+                    if (S.cpu || d.arAccepted) { 
+                        hideArControls(); document.getElementById('ar-scan-text').innerText = "EN JUEGO"; 
+                        document.getElementById('ar-hint').style.display = 'none'; 
+                    } else {
+                        showArControls(); document.getElementById('ar-scan-text').innerText = "AJUSTANDO...";
+                        document.getElementById('btn-ar-accept').innerText = isArHost ? "FIJAR" : "ESPERANDO HOST...";
+                        document.getElementById('btn-ar-accept').disabled = !isArHost; 
+                        document.getElementById('btn-ar-recal').style.display = isArHost ? 'inline-block' : 'none';
+                    }
+                } else if (isArHost && !placed) { 
+                    document.getElementById('ar-scan-text').innerText = "ESCANEA PISO"; document.getElementById('ar-hint').style.display = 'flex'; 
+                } 
             } else {
-                currentScale = d.scale || 1.0;
-                if(group) group.scale.set(currentScale, currentScale, currentScale);
+                currentScale = d.scale || 1.0; if(group) group.scale.set(currentScale, currentScale, currentScale);
             }
             window.draw();
-            if(S.cpu && d.turn==='guest') { 
-                if(d.movs===0 && !d.dice) { setTimeout(()=>window.update({dice:Math.ceil(Math.random()*6),movs:3, skips:0}),1000); } 
-                else if(d.movs>0) { setTimeout(window.cpuMove,1500); }
+            
+            // Lógica de IA y Verificación de Fin de Juego
+            if(d.stat === 'play') {
+                if(S.cpu && d.turn==='guest') { 
+                    if(d.movs===0 && !d.dice) setTimeout(()=>window.update({dice:Math.ceil(Math.random()*6),movs:3, skips:0}),1000); 
+                    else if(d.movs>0) setTimeout(window.cpuMove,1500);
+                }
+                // Check status SIEMPRE para detectar final
+                window.checkGameEndCondition(); 
             }
-            if(S.role === 'host' && !S.cpu) window.checkStatus();
         }
 
-        window.checkStatus = () => { 
+        // CORRECCIÓN: Lógica de Fin de Juego Robusta
+        window.checkGameEndCondition = () => {
             const d = S.data;
-            if (d.stat !== 'play') return;
-            let movesLeft = 0;
+            // Si ya terminó, no hacer nada
+            if(d.stat !== 'play') return;
+
+            // Verificar movimientos posibles de forma exhaustiva
+            let movesPossible = false;
+            
+            // Recorremos todos los pares posibles
             for(let i=0; i<pts.length; i++) {
                 for(let j=i+1; j<pts.length; j++) {
-                    if(pts[i].position.distanceTo(pts[j].position) < 1.2 && 
-                       !d.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && 
-                       !window.checkCollision(i,j,d.tris)) {
-                        movesLeft++;
+                    const dist = pts[i].position.distanceTo(pts[j].position);
+                    // Si están cerca y NO hay línea
+                    if(dist < 1.3 && !d.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) {
+                        // Y NO hay colisión con triángulos existentes
+                        if(!window.checkCollision(i, j, d.tris)) {
+                            movesPossible = true;
+                            break; 
+                        }
                     }
                 }
+                if(movesPossible) break;
             }
-            if(movesLeft === 0) window.update({stat: 'end'});
+
+            // Si no hay movimientos posibles, se acaba el juego
+            if(!movesPossible) {
+                console.log("No more moves possible. Ending game.");
+                window.update({stat: 'end'});
+            }
         }
 
         window.cpuMove = () => { 
             let m=null; 
+            // 1. Intentar cerrar triángulo
             for(let i=0; i<pts.length; i++) {
                 for(let j=i+1; j<pts.length; j++) {
-                    if(pts[i].position.distanceTo(pts[j].position)<1.2 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j,S.data.tris)) {
+                    if(pts[i].position.distanceTo(pts[j].position)<1.3 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j,S.data.tris)) {
                         const testLines = [...S.data.lines, {s:i,e:j,own:'guest'}];
                         if (window.checkTri(i, j, 'guest', testLines).length > 0) { m={s:i,e:j}; break; }
                     }
                 }
                 if(m) break;
             }
-
+            // 2. Si no, movimiento aleatorio válido
             if(!m) {
+                const candidates = [];
                 for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) 
-                    if(pts[i].position.distanceTo(pts[j].position)<0.8 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j,S.data.tris)) { m={s:i,e:j}; break; }
+                    if(pts[i].position.distanceTo(pts[j].position)<1.3 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j,S.data.tris)) { 
+                        candidates.push({s:i,e:j});
+                    }
+                if(candidates.length > 0) m = candidates[Math.floor(Math.random() * candidates.length)];
             }
             
             if(m) {
                 const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=window.checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
                 let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
                 window.update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
-            } else { window.update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1}); }
+            } else { 
+                window.update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1}); 
+            }
         }
 
-        // --- FUNCIONES 3D Y AR ---
-
+        // --- AR / 3D INIT ---
         window.checkAR = () => {
             const el = document.getElementById('ar-status');
             if('xr' in navigator) {
-                navigator.xr.isSessionSupported('immersive-ar')
-                    .then(ok => {
-                        if(ok) {
-                            el.innerHTML='<span class="text-neon font-bold">AR DETECTADO</span>';
-                            if (!arInitialized) { window.init3D(); }
-                        } else el.innerText="MODO 3D (No AR)";
-                    })
-                    .catch(()=>el.innerText="MODO 3D (Error AR)");
-            } else el.innerText="MODO 3D (PC)";
+                navigator.xr.isSessionSupported('immersive-ar').then(ok => {
+                    el.innerHTML= ok ? '<span class="text-neon font-bold">AR DISPONIBLE</span>' : 'MODO 3D (No AR)';
+                    // Pre-iniciar 3D para estar listos
+                    if(ok && !arInitialized) window.init3D();
+                });
+            } else el.innerText="MODO PC";
         }
 
         window.init3D = () => {
-            if(arInitialized) return; 
-            arInitialized = true;
+            if(arInitialized) return; arInitialized = true;
             
             scene=new THREE.Scene(); cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.01,20);
-            ren=new THREE.WebGLRenderer({antialias:true, alpha:true}); ren.setSize(innerWidth,innerHeight); ren.xr.enabled=true;
+            ren=new THREE.WebGLRenderer({antialias:true, alpha:true}); 
+            ren.setSize(innerWidth,innerHeight); ren.xr.enabled=true;
             ren.domElement.style.position='absolute'; ren.domElement.style.top='0'; ren.domElement.style.zIndex='1';
             document.body.appendChild(ren.domElement);
             
-            navigator.xr?.isSessionSupported('immersive-ar').then(supported => {
-                if(supported) {
-                    const btn = ARButton.createButton(ren, {
-                        requiredFeatures: ['hit-test', 'local'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body }
-                    });
-                    document.getElementById('ar-zone').appendChild(btn);
-                    btn.addEventListener('click', ()=>{ document.getElementById('bg-canvas').style.opacity=0; });
-                }
-            });
+            const btn = ARButton.createButton(ren, { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body } });
+            document.getElementById('ar-zone').appendChild(btn);
 
+            // EVENTOS DE SESIÓN AR (SOLUCIÓN PANTALLA NEGRA)
             ren.xr.addEventListener('sessionstart', async (e)=>{
+                // TRUCO IMPORTANTE: Hacer body transparente al entrar en AR
+                document.body.classList.add('ar-active');
+                
                 try {
                     const session = ren.xr.getSession(); arRefSpace = await session.requestReferenceSpace('local');
-                    session.requestHitTestSource({space: arRefSpace}).then(h => { arHit = h; window.systemToast("AR", "Detección de superficie activada."); })
-                    .catch(e => { console.error("Hit test request failed:", e); window.systemToast("AR ERROR", "Fallo al iniciar detección de plano."); });
-                } catch (e) { console.error("Failed to get AR reference space:", e); }
+                    session.requestHitTestSource({space: arRefSpace}).then(h => arHit = h);
+                } catch (e) { console.error("AR Error", e); }
 
                 placed = false; group.visible = false; reticle.visible = true; 
-                document.getElementById('ar-hint').style.display = 'flex'; document.getElementById('ar-scan-text').innerText = "ESCANEA SUPERFICIE";
+                document.getElementById('ar-hint').style.display = 'flex'; 
+                document.getElementById('ar-scan-text').innerText = "MUEVE EL MÓVIL SUAVEMENTE";
                 document.getElementById('btn-rec').style.display='none';
                 
-                const controller = ren.xr.getController(0); controller.addEventListener('select', window.onControllerSelect);
+                const c = ren.xr.getController(0); c.addEventListener('select', window.onControllerSelect);
             });
 
             ren.xr.addEventListener('sessionend',()=>{ 
-                const controller = ren.xr.getController(0); controller.removeEventListener('select', window.onControllerSelect);
-                window.recenter(); document.getElementById('bg-canvas').style.opacity=1; document.getElementById('btn-rec').style.display='flex';
-                document.getElementById('ar-hint').style.display='none'; document.getElementById('ar-scale-hint').style.display='none';
+                document.body.classList.remove('ar-active');
+                window.recenter(); 
+                document.getElementById('btn-rec').style.display='flex';
+                document.getElementById('ar-hint').style.display='none';
                 hideArControls(); placed = false; reticle.visible = false; arHit = null; 
             });
             
@@ -1007,7 +940,6 @@
             window.addEventListener('pointerdown', (e)=>{
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return;
                 if(ren.xr.isPresenting) return;
-
                 const m=new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
                 ray.setFromCamera(m,cam); 
                 const h=ray.intersectObjects(group.children,true);
@@ -1015,24 +947,30 @@
                 if(obj) window.clickPt(obj.object.parent.userData.id);
             });
 
-            controls=new OrbitControls(cam,ren.domElement); window.recenter();
+            controls=new OrbitControls(cam,ren.domElement); 
+            window.recenter();
         }
 
         window.draw = () => { 
             if(!S.data || !group) return;
+            // Limpiar líneas y tris previos, dejar puntos
             for(let i=group.children.length-1;i>=0;i--) if(group.children[i].userData.t) group.remove(group.children[i]);
+            
             S.data.lines.forEach(l=>{
                 const p=l.own==='host'?S.data.p1:S.data.p2; const c=p?new THREE.Color(p.c):new THREE.Color('#fff');
                 const p1=pts[l.s].position; const p2=pts[l.e].position;
                 const g=new THREE.CylinderGeometry(0.012,0.012,p1.distanceTo(p2),8); const m=new THREE.MeshBasicMaterial({color:c}); const o=new THREE.Mesh(g,m);
                 o.position.copy(p1).lerp(p2,0.5); o.lookAt(p2); o.rotateX(Math.PI/2); o.userData.t=true; group.add(o);
             });
+            
             S.data.tris.forEach(t=>{
                 const p=t.own==='host'?S.data.p1:S.data.p2; const c=p?p.c:'#fff'; const i=p?p.i:'gem';
                 const v=new Float32Array([pts[t.p1].position.x,pts[t.p1].position.y,pts[t.p1].position.z,pts[t.p2].position.x,pts[t.p2].position.y,pts[t.p2].position.z,pts[t.p3].position.x,pts[t.p3].position.y,pts[t.p3].position.z]);
                 const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(v,3));
                 const m=new THREE.MeshBasicMaterial({color:c, opacity:0.3, transparent:true, side:THREE.DoubleSide, depthWrite:false});
                 const o=new THREE.Mesh(g,m); o.userData.t=true;
+                
+                // Icono flotante
                 let ig; if(i==='atom') ig=new THREE.IcosahedronGeometry(0.05,0); else if(i==='star') ig=new THREE.OctahedronGeometry(0.05,0); else if(i==='bolt') ig=new THREE.ConeGeometry(0.03,0.08,4); else ig=new THREE.IcosahedronGeometry(0.04,0); 
                 const im=new THREE.Mesh(ig,new THREE.MeshBasicMaterial({color:c, wireframe:false, emissive:c, emissiveIntensity:0.5})); 
                 const ce=new THREE.Vector3().add(pts[t.p1].position).add(pts[t.p2].position).add(pts[t.p3].position).divideScalar(3);
@@ -1045,90 +983,50 @@
         window.recenter = () => { group.visible=true; placed=true; group.position.set(0,0,0); group.rotation.set(0,0,0); cam.position.set(0,2.0,0.1); cam.lookAt(0,0,0); currentScale=1.0; group.scale.set(1,1,1); }
         window.highlight = (id,on) => { const m=pts[id]; if(on) { m.scale.set(1.5,1.5,1.5); m.material.emissive.setHex(0xffffff); } else { m.scale.set(1,1,1); m.material.emissive.setHex(0x00f3ff); } }
 
-
         window.loop = (t, frame) => {
             if(controls) controls.update();
             
             if(ren.xr.isPresenting) {
-                const s=ren.xr.getSession();
-                
-                if (frame && arRefSpace) {
-                    if(arHit) {
-                        const h=frame.getHitTestResults(arHit);
-                        
-                        if(!placed && h.length && isArHost && !placementAccepted) {
-                            reticle.visible=true; 
-                            reticle.matrix.fromArray(h[0].getPose(arRefSpace).transform.matrix);
-                            
-                            group.position.setFromMatrixPosition(reticle.matrix); 
-                            group.rotation.setFromRotationMatrix(reticle.matrix);
-                            group.visible = true;
-                            
-                            document.getElementById('ar-scan-text').innerText = "TAP para Fijar, Pellizcar para Escalar";
-                            document.getElementById('ar-hint').style.display='flex';
-                            document.getElementById('ar-scale-hint').style.display = 'block';
-
-                        } else if (!placed && h.length && !isArHost && !placementAccepted && !S.data.arPos) {
-                            document.getElementById('ar-scan-text').innerText = "ESPERANDO POSICIÓN DEL HOST";
-                        } 
-                        else {
-                            reticle.visible=false;
-                        }
-                    }
-                }
-            } else {
-                if(S.data && S.data.stat==='play' && group && controls) {
-                     controls.update(); 
+                if (frame && arRefSpace && arHit) {
+                    const h=frame.getHitTestResults(arHit);
+                    if(!placed && h.length && isArHost) { // Solo si soy Host y no he colocado
+                        reticle.visible=true; 
+                        reticle.matrix.fromArray(h[0].getPose(arRefSpace).transform.matrix);
+                        document.getElementById('ar-scan-text').innerText = "DETECTADO - TOCA PARA FIJAR";
+                        document.getElementById('ar-hint').classList.remove('opacity-50');
+                    } else if (!placed && !isArHost) {
+                         reticle.visible = false;
+                    } else { reticle.visible=false; }
                 }
             }
             ren.render(scene,cam);
         }
 
-        // --- Funciones de Sincronización AR ---
-
         window.acceptScaleAndPosition = () => {
-            if (!ren.xr.isPresenting || !isArHost || !placed || placementAccepted) return window.gameToast("ERROR", "No es tu turno de colocar.");
-            
-            const pos = group.position.toArray();
-            const rot = group.rotation.toArray().slice(0, 3);
-            const scale = currentScale;
-
-            window.update({ arPos: pos, arRot: rot, arScale: scale, arAccepted: true });
-            window.gameToast("AR SYNC", "Posición del tablero fijada y sincronizada.");
+            if (!ren.xr.isPresenting || !isArHost || !placed) return;
+            const pos = group.position.toArray(); const rot = group.rotation.toArray().slice(0, 3);
+            window.update({ arPos: pos, arRot: rot, arScale: currentScale, arAccepted: true });
+            window.gameToast("OK", "Tablero sincronizado.");
         }
 
         window.recalibrate = () => {
             if (!ren.xr.isPresenting || !isArHost) return;
             placed = false; group.visible = false; reticle.visible = true; placementAccepted = false;
-
             window.update({ arPos: null, arRot: null, arScale: 1.0, arAccepted: false });
-            window.gameToast("RECALIBRAR", "Vuelve a escanear la superficie para colocar.");
-            hideArControls();
+            showArControls();
         }
         
-        // Función de Toast para mensajes no intrusivos (MENSAJES DEL JUEGO: Conquista, Línea, Rango)
         window.gameToast = (t,m) => {
             const e=document.getElementById('game-toast');
-            document.getElementById('t-head').innerText=t;
-            document.getElementById('t-body').innerText=m;
-            e.classList.add('show');
-            setTimeout(()=>e.classList.remove('show'),3000);
+            document.getElementById('t-head').innerText=t; document.getElementById('t-body').innerText=m;
+            e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),3000);
         }
         
-        // Función de Toast para mensajes de sistema (LOGIN, RED, ERROR FATAL)
         window.systemToast = (t,m) => {
             const e=document.getElementById('toast');
-            document.getElementById('s-head').innerText="3 LINE-AR";
-            document.getElementById('s-body').innerText=`${t}: ${m}`;
-            e.classList.add('show');
-            setTimeout(()=>e.classList.remove('show'),3000);
+            document.getElementById('s-head').innerText="SISTEMA"; document.getElementById('s-body').innerText=`${t}: ${m}`;
+            e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),3000);
         }
-
-        // Aseguramos que init3D se llama en el onload para tener el canvas.
-        window.onload = () => { 
-             // Dejamos vacío ya que se llama desde onAuthStateChanged -> checkAR
-        };
-
     </script>
 </body>
 </html>
