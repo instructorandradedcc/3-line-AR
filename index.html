@@ -2,8 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <!-- Corrección 1: Meta etiqueta para permitir que Tailwind funcione sin bloqueos de seguridad -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:; style-src * 'self' 'unsafe-inline'; script-src * 'self' 'unsafe-inline' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V44.1 FIXED</title>
+    <title>3 LINE-AR | V44.2 LOGIN FIX</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -87,7 +89,7 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     
-    <div class="version-tag">V44.1 FIXED</div>
+    <div class="version-tag">V44.2 LOGIN FIX</div>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
@@ -108,7 +110,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V44.1 FIXED</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V44.2 LOGIN FIX</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
@@ -336,7 +338,30 @@
             }); 
         };
         
-        window.doLogin = async () => { if(!auth) return; try{ showLoad(true, "CONECTANDO..."); await setPersistence(auth, browserLocalPersistence); await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { showLoad(false); } };
+        // --- FUNCIÓN LOGIN CORREGIDA ---
+        window.doLogin = async () => { 
+            if(!auth) return; 
+            const btn = document.getElementById('btn-login-google');
+            const txt = document.getElementById('login-btn-txt');
+            
+            try{ 
+                showLoad(true, "CONECTANDO..."); 
+                // Configurar proveedor para forzar selección de cuenta (resuelve el bug de bloqueo)
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                
+                await setPersistence(auth, browserLocalPersistence); 
+                await signInWithPopup(auth, provider); 
+            } catch(e) { 
+                console.error("Login Error:", e);
+                showLoad(false);
+                window.systemToast("ERROR LOGIN", "Intenta de nuevo."); 
+                
+                // Restaurar botón si falla
+                if(btn) btn.classList.remove('btn-disabled');
+                if(txt) txt.innerText = "INICIAR SESIÓN";
+            } 
+        };
 
         window.startARSession = () => { if(arBtn) arBtn.click(); }
 
@@ -699,7 +724,6 @@
             } else el.innerText="MODO PC";
         }
 
-        // --- FUNCIÓN FALTANTE QUE CAUSABA EL ERROR ---
         window.recenter = () => {
             if (controls) {
                 controls.reset();
@@ -742,8 +766,6 @@
                 document.getElementById('ar-instructions').style.display = 'block';
                 document.getElementById('ar-instr-txt').innerHTML = "ESCANEANDO...";
 
-                // Eliminamos el listener simple anterior
-                // const c = ren.xr.getController(0); c.addEventListener('select', window.onControllerSelect);
             });
 
             ren.xr.addEventListener('sessionend',()=>{ 
