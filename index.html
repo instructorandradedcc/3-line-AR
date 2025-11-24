@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V38.5 AR FIXES</title>
+    <title>3 LINE-AR | V38.6 AR SIZE FIX</title>
     
-    <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { 
@@ -22,15 +21,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* ESTILOS BASE */
         body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; transition: background-color 0.5s; }
-        
-        /* AR MODE */
         body.ar-active { background-color: transparent !important; }
         body.ar-active #bg-canvas { opacity: 0 !important; display: none; }
         
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; background: radial-gradient(circle at center, #080810 0%, #000000 100%); pointer-events: none; transition: opacity 0.5s; }
-        
         canvas { display: block; outline: none; } 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
@@ -48,12 +43,10 @@
 
         .toast-box { background: #000; border: 1px solid #00f3ff; border-left-width: 5px; padding: 12px 24px; color: white; font-size: 11px; font-family: 'monospace'; transform: translateY(100px); opacity: 0; transition: all 0.4s; }
         .toast-box.show { transform: translateY(0); opacity: 1; }
-        
         #game-toast { background: rgba(8, 12, 18, 0.95); backdrop-filter: blur(8px); border: 1px solid #00f3ff; border-radius: 8px; box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); min-width: 200px; max-width: 90%; padding: 8px 12px; opacity: 0; transform: translateY(-5px); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
         #game-toast.show { opacity: 1; transform: translateY(0); }
 
         #mini-loader { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; }
-        
         #win-screen { position: absolute; inset: 0; background: rgba(0,0,0,0.98); z-index: 60; pointer-events: auto; display: none !important; flex-direction: column; justify-content: center; align-items: center; }
         #win-screen.active { display: flex !important; }
 
@@ -62,7 +55,8 @@
         .opt-i { font-size: 24px; color: #555; transition: 0.2s; cursor: pointer; pointer-events: auto; }
         .opt-i.active { color: #00f3ff; transform: scale(1.3); text-shadow: 0 0 15px #00f3ff; }
 
-        #ar-zone button { background: rgba(20, 20, 30, 0.95) !important; border: 1px solid #00f3ff !important; color: #00f3ff !important; font-family: 'Orbitron' !important; padding: 12px 24px !important; border-radius: 6px !important; text-transform: uppercase !important; transition: background 0.2s; pointer-events: auto !important; position: relative !important; bottom: auto !important; }
+        /* Ocultar botón nativo de Three.js para usar el nuestro */
+        #ar-zone button { display: none !important; }
 
         #btn-rec { display: flex; }
         .ar-sync-btn { background: rgba(255, 204, 0, 0.1) !important; border: 1px solid #ffcc00 !important; color: #ffcc00 !important; font-family: 'Orbitron' !important; padding: 8px 16px !important; border-radius: 6px !important; text-transform: uppercase !important; font-size: 10px; font-weight: bold; }
@@ -73,8 +67,10 @@
 
         #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
         #modal-content { background: rgba(8, 12, 18, 0.98); backdrop-filter: blur(20px); border: 2px solid #00f3ff; border-radius: 12px; padding: 24px; max-width: 300px; width: 90%; text-align: center; color: white; box-shadow: 0 0 50px rgba(0, 243, 255, 0.3); }
-        
         #room-label-container { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: none; }
+        
+        /* Botón flotante para iniciar AR */
+        #btn-start-ar-float { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); z-index: 50; }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -84,7 +80,6 @@
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
-        <!-- MODAL -->
         <div id="custom-modal" class="interactive">
             <div id="modal-content">
                 <h3 class="text-lg font-bold text-cyber mb-3" id="modal-title"></h3>
@@ -102,7 +97,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V38.5 AR FIXES</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V38.6 AR SIZE FIX</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
@@ -154,7 +149,7 @@
                 </div>
                 <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V38.5 AR FIXES</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V38.6 AR SIZE FIX</div>
             </div>
         </div>
 
@@ -190,11 +185,13 @@
 
             <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span></div>
 
+            <!-- HINT AR MEJORADO -->
             <div id="ar-hint" class="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none hidden flex-col items-center z-0">
-                <div class="w-20 h-20 border-2 border-cyber rounded-full animate-ping absolute opacity-30"></div>
-                <div class="w-2 h-2 bg-cyber rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-                <span id="ar-scan-text" class="bg-black/80 text-[10px] px-3 py-2 text-cyber border border-cyber rounded mt-4 font-bold tracking-widest backdrop-blur shadow-[0_0_15px_#00f3ff]">BUSCANDO SUPERFICIE...</span>
-                <span id="ar-scale-hint" class="hidden mt-2 text-[8px] text-white bg-black/50 px-2 rounded">PELLIZCA PARA ESCALAR</span>
+                <div class="w-16 h-16 border-2 border-warn rounded-full animate-ping absolute opacity-50"></div>
+                <div class="w-16 h-16 border border-warn rounded-full absolute opacity-20"></div>
+                <div class="w-2 h-2 bg-warn rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+                <span id="ar-scan-text" class="bg-black/80 text-[10px] px-3 py-2 text-warn border border-warn rounded mt-20 font-bold tracking-widest backdrop-blur shadow-[0_0_15px_#ffcc00]">BUSCANDO PISO...</span>
+                <span id="ar-scale-hint" class="hidden mt-2 text-[8px] text-white bg-black/50 px-2 rounded animate-pulse">PELLIZCA PANTALLA PARA CAMBIAR TAMAÑO</span>
             </div>
 
             <div class="flex justify-center items-center flex-grow pointer-events-none absolute bottom-1/2 left-1/2 -translate-x-1/2 translate-y-1/2">
@@ -207,39 +204,41 @@
                 <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
             </div>
             
+            <!-- BOTÓN START AR (Flotante) -->
+            <div id="btn-start-ar-float" class="hidden interactive">
+                <button onclick="window.startARSession()" class="btn-neon py-3 px-6 text-xs shadow-[0_0_20px_#00f3ff] animate-bounce"><i class="fas fa-cube mr-2"></i> INICIAR AR</button>
+            </div>
+
+            <!-- BOTÓN SALIR AR (Nuevo, visible solo en AR) -->
+            <div id="btn-exit-ar" class="hidden interactive absolute bottom-8 right-4 z-50">
+                <button onclick="window.goHome()" class="bg-red-600/90 text-white border border-red-400 font-bold py-3 px-6 rounded-lg shadow-lg text-xs backdrop-blur"><i class="fas fa-times-circle mr-2"></i> SALIR MODO AR</button>
+            </div>
+            
             <div id="ar-controls" class="interactive absolute bottom-4 left-1/2 -translate-x-1/2 hidden justify-center gap-4 z-40 w-full px-4">
                 <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn flex-1"><i class="fas fa-check mr-2"></i> FIJAR</button>
                 <button onclick="window.recalibrate()" id="btn-ar-recal" class="ar-sync-btn flex-1"><i class="fas fa-sync-alt mr-2"></i> MOVER</button>
             </div>
         </div>
 
-        <!-- PANTALLA FIN DE JUEGO MEJORADA -->
+        <!-- WIN SCREEN -->
         <div id="win-screen">
             <h1 id="win-title" class="text-4xl md:text-6xl font-black text-cyber mb-2 animate-pulse text-center px-4">VICTORIA</h1>
             <p id="win-msg" class="text-white font-mono mb-8 tracking-widest text-center text-sm px-4">MENSAJE MOTIVACIONAL</p>
             
             <div class="glass-panel p-6 mb-8 w-full max-w-sm mx-4">
                 <div class="flex justify-between items-center text-center">
-                    <div>
-                        <span class="text-gray-500 text-[10px] block tracking-widest mb-1">TU PUNTAJE</span>
-                        <span id="final-p1" class="text-5xl font-bold text-white">0</span>
-                    </div>
+                    <div><span class="text-gray-500 text-[10px] block tracking-widest mb-1">TU PUNTAJE</span><span id="final-p1" class="text-5xl font-bold text-white">0</span></div>
                     <div class="h-10 w-px bg-white/20"></div>
-                    <div>
-                        <span class="text-gray-500 text-[10px] block tracking-widest mb-1">RIVAL</span>
-                        <span id="final-p2" class="text-5xl font-bold text-white">0</span>
-                    </div>
+                    <div><span class="text-gray-500 text-[10px] block tracking-widest mb-1">RIVAL</span><span id="final-p2" class="text-5xl font-bold text-white">0</span></div>
                 </div>
             </div>
-
             <div class="flex flex-col gap-3 w-full max-w-xs px-4">
                 <button onclick="window.goHomeAfterWin()" class="btn-neon py-3 px-6 text-sm w-full"><i class="fas fa-bars mr-2"></i> VOLVER AL MENÚ</button>
             </div>
         </div>
-        
     </div>
 
-    <div id="ar-zone" class="absolute bottom-8 left-1/2 -translate-x-1/2 interactive z-30 w-full flex justify-center pointer-events-none"></div>
+    <div id="ar-zone"></div>
 
     <script type="module">
         import * as THREE from 'three';
@@ -249,34 +248,18 @@
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // CONFIGURACIÓN DE FIREBASE
-        const manualConfig = { 
-            apiKey: "AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", 
-            authDomain: "ar-3lilne.firebaseapp.com", 
-            projectId: "ar-3lilne", 
-            appId: "1:382966716480:web:ee244825bb34bc35c667a5" 
-        };
+        const manualConfig = { apiKey: "AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain: "ar-3lilne.firebaseapp.com", projectId: "ar-3lilne", appId: "1:382966716480:web:ee244825bb34bc35c667a5" };
         const firebaseConfig = (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-ar-app';
         
         let app, auth, db;
-        
-        try { 
-            app = initializeApp(firebaseConfig); 
-            auth = getAuth(app); 
-            db = getFirestore(app); 
-            if (typeof __initial_auth_token !== 'undefined') { signInWithCustomToken(auth, __initial_auth_token); }
-        } catch(e) { 
+        try { app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app); if (typeof __initial_auth_token !== 'undefined') { signInWithCustomToken(auth, __initial_auth_token); } } 
+        catch(e) { 
             console.error("CRITICAL: Firebase Init Fail", e); 
-            window.onload = () => {
-                document.getElementById('login-btn-txt').innerText = "ERROR DE CONFIG";
-                document.getElementById('login-msg').innerText = "CLAVES DE API INVÁLIDAS O DOMINIO NO AUTORIZADO";
-                document.getElementById('btn-login-google').classList.remove('btn-disabled');
-            };
+            window.onload = () => { document.getElementById('login-btn-txt').innerText = "ERROR DE CONFIG"; document.getElementById('btn-login-google').classList.remove('btn-disabled'); };
         }
 
         const LOSE_MSGS = ["¡MUY BUENA PARA LA PRÓXIMA!", "BUEN INTENTO, AGENTE", "LA PRÓXIMA LO LOGRARÁS", "GRAN ESTRATEGIA, PERO NO BASTÓ", "CASI LO TIENES, SIGUE ASÍ", "SIGUE PRACTICANDO", "BIEN JUGADO, AUNQUE PERDISTE", "NO TE RINDAS AHORA"];
-
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(type) {
             if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -291,66 +274,39 @@
         }
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
-        let pts=[], selPt=null, placed=false, roomUnsub=null, currentScale=1.0;
+        let pts=[], selPt=null, placed=false, roomUnsub=null, currentScale=0.1; // ESCALA INICIAL PEQUEÑA
         let arInitialized = false, isArHost = false, placementAccepted = false; 
-        let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace;
-        let initialPinchDistance = 0; let initialScale = 1.0;
+        let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace, arBtn;
+        let initialPinchDistance = 0; let initialScale = 0.1;
 
         function nav(id) {
-            ['s-login','s-menu','s-game','win-screen'].forEach(i => { 
-                const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); }
-            });
-            const target = document.getElementById(id); 
-            if (target) { target.classList.remove('hidden'); if(id === 'win-screen') target.classList.add('active'); }
+            ['s-login','s-menu','s-game','win-screen'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); } });
+            const target = document.getElementById(id); if (target) { target.classList.remove('hidden'); if(id === 'win-screen') target.classList.add('active'); }
         }
 
         if (auth) {
             onAuthStateChanged(auth, async (u) => {
                 if(u) {
-                    S.user = u;
-                    document.getElementById('login-btn-txt').innerText = "RECUPERANDO DATOS...";
+                    S.user = u; document.getElementById('login-btn-txt').innerText = "RECUPERANDO DATOS...";
                     try { await registerUserAccess(u); } catch(e) { console.warn("AdBlock?", e); }
-
                     if (!document.getElementById('s-login').classList.contains('hidden')) {
-                        const uName = document.getElementById('u-name');
-                        if(uName) uName.innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
-                        if(u.photoURL) { const img = document.getElementById('u-photo'); if(img) { img.src = u.photoURL; img.classList.remove('hidden'); }}
+                        const uName = document.getElementById('u-name'); if(uName) uName.innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : u.uid.substring(0,8).toUpperCase(); 
                         nav('s-menu'); 
                     }
-                    window.checkAR();
-                    window.updateMenuButtons(true);
-                    window.systemToast("CONECTADO", "Sesión sincronizada.");
+                    window.checkAR(); window.updateMenuButtons(true); window.systemToast("CONECTADO", "Sesión sincronizada.");
                 } else {
-                    S.user = null; nav('s-login');
-                    const btn = document.getElementById('btn-login-google'); if(btn) btn.classList.remove('btn-disabled');
-                    const txt = document.getElementById('login-btn-txt'); if(txt) txt.innerText = "INICIAR SESIÓN";
-                    const msg = document.getElementById('login-msg'); if(msg) msg.innerText = "INGRESO MANUAL REQUERIDO";
-                    window.updateMenuButtons(false);
+                    S.user = null; nav('s-login'); document.getElementById('login-btn-txt').innerText = "INICIAR SESIÓN"; window.updateMenuButtons(false);
                 }
             });
-        } else {
-            setTimeout(() => {
-                 const btn = document.getElementById('btn-login-google'); if(btn) btn.classList.remove('btn-disabled');
-                 const txt = document.getElementById('login-btn-txt'); if(txt) txt.innerText = "ERROR DE SISTEMA";
-            }, 1000);
+        } else { setTimeout(() => { document.getElementById('login-btn-txt').innerText = "ERROR DE SISTEMA"; }, 1000); }
+
+        async function registerUserAccess(u) { const userRef = doc(db, 'artifacts', appId, 'users', u.uid); await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online' }, { merge: true }); }
+        window.updateMenuButtons = (enabled) => { ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'].forEach(id => { const btn = document.getElementById(id); if (btn) { if(enabled) btn.classList.remove('btn-disabled'); else btn.classList.add('btn-disabled'); } }); };
+        window.doLogin = async () => { if(!auth) return; try{ showLoad(true, "CONECTANDO..."); await setPersistence(auth, browserLocalPersistence); await signInWithPopup(auth, new GoogleAuthProvider()); } catch(e) { showLoad(false); window.systemToast("ERROR","Error Auth."); } };
+
+        window.startARSession = () => {
+            if(arBtn) arBtn.click(); // Simular click en botón nativo
         }
-
-        async function registerUserAccess(u) {
-            const userRef = doc(db, 'artifacts', appId, 'users', u.uid);
-            await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online' }, { merge: true });
-        }
-
-        window.updateMenuButtons = (enabled) => {
-            ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'].forEach(id => {
-                const btn = document.getElementById(id); if (btn) { if(enabled) btn.classList.remove('btn-disabled'); else btn.classList.add('btn-disabled'); }
-            });
-        };
-
-        window.doLogin = async () => { 
-            if(!auth) return window.systemToast("FATAL", "Firebase no inicializado.");
-            try{ showLoad(true, "CONECTANDO..."); await setPersistence(auth, browserLocalPersistence); await signInWithPopup(auth, new GoogleAuthProvider()); } 
-            catch(e) { showLoad(false); window.systemToast("ERROR","Error de autenticación."); console.error(e); } 
-        };
 
         window.onControllerSelect = () => {
             if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
@@ -359,24 +315,14 @@
                 group.rotation.setFromRotationMatrix(reticle.matrix);
                 group.visible = true;
                 document.getElementById('ar-hint').style.display='flex';
-                document.getElementById('ar-scan-text').innerText = "TABLERO COLOCADO";
+                document.getElementById('ar-scan-text').innerText = "TABLERO FIJADO";
                 document.getElementById('ar-scale-hint').style.display = 'block';
                 showArControls();
             }
         }
 
         function genPoints() {
-            const p=[]; 
-            for(let i=0;i<16;i++){
-                let v=false, pt, att=0;
-                while(!v && att<100){
-                    pt = { x:(Math.random()-0.5)*1.8, y:0, z:(Math.random()-0.5)*1.8 };
-                    let ok=true; for(let ex of p) if(Math.hypot(ex.x-pt.x, ex.z-pt.z) < 0.35) ok=false;
-                    if(ok) v=true; att++;
-                }
-                p.push(pt);
-            }
-            return p;
+            const p=[]; for(let i=0;i<16;i++){ let v=false, pt, att=0; while(!v && att<100){ pt = { x:(Math.random()-0.5)*1.8, y:0, z:(Math.random()-0.5)*1.8 }; let ok=true; for(let ex of p) if(Math.hypot(ex.x-pt.x, ex.z-pt.z) < 0.35) ok=false; if(ok) v=true; att++; } p.push(pt); } return p;
         }
 
         window.intersect = (a, b) => Math.hypot(a.x - b.x, a.z - b.z) < 0.25;
@@ -392,47 +338,40 @@
             if(!S.data || !S.data.points || !group) return;
             while(group.children.length > 0) group.remove(group.children[0]);
             pts = [];
-            const geo=new THREE.SphereGeometry(0.04,32,32); 
+            // REDUCCIÓN DE TAMAÑO DE PUNTOS PARA AR
+            const geo=new THREE.SphereGeometry(0.03,32,32); // Más pequeño
             const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:2}); 
-            const hGeo=new THREE.SphereGeometry(0.15); const hMat=new THREE.MeshBasicMaterial({visible:false});
+            const hGeo=new THREE.SphereGeometry(0.1); const hMat=new THREE.MeshBasicMaterial({visible:false}); // Hitbox
             
             S.data.points.forEach((p,i)=>{
                 const m=new THREE.Mesh(geo,mat.clone()); m.position.set(p.x,p.y,p.z); m.userData.id=i;
                 m.add(new THREE.Mesh(hGeo,hMat)); 
-                m.add(new THREE.Mesh(new THREE.SphereGeometry(0.06,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})));
+                m.add(new THREE.Mesh(new THREE.SphereGeometry(0.05,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})));
                 group.add(m); pts.push(m);
             });
             window.draw();
-            if (ren && !ren.xr.isPresenting) { group.visible = true; placed = true; window.recenter(); }
+            if (ren && !ren.xr.isPresenting) { 
+                group.visible = true; placed = true; window.recenter(); 
+            } else {
+                // En AR empezamos pequeños
+                currentScale = 0.1; 
+                group.scale.set(0.1, 0.1, 0.1);
+            }
         }
 
         window.rollDice = () => {
             const d=S.data; if(d.turn!==S.role) return window.gameToast("ESPERA","Turno Rival"); if(d.movs>0) return window.gameToast("JUEGA","Usa tus líneas");
             const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
-            setTimeout(()=>{
-                el.classList.remove('rolling'); 
-                const v=Math.ceil(Math.random()*6); 
-                window.update({dice:v, movs:v, skips:0});
-                window.gameToast("DADO",`ENERGÍA: ${v} líneas.`);
-            },500);
+            setTimeout(()=>{ el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); window.update({dice:v, movs:v, skips:0}); window.gameToast("DADO",`ENERGÍA: ${v} líneas.`); },500);
         };
         
         window.skipTurn = () => { 
-            const d=S.data; 
-            if(d.turn===S.role) { 
-                const newSkips = (d.skips || 0) + 1;
-                if (newSkips >= 2) window.update({stat:'end'});
-                else {
-                    const t = d.turn==='host'?'guest':'host'; 
-                    window.update({movs:0, turn:t, dice:null, skips: newSkips}); 
-                    window.gameToast("PASO", "Turno cedido.");
-                }
-            } 
+            const d=S.data; if(d.turn===S.role) { const newSkips = (d.skips || 0) + 1; if (newSkips >= 2) window.update({stat:'end'}); else { const t = d.turn==='host'?'guest':'host'; window.update({movs:0, turn:t, dice:null, skips: newSkips}); window.gameToast("PASO", "Turno cedido."); } } 
         }
 
         window.clickPt = (id) => {
             const d=S.data; if(d.turn!==S.role || d.movs<=0) return window.gameToast("ERROR","Lanza el dado o espera tu turno");
-            if(ren.xr.isPresenting && !placementAccepted && !S.cpu) return window.gameToast("AR SYNC", "Espera confirmación de posición.");
+            if(ren.xr.isPresenting && !placementAccepted && !S.cpu) return window.gameToast("AR SYNC", "Espera confirmación.");
             playSfx('click');
             if(selPt===null) { selPt=id; window.highlight(id,true); }
             else { if(selPt===id) { window.highlight(id,false); selPt=null; } else { window.tryLine(selPt,id); window.highlight(selPt,false); selPt=null; } }
@@ -453,22 +392,15 @@
         }
         
         window.checkCollision = (p1, p2) => { 
-            const A = pts[p1].position; const B = pts[p2].position;
-            const lines = S.data.lines;
-            for (let l of lines) {
-                if(l.s===p1 || l.s===p2 || l.e===p1 || l.e===p2) continue;
-                const C = pts[l.s].position; const D = pts[l.e].position;
-                if (window.intersectLine(A, B, C, D)) return true;
-            }
-            return false;
+            const A = pts[p1].position; const B = pts[p2].position; const lines = S.data.lines;
+            for (let l of lines) { if(l.s===p1 || l.s===p2 || l.e===p1 || l.e===p2) continue; const C = pts[l.s].position; const D = pts[l.e].position; if (window.intersectLine(A, B, C, D)) return true; } return false;
         }
 
         window.intersectLine = (a, b, c, d) => {
             const x1=a.x, y1=a.z, x2=b.x, y2=b.z, x3=c.x, y3=c.z, x4=d.x, y4=d.z;
             const denom = (y4-y3)*(x2-x1) - (x4-x3)*(y2-y1);
             if (denom === 0) return false;
-            const ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom;
-            const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom;
+            const ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom; const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom;
             return (ua > 0.01 && ua < 0.99 && ub > 0.01 && ub < 0.99); 
         }
 
@@ -489,8 +421,7 @@
         window.confirmFinishGame = () => { showConfirmModal("RENDIRSE", "¿Finalizar la partida?", () => window.update({stat: 'end'})); };
         
         function showConfirmModal(title, message, onConfirm) {
-            const modal = document.getElementById('custom-modal');
-            if(!modal) return;
+            const modal = document.getElementById('custom-modal'); if(!modal) return;
             document.getElementById('modal-title').innerText = title; document.getElementById('modal-message').innerText = message;
             modal.style.display = 'flex';
             document.getElementById('modal-confirm').onclick = () => { modal.style.display='none'; onConfirm(); };
@@ -498,14 +429,7 @@
         }
         
         window.goHome = () => {
-            // AR FIX 1: Si estamos en AR, cerrar la sesión primero
-            if (ren && ren.xr.isPresenting) {
-                ren.xr.getSession().end().then(() => {
-                    performGoHome();
-                });
-            } else {
-                performGoHome();
-            }
+            if (ren && ren.xr.isPresenting) { ren.xr.getSession().end().then(() => { performGoHome(); }); } else { performGoHome(); }
         }
 
         function performGoHome() {
@@ -533,11 +457,10 @@
             if(!S.user) return window.systemToast("ERROR","Login requerido.");
             S.cpu=false; showLoad(true,"BUSCANDO RIVAL...");
             try {
-                const q = await getDocs(ROOMS_COLL);
-                let found = null;
+                const q = await getDocs(ROOMS_COLL); let found = null;
                 q.forEach(d => { const r = d.data(); if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest) found = d.id.replace('room_',''); });
                 if(found) await window.join(found); else { window.systemToast("INFO", "Creando sala pública..."); await window.create(true); }
-            } catch(e) { console.error(e); showLoad(false); window.systemToast("ERROR","Error de red. Intenta de nuevo."); }
+            } catch(e) { console.error(e); showLoad(false); window.systemToast("ERROR","Error de red."); }
         };
 
         window.createRoom = () => window.create(false);
@@ -603,16 +526,9 @@
             const win = myS > rivS ? 'WIN' : (myS < rivS ? 'LOSE' : 'DRAW');
             const tit = document.getElementById('win-title'); const msg = document.getElementById('win-msg');
             
-            if(win === 'DRAW') { 
-                tit.innerText = "EMPATE"; tit.className = "text-4xl md:text-6xl font-black text-warn mb-2 text-center"; 
-                msg.innerText = "EQUILIBRIO DE FUERZAS"; 
-            } else if(win === 'WIN') { 
-                tit.innerText = "VICTORIA"; tit.className = "text-4xl md:text-6xl font-black text-neon mb-2 animate-pulse text-center"; 
-                msg.innerText = "DOMINIO TOTAL"; 
-            } else { 
-                tit.innerText = "FIN DEL JUEGO"; tit.className = "text-4xl md:text-6xl font-black text-hot mb-2 text-center"; 
-                msg.innerText = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)]; 
-            }
+            if(win === 'DRAW') { tit.innerText = "EMPATE"; tit.className = "text-4xl md:text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "EQUILIBRIO"; }
+            else if(win === 'WIN') { tit.innerText = "VICTORIA"; tit.className = "text-4xl md:text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL"; }
+            else { tit.innerText = "FIN DEL JUEGO"; tit.className = "text-4xl md:text-6xl font-black text-hot mb-2 text-center"; msg.innerText = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)]; }
             document.getElementById('final-p1').innerText = myS; document.getElementById('final-p2').innerText = rivS;
             hideArControls();
         }
@@ -631,6 +547,9 @@
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor=d.dice?'#00f3ff':'#444'; dv.style.color=d.dice?'#00f3ff':'#555'; }
 
             if(ren && ren.xr.isPresenting) {
+                // MOSTRAR BOTÓN SALIR AR
+                document.getElementById('btn-exit-ar').classList.remove('hidden');
+                // MOSTRAR CONTROLES DE AR
                 if(d.arPos && (!S.cpu || placed)) { 
                     if(!S.cpu) {
                         const pos = new THREE.Vector3().fromArray(d.arPos); const rot = new THREE.Euler().fromArray(d.arRot);
@@ -646,13 +565,13 @@
                         document.getElementById('btn-ar-recal').style.display = isArHost ? 'inline-block' : 'none';
                     }
                 } else if (isArHost && !placed) { document.getElementById('ar-scan-text').innerText = "ESCANEA PISO"; document.getElementById('ar-hint').style.display = 'flex'; } 
-            } else { currentScale = d.scale || 1.0; if(group) group.scale.set(currentScale, currentScale, currentScale); }
+            } else { 
+                document.getElementById('btn-exit-ar').classList.add('hidden');
+                currentScale = d.scale || 1.0; if(group) group.scale.set(currentScale, currentScale, currentScale); 
+            }
             window.draw();
             if(d.stat === 'play') {
-                if(S.cpu && d.turn==='guest') { 
-                    if(d.movs===0 && !d.dice) setTimeout(()=>window.update({dice:Math.ceil(Math.random()*6),movs:3, skips:0}),1000); 
-                    else if(d.movs>0) setTimeout(window.cpuMove,1500);
-                }
+                if(S.cpu && d.turn==='guest') { if(d.movs===0 && !d.dice) setTimeout(()=>window.update({dice:Math.ceil(Math.random()*6),movs:3, skips:0}),1000); else if(d.movs>0) setTimeout(window.cpuMove,1500); }
                 window.checkGameEndCondition(); 
             }
         }
@@ -663,35 +582,17 @@
             for(let i=0; i<pts.length; i++) {
                 for(let j=i+1; j<pts.length; j++) {
                     const dist = pts[i].position.distanceTo(pts[j].position);
-                    if(dist < 1.3 && !d.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) {
-                        if(!window.checkCollision(i, j)) { movesPossible = true; break; }
-                    }
+                    if(dist < 1.3 && !d.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) { if(!window.checkCollision(i, j)) { movesPossible = true; break; } }
                 } if(movesPossible) break;
             }
-            if(!movesPossible) { console.log("Game Over"); window.update({stat: 'end'}); }
+            if(!movesPossible) { window.update({stat: 'end'}); }
         }
 
         window.cpuMove = () => { 
             let m=null; 
-            for(let i=0; i<pts.length; i++) {
-                for(let j=i+1; j<pts.length; j++) {
-                    if(pts[i].position.distanceTo(pts[j].position)<1.3 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j)) {
-                        const testLines = [...S.data.lines, {s:i,e:j,own:'guest'}];
-                        if (window.checkTri(i, j, 'guest', testLines).length > 0) { m={s:i,e:j}; break; }
-                    }
-                } if(m) break;
-            }
-            if(!m) {
-                const candidates = [];
-                for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) 
-                    if(pts[i].position.distanceTo(pts[j].position)<1.3 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j)) candidates.push({s:i,e:j});
-                if(candidates.length > 0) m = candidates[Math.floor(Math.random() * candidates.length)];
-            }
-            if(m) {
-                const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=window.checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length;
-                let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;}
-                window.update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
-            } else { window.update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1}); }
+            for(let i=0; i<pts.length; i++) { for(let j=i+1; j<pts.length; j++) { if(pts[i].position.distanceTo(pts[j].position)<1.3 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j)) { const testLines = [...S.data.lines, {s:i,e:j,own:'guest'}]; if (window.checkTri(i, j, 'guest', testLines).length > 0) { m={s:i,e:j}; break; } } } if(m) break; }
+            if(!m) { const candidates = []; for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) if(pts[i].position.distanceTo(pts[j].position)<1.3 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j)) candidates.push({s:i,e:j}); if(candidates.length > 0) m = candidates[Math.floor(Math.random() * candidates.length)]; }
+            if(m) { const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=window.checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length; let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;} window.update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0}); } else { window.update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1}); }
         }
 
         window.checkAR = () => {
@@ -699,7 +600,10 @@
             if('xr' in navigator) {
                 navigator.xr.isSessionSupported('immersive-ar').then(ok => {
                     el.innerHTML= ok ? '<span class="text-neon font-bold">AR DISPONIBLE</span>' : 'MODO 3D (No AR)';
-                    if(ok && !arInitialized) window.init3D();
+                    if(ok) {
+                        document.getElementById('btn-start-ar-float').classList.remove('hidden');
+                        if(!arInitialized) window.init3D();
+                    }
                 });
             } else el.innerText="MODO PC";
         }
@@ -712,11 +616,12 @@
             ren.domElement.style.position='absolute'; ren.domElement.style.top='0'; ren.domElement.style.zIndex='1';
             document.body.appendChild(ren.domElement);
             
-            const btn = ARButton.createButton(ren, { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body } });
-            document.getElementById('ar-zone').appendChild(btn);
+            arBtn = ARButton.createButton(ren, { requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body } });
+            document.getElementById('ar-zone').appendChild(arBtn);
 
             ren.xr.addEventListener('sessionstart', async (e)=>{
                 document.body.classList.add('ar-active');
+                document.getElementById('btn-start-ar-float').classList.add('hidden');
                 try {
                     const session = ren.xr.getSession(); arRefSpace = await session.requestReferenceSpace('local');
                     session.requestHitTestSource({space: arRefSpace}).then(h => arHit = h);
@@ -729,41 +634,41 @@
             });
 
             ren.xr.addEventListener('sessionend',()=>{ 
-                // AR FIX 2: Restaurar fondo al salir
-                document.body.classList.remove('ar-active');
+                document.body.classList.remove('ar-active'); 
                 const bg = document.getElementById('bg-canvas'); if(bg) { bg.style.opacity = '1'; bg.style.display = 'block'; }
                 window.recenter(); 
                 document.getElementById('btn-rec').style.display='flex';
                 document.getElementById('ar-hint').style.display='none';
+                document.getElementById('btn-exit-ar').classList.add('hidden');
+                if(document.getElementById('s-game').classList.contains('hidden') === false) {
+                     document.getElementById('btn-start-ar-float').classList.remove('hidden');
+                }
                 hideArControls(); placed = false; reticle.visible = false; arHit = null; 
             });
             
             scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); group=new THREE.Group(); scene.add(group);
-            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
+            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffff00}));
             reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
             ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
             
-            // AR FIX 3: GESTOS DE PELLIZCO (SCALE)
+            // GESTOS PINCH (SCALE)
             window.addEventListener('touchstart', (e) => {
                 if (ren.xr.isPresenting && e.touches.length === 2 && (!placed || !placementAccepted)) {
-                    const dx = e.touches[0].pageX - e.touches[1].pageX;
-                    const dy = e.touches[0].pageY - e.touches[1].pageY;
-                    initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
-                    initialScale = currentScale;
+                    const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
+                    initialPinchDistance = Math.sqrt(dx * dx + dy * dy); initialScale = currentScale;
                 }
             }, {passive: false});
 
             window.addEventListener('touchmove', (e) => {
                 if (ren.xr.isPresenting && e.touches.length === 2 && (!placed || !placementAccepted)) {
-                    const dx = e.touches[0].pageX - e.touches[1].pageX;
-                    const dy = e.touches[0].pageY - e.touches[1].pageY;
+                    const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (initialPinchDistance > 0) {
                         const scaleFactor = dist / initialPinchDistance;
-                        currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.5), 3.0);
+                        currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.05), 3.0);
                         if(group) group.scale.set(currentScale, currentScale, currentScale);
                     }
-                    e.preventDefault(); // Prevenir zoom del navegador
+                    e.preventDefault(); 
                 }
             }, {passive: false});
 
@@ -784,7 +689,7 @@
             S.data.lines.forEach(l=>{
                 const p=l.own==='host'?S.data.p1:S.data.p2; const c=p?new THREE.Color(p.c):new THREE.Color('#fff');
                 const p1=pts[l.s].position; const p2=pts[l.e].position;
-                const g=new THREE.CylinderGeometry(0.012,0.012,p1.distanceTo(p2),8); const m=new THREE.MeshBasicMaterial({color:c}); const o=new THREE.Mesh(g,m);
+                const g=new THREE.CylinderGeometry(0.01,0.01,p1.distanceTo(p2),8); const m=new THREE.MeshBasicMaterial({color:c}); const o=new THREE.Mesh(g,m);
                 o.position.copy(p1).lerp(p2,0.5); o.lookAt(p2); o.rotateX(Math.PI/2); o.userData.t=true; group.add(o);
             });
             S.data.tris.forEach(t=>{
