@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V42.0 FINAL MATCHMAKING</title>
+    <title>3 LINE-AR | V43.0 TOUCH FIX</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -21,7 +21,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        html, body { background-color: #000000; height: 100%; width: 100%; overflow: hidden; }
+        html, body { background-color: #000000; height: 100%; width: 100%; overflow: hidden; touch-action: none; } /* Touch-action none es vital */
         body { margin: 0; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
         body.ar-active { background-color: transparent !important; }
         body.ar-active #bg-canvas { display: none !important; }
@@ -73,14 +73,11 @@
         #ar-instructions { position: absolute; top: 30%; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 45; display: none; }
         .instr-card { background: rgba(0,0,0,0.6); border: 1px solid #00f3ff; color: #00f3ff; padding: 10px 20px; border-radius: 20px; display: inline-block; backdrop-filter: blur(4px); font-size: 12px; font-weight: bold; box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); }
 
-        /* Estilo para la sala en juego */
         #room-label-container { position: absolute; top: 70px; right: 10px; z-index: 10; pointer-events: none; }
         .room-badge { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 2px 6px; font-size: 8px; color: rgba(255,255,255,0.5); font-family: monospace; backdrop-filter: blur(2px); }
 
-        /* Estilo de Versión */
         .version-tag { position: absolute; top: 10px; right: 10px; font-family: monospace; font-size: 10px; color: #00f3ff; opacity: 0.7; z-index: 60; pointer-events: none; }
 
-        /* PANTALLA DE ESPERA (NUEVA) */
         #s-waiting { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 55; display: none; flex-direction: column; justify-content: center; align-items: center; }
         #s-waiting.active { display: flex; }
     </style>
@@ -90,8 +87,7 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     
-    <!-- VERSIÓN VISIBLE -->
-    <div class="version-tag">V42.0 ONLINE</div>
+    <div class="version-tag">V43.0 TOUCH FIX</div>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
@@ -112,7 +108,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V42.0 MATCHMAKING</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V43.0 TOUCH CONTROLS</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
@@ -315,7 +311,6 @@
                         nav('s-menu'); 
                     }
                     window.checkAR(); 
-                    // CRÍTICO: Asegurar que se habiliten los botones
                     setTimeout(() => window.updateMenuButtons(true), 500);
                 } else {
                     S.user = null; nav('s-login'); document.getElementById('login-btn-txt').innerText = "INICIAR SESIÓN"; window.updateMenuButtons(false);
@@ -339,7 +334,8 @@
 
         window.startARSession = () => { if(arBtn) arBtn.click(); }
 
-        window.onControllerSelect = () => {
+        // FUNCIÓN PARA FIJAR LA POSICIÓN (LLAMADA POR CONTROL O TOQUE)
+        window.doPlace = () => {
             if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
                 placed = true; reticle.visible = false;
                 group.position.setFromMatrixPosition(reticle.matrix); 
@@ -348,9 +344,11 @@
                 if(ghostGroup) ghostGroup.visible = false;
                 document.getElementById('ar-instructions').style.display='none';
                 showArControls();
-                window.gameToast("FIJADO", "Ahora ajusta tamaño si deseas.");
+                window.gameToast("FIJADO", "Pellizca para cambiar tamaño.");
             }
         }
+
+        window.onControllerSelect = () => { window.doPlace(); }
 
         function genPoints() {
             const p=[]; for(let i=0;i<16;i++){ let v=false, pt, att=0; while(!v && att<100){ pt = { x:(Math.random()-0.5)*1.8, y:0, z:(Math.random()-0.5)*1.8 }; let ok=true; for(let ex of p) if(Math.hypot(ex.x-pt.x, ex.z-pt.z) < 0.35) ok=false; if(ok) v=true; att++; } p.push(pt); } return p;
@@ -415,7 +413,7 @@
             else { window.gameToast("LÍNEA", "Enlace establecido."); }
             
             let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
-            window.update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0});
+            window.update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
         }
         
         window.checkCollision = (p1, p2) => { 
@@ -489,24 +487,19 @@
 
         const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
-        // --- MATCHMAKING MEJORADO ---
         window.quickMatch = async () => {
             if(!S.user) return window.systemToast("ERROR","Login requerido.");
             S.cpu=false; 
             showLoad(true, "BUSCANDO OPONENTE...");
             
             try {
-                // Traer todas las salas (en un entorno real usaríamos where() e índices)
                 const q = await getDocs(ROOMS_COLL); 
                 let found = null;
-                
-                // Filtrar localmente por estado 'wait', pública y reciente (últimos 10 mins)
                 const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
 
                 q.forEach(d => { 
                     const r = d.data(); 
                     if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest) {
-                         // Verificar si es reciente para evitar salas muertas
                          if(r.lastUpdate && r.lastUpdate > tenMinutesAgo) {
                             found = d.id.replace('room_','');
                          }
@@ -539,22 +532,17 @@
         window.create = async (pub) => {
             if(!S.user) return; if (S.room) window.goHome(); 
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
-            
             showLoad(true, pub ? "CREANDO PÚBLICA..." : "GENERANDO CÓDIGO...");
-            
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             try {
                 await setDoc(docRef, { host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, scale:1.0, arPos: null, arRot: null, arScale: 1.0, arAccepted: false, lastUpdate: Date.now() });
-                
-                // Si es privada, mostrar pantalla de espera
                 if(!pub) {
                     showLoad(false);
                     document.getElementById('waiting-code').innerText = c;
-                    nav('s-waiting'); // Mostrar pantalla de espera
+                    nav('s-waiting'); 
                 } else {
                      document.getElementById('room-lbl').innerText="PÚBLICA";
                 }
-                
                 window.sub(c); 
             } catch (e) { showLoad(false); window.systemToast("ERROR", "Permisos insuficientes."); }
         }
@@ -580,7 +568,6 @@
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { 
-                        // SI EMPIEZA EL JUEGO, QUITAR PANTALLA DE ESPERA
                         const waitScreen = document.getElementById('s-waiting');
                         if(waitScreen && waitScreen.classList.contains('active')) {
                              nav('s-game');
@@ -662,12 +649,14 @@
                     }
                 } else if (isArHost && !placed) { 
                     document.getElementById('ar-instructions').style.display='block';
-                    document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>MODO ESCANEO</span><br>Fija el juego donde quieras";
+                    document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>MODO ESCANEO</span><br>Toca pantalla para fijar";
                 } 
             } else { 
                 document.getElementById('btn-exit-ar').classList.add('hidden');
                 document.getElementById('ar-instructions').style.display='none';
-                currentScale = d.scale || 1.0; if(group) group.scale.set(currentScale, currentScale, currentScale); 
+                // En modo 3D, aseguramos que la escala se aplique también
+                currentScale = d.scale || 1.0; 
+                if(group) group.scale.set(currentScale, currentScale, currentScale); 
             }
             window.draw();
             if(d.stat === 'play') {
@@ -756,24 +745,38 @@
 
             ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
             
+            // --- GESTIÓN TÁCTIL UNIVERSAL (AR Y 3D) ---
             window.addEventListener('touchstart', (e) => {
-                if (ren.xr.isPresenting && e.touches.length === 2 && (!placed || !placementAccepted)) {
+                // Si tocamos con 2 dedos, iniciamos el escalado
+                if (e.touches.length === 2) {
                     const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
                     initialPinchDistance = Math.sqrt(dx * dx + dy * dy); initialScale = currentScale;
+                }
+                
+                // FALLBACK PARA COLOCACIÓN EN AR (Si el controller select falla)
+                if (ren.xr.isPresenting && !placed && e.touches.length === 1) {
+                    // Un toque simple en pantalla también intenta colocar el tablero
+                    window.doPlace();
                 }
             }, {passive: false});
 
             window.addEventListener('touchmove', (e) => {
-                if (ren.xr.isPresenting && e.touches.length === 2 && (!placed || !placementAccepted)) {
+                // Lógica de escalado con 2 dedos
+                if (e.touches.length === 2) {
                     const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (initialPinchDistance > 0) {
                         const scaleFactor = dist / initialPinchDistance;
-                        currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.05), 3.0);
+                        // Limitamos la escala para que no desaparezca ni sea gigante
+                        currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.05), 5.0);
+                        
                         if(group) group.scale.set(currentScale, currentScale, currentScale);
                         if(ghostGroup) ghostGroup.scale.set(currentScale, currentScale, currentScale);
+                        
+                        // Mostrar feedback visual
+                        window.gameToast("TAMAÑO", `${currentScale.toFixed(2)}x`);
                     }
-                    e.preventDefault(); 
+                    e.preventDefault(); // Prevenir zoom nativo del navegador
                 }
             }, {passive: false});
 
@@ -785,7 +788,9 @@
                 const obj=h.find(x=>x.object.parent && x.object.parent.userData.id!==undefined); 
                 if(obj) window.clickPt(obj.object.parent.userData.id);
             });
-            controls=new OrbitControls(cam,ren.domElement); window.recenter();
+            controls=new OrbitControls(cam,ren.domElement); 
+            controls.enableDamping = true; // Suavizado
+            window.recenter();
         }
 
         // BUCLE DE AR CON "MODO FLOTANTE" (FALLBACK)
@@ -807,7 +812,7 @@
                             // Color Verde/Cian para indicar éxito
                             reticle.children.forEach(c => c.material.color.setHex(0x39ff14));
                             hitFound = true;
-                            document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>PISO DETECTADO</span>";
+                            document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>PISO DETECTADO</span><br>Toca pantalla para fijar";
                         }
                     }
 
@@ -827,7 +832,7 @@
                             reticle.updateMatrix();
                             
                             reticle.children.forEach(c => c.material.color.setHex(0xffcc00));
-                            document.getElementById('ar-instr-txt').innerHTML = "<span class='text-warn'>MODO AÉREO</span>";
+                            document.getElementById('ar-instr-txt').innerHTML = "<span class='text-warn'>MODO AÉREO</span><br>Toca para fijar en el aire";
                         }
                     }
                     
