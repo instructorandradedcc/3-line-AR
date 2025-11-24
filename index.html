@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V38.4 FINAL LOGIC FIX</title>
+    <title>3 LINE-AR | V38.5 AR FIXES</title>
     
     <!-- Dependencias -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -102,7 +102,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V38.4 FINAL LOGIC FIX</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V38.5 AR FIXES</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
@@ -154,7 +154,7 @@
                 </div>
                 <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V38.4 FINAL LOGIC FIX</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V38.5 AR FIXES</div>
             </div>
         </div>
 
@@ -275,16 +275,7 @@
             };
         }
 
-        const LOSE_MSGS = [
-            "¡MUY BUENA PARA LA PRÓXIMA!",
-            "BUEN INTENTO, AGENTE",
-            "LA PRÓXIMA LO LOGRARÁS",
-            "GRAN ESTRATEGIA, PERO NO BASTÓ",
-            "CASI LO TIENES, SIGUE ASÍ",
-            "SIGUE PRACTICANDO",
-            "BIEN JUGADO, AUNQUE PERDISTE",
-            "NO TE RINDAS AHORA"
-        ];
+        const LOSE_MSGS = ["¡MUY BUENA PARA LA PRÓXIMA!", "BUEN INTENTO, AGENTE", "LA PRÓXIMA LO LOGRARÁS", "GRAN ESTRATEGIA, PERO NO BASTÓ", "CASI LO TIENES, SIGUE ASÍ", "SIGUE PRACTICANDO", "BIEN JUGADO, AUNQUE PERDISTE", "NO TE RINDAS AHORA"];
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSfx(type) {
@@ -303,6 +294,7 @@
         let pts=[], selPt=null, placed=false, roomUnsub=null, currentScale=1.0;
         let arInitialized = false, isArHost = false, placementAccepted = false; 
         let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace;
+        let initialPinchDistance = 0; let initialScale = 1.0;
 
         function nav(id) {
             ['s-login','s-menu','s-game','win-screen'].forEach(i => { 
@@ -360,7 +352,6 @@
             catch(e) { showLoad(false); window.systemToast("ERROR","Error de autenticación."); console.error(e); } 
         };
 
-        // --- GAME LOGIC ---
         window.onControllerSelect = () => {
             if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
                 placed = true; reticle.visible = false;
@@ -451,8 +442,6 @@
             const d=S.data; const v1=pts[p1].position; const v2=pts[p2].position;
             if(v1.distanceTo(v2) * currentScale > 1.3 * currentScale) return window.gameToast("RANGO","Demasiado lejos"); 
             if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return window.gameToast("OCUPADO","Enlace existente");
-            
-            // CORRECCIÓN CRÍTICA: Bloquear cualquier cruce con líneas existentes (sean de triángulos o no)
             if(window.checkCollision(p1, p2)) { playSfx('error'); return window.gameToast("BLOQUEADO", "No puedes cruzar líneas"); }
             
             const nl=[...d.lines,{s:p1,e:p2,own:S.role}]; const nt=window.checkTri(p1,p2,S.role,nl); const sc={...d.sc}; 
@@ -463,14 +452,11 @@
             window.update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
         }
         
-        // CORRECCIÓN CRÍTICA: Validar colisión contra TODAS las líneas del tablero
         window.checkCollision = (p1, p2) => { 
             const A = pts[p1].position; const B = pts[p2].position;
             const lines = S.data.lines;
             for (let l of lines) {
-                // Si comparten un punto (se conectan en un nodo), no cuenta como colisión
                 if(l.s===p1 || l.s===p2 || l.e===p1 || l.e===p2) continue;
-
                 const C = pts[l.s].position; const D = pts[l.e].position;
                 if (window.intersectLine(A, B, C, D)) return true;
             }
@@ -483,7 +469,6 @@
             if (denom === 0) return false;
             const ua = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / denom;
             const ub = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / denom;
-            // Estrictamente mayor que 0 y menor que 1 para evitar falsos positivos en vértices
             return (ua > 0.01 && ua < 0.99 && ub > 0.01 && ub < 0.99); 
         }
 
@@ -513,6 +498,17 @@
         }
         
         window.goHome = () => {
+            // AR FIX 1: Si estamos en AR, cerrar la sesión primero
+            if (ren && ren.xr.isPresenting) {
+                ren.xr.getSession().end().then(() => {
+                    performGoHome();
+                });
+            } else {
+                performGoHome();
+            }
+        }
+
+        function performGoHome() {
             if(roomUnsub) roomUnsub(); roomUnsub=null; S.room = null; S.data = null;
             nav('s-menu'); isArHost = false; placementAccepted = false; hideArControls();
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
@@ -615,7 +611,6 @@
                 msg.innerText = "DOMINIO TOTAL"; 
             } else { 
                 tit.innerText = "FIN DEL JUEGO"; tit.className = "text-4xl md:text-6xl font-black text-hot mb-2 text-center"; 
-                // Mensaje aleatorio motivacional
                 msg.innerText = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)]; 
             }
             document.getElementById('final-p1').innerText = myS; document.getElementById('final-p2').innerText = rivS;
@@ -669,7 +664,6 @@
                 for(let j=i+1; j<pts.length; j++) {
                     const dist = pts[i].position.distanceTo(pts[j].position);
                     if(dist < 1.3 && !d.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i))) {
-                        // Aquí usamos la nueva lógica estricta de colisión
                         if(!window.checkCollision(i, j)) { movesPossible = true; break; }
                     }
                 } if(movesPossible) break;
@@ -735,7 +729,10 @@
             });
 
             ren.xr.addEventListener('sessionend',()=>{ 
-                document.body.classList.remove('ar-active'); window.recenter(); 
+                // AR FIX 2: Restaurar fondo al salir
+                document.body.classList.remove('ar-active');
+                const bg = document.getElementById('bg-canvas'); if(bg) { bg.style.opacity = '1'; bg.style.display = 'block'; }
+                window.recenter(); 
                 document.getElementById('btn-rec').style.display='flex';
                 document.getElementById('ar-hint').style.display='none';
                 hideArControls(); placed = false; reticle.visible = false; arHit = null; 
@@ -746,6 +743,30 @@
             reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
             ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
             
+            // AR FIX 3: GESTOS DE PELLIZCO (SCALE)
+            window.addEventListener('touchstart', (e) => {
+                if (ren.xr.isPresenting && e.touches.length === 2 && (!placed || !placementAccepted)) {
+                    const dx = e.touches[0].pageX - e.touches[1].pageX;
+                    const dy = e.touches[0].pageY - e.touches[1].pageY;
+                    initialPinchDistance = Math.sqrt(dx * dx + dy * dy);
+                    initialScale = currentScale;
+                }
+            }, {passive: false});
+
+            window.addEventListener('touchmove', (e) => {
+                if (ren.xr.isPresenting && e.touches.length === 2 && (!placed || !placementAccepted)) {
+                    const dx = e.touches[0].pageX - e.touches[1].pageX;
+                    const dy = e.touches[0].pageY - e.touches[1].pageY;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (initialPinchDistance > 0) {
+                        const scaleFactor = dist / initialPinchDistance;
+                        currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.5), 3.0);
+                        if(group) group.scale.set(currentScale, currentScale, currentScale);
+                    }
+                    e.preventDefault(); // Prevenir zoom del navegador
+                }
+            }, {passive: false});
+
             window.addEventListener('pointerdown', (e)=>{
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return; if(ren.xr.isPresenting) return;
                 const m=new THREE.Vector2((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
