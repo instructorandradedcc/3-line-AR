@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V38.7 NETWORK & AR FIX</title>
+    <title>3 LINE-AR | V39.0 FIXED UI & AR</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -22,8 +22,6 @@
     
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; transition: background-color 0.5s; }
-        
-        /* AR MODE: Fondo transparente */
         body.ar-active { background-color: transparent !important; }
         body.ar-active #bg-canvas { opacity: 0 !important; display: none; }
         
@@ -71,8 +69,19 @@
         #modal-content { background: rgba(8, 12, 18, 0.98); backdrop-filter: blur(20px); border: 2px solid #00f3ff; border-radius: 12px; padding: 24px; max-width: 300px; width: 90%; text-align: center; color: white; box-shadow: 0 0 50px rgba(0, 243, 255, 0.3); }
         #room-label-container { position: absolute; top: 15%; left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: none; }
         
-        /* Botón flotante para iniciar AR */
-        #btn-start-ar-float { position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); z-index: 50; }
+        /* Botón flotante para iniciar AR - Posicionado más arriba para no chocar */
+        #btn-start-ar-float { position: absolute; bottom: 180px; left: 50%; transform: translateX(-50%); z-index: 50; width: auto; white-space: nowrap; }
+        
+        /* Instrucciones de AR en pantalla */
+        #ar-instructions {
+            position: absolute; top: 20%; left: 0; width: 100%; text-align: center; pointer-events: none; z-index: 45; display: none;
+        }
+        .instr-card {
+            background: rgba(0,0,0,0.7); border: 1px solid #00f3ff; color: #00f3ff; 
+            padding: 10px 20px; border-radius: 20px; display: inline-block;
+            backdrop-filter: blur(4px); font-size: 12px; font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+        }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -99,7 +108,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V38.7 NETWORK & AR FIX</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V39.0 FIXED AR UI</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
@@ -151,7 +160,7 @@
                 </div>
                 <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR CONTRA LA MÁQUINA</button>
                 <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
-                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V38.7 NETWORK & AR FIX</div>
+                <div id="version-lbl" class="text-center mt-2 text-[8px] text-gray-700 font-mono tracking-widest">V39.0 FIXED AR UI</div>
             </div>
         </div>
 
@@ -187,13 +196,10 @@
 
             <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span></div>
 
-            <!-- HINT AR MEJORADO -->
-            <div id="ar-hint" class="absolute top-24 left-1/2 -translate-x-1/2 pointer-events-none hidden flex-col items-center z-0">
-                <div class="w-16 h-16 border-2 border-warn rounded-full animate-ping absolute opacity-50"></div>
-                <div class="w-16 h-16 border border-warn rounded-full absolute opacity-20"></div>
-                <div class="w-2 h-2 bg-warn rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-                <span id="ar-scan-text" class="bg-black/80 text-[10px] px-3 py-2 text-warn border border-warn rounded mt-20 font-bold tracking-widest backdrop-blur shadow-[0_0_15px_#ffcc00]">BUSCANDO PISO...</span>
-                <span id="ar-scale-hint" class="hidden mt-2 text-[8px] text-white bg-black/50 px-2 rounded animate-pulse">PELLIZCA PANTALLA PARA CAMBIAR TAMAÑO</span>
+            <!-- INSTRUCCIONES AR NUEVAS -->
+            <div id="ar-instructions">
+                <div class="instr-card" id="ar-instr-txt">MUEVE EL CELULAR PARA DETECTAR PISO</div>
+                <div id="ar-hand-anim" class="mt-2 text-2xl text-white animate-pulse"><i class="fas fa-mobile-alt"></i></div>
             </div>
 
             <div class="flex justify-center items-center flex-grow pointer-events-none absolute bottom-1/2 left-1/2 -translate-x-1/2 translate-y-1/2">
@@ -206,18 +212,18 @@
                 <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
             </div>
             
-            <!-- BOTÓN START AR (Flotante) -->
+            <!-- BOTÓN START AR (Flotante) - Corregido -->
             <div id="btn-start-ar-float" class="hidden interactive">
-                <button onclick="window.startARSession()" class="btn-neon py-3 px-6 text-xs shadow-[0_0_20px_#00f3ff] animate-bounce"><i class="fas fa-cube mr-2"></i> INICIAR AR</button>
+                <button onclick="window.startARSession()" class="btn-neon py-3 px-6 text-xs shadow-[0_0_20px_#00f3ff] animate-bounce bg-black/80"><i class="fas fa-cube mr-2"></i> INICIAR MODO AR</button>
             </div>
 
-            <!-- BOTÓN SALIR AR (Nuevo, visible solo en AR) -->
+            <!-- BOTÓN SALIR AR -->
             <div id="btn-exit-ar" class="hidden interactive absolute bottom-8 right-4 z-50">
-                <button onclick="window.goHome()" class="bg-red-600/90 text-white border border-red-400 font-bold py-3 px-6 rounded-lg shadow-lg text-xs backdrop-blur"><i class="fas fa-times-circle mr-2"></i> SALIR MODO AR</button>
+                <button onclick="window.goHome()" class="bg-red-600/90 text-white border border-red-400 font-bold py-3 px-6 rounded-lg shadow-lg text-xs backdrop-blur"><i class="fas fa-times-circle mr-2"></i> SALIR AR</button>
             </div>
             
             <div id="ar-controls" class="interactive absolute bottom-4 left-1/2 -translate-x-1/2 hidden justify-center gap-4 z-40 w-full px-4">
-                <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn flex-1"><i class="fas fa-check mr-2"></i> FIJAR</button>
+                <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn flex-1"><i class="fas fa-check mr-2"></i> JUGAR AQUÍ</button>
                 <button onclick="window.recalibrate()" id="btn-ar-recal" class="ar-sync-btn flex-1"><i class="fas fa-sync-alt mr-2"></i> MOVER</button>
             </div>
         </div>
@@ -276,25 +282,15 @@
         }
 
         let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
-        let pts=[], selPt=null, placed=false, roomUnsub=null, currentScale=0.1;
+        let pts=[], selPt=null, placed=false, roomUnsub=null, currentScale=0.1; 
         let arInitialized = false, isArHost = false, placementAccepted = false; 
-        let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace, arBtn;
+        let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace, arBtn, ghostGroup;
         let initialPinchDistance = 0; let initialScale = 0.1;
 
         function nav(id) {
             ['s-login','s-menu','s-game','win-screen'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); } });
             const target = document.getElementById(id); if (target) { target.classList.remove('hidden'); if(id === 'win-screen') target.classList.add('active'); }
         }
-
-        // --- SEGURIDAD DE RED MÓVIL ---
-        // Si el listener de Firebase tarda más de 4s en detectar usuario, liberamos el botón
-        setTimeout(() => {
-            if (!S.user) {
-                document.getElementById('login-btn-txt').innerText = "INICIAR SESIÓN";
-                document.getElementById('btn-login-google').classList.remove('btn-disabled');
-                document.getElementById('login-msg').innerText = "Toque para conectar manualmente";
-            }
-        }, 4000);
 
         if (auth) {
             onAuthStateChanged(auth, async (u) => {
@@ -310,7 +306,7 @@
                     S.user = null; nav('s-login'); document.getElementById('login-btn-txt').innerText = "INICIAR SESIÓN"; window.updateMenuButtons(false);
                 }
             });
-        }
+        } else { setTimeout(() => { document.getElementById('login-btn-txt').innerText = "ERROR DE SISTEMA"; }, 1000); }
 
         async function registerUserAccess(u) { const userRef = doc(db, 'artifacts', appId, 'users', u.uid); await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online' }, { merge: true }); }
         window.updateMenuButtons = (enabled) => { ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'].forEach(id => { const btn = document.getElementById(id); if (btn) { if(enabled) btn.classList.remove('btn-disabled'); else btn.classList.add('btn-disabled'); } }); };
@@ -323,13 +319,19 @@
         window.onControllerSelect = () => {
             if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
                 placed = true; reticle.visible = false;
+                
+                // FIJAR TABLERO
                 group.position.setFromMatrixPosition(reticle.matrix); 
                 group.rotation.setFromRotationMatrix(reticle.matrix);
                 group.visible = true;
-                document.getElementById('ar-hint').style.display='flex';
-                document.getElementById('ar-scan-text').innerText = "TABLERO FIJADO";
-                document.getElementById('ar-scale-hint').style.display = 'block';
+                
+                // OCULTAR FANTASMA
+                if(ghostGroup) ghostGroup.visible = false;
+
+                document.getElementById('ar-instructions').style.display='none'; // Ocultar instrucciones
+                
                 showArControls();
+                window.gameToast("POSICIÓN FIJADA", "Pellizca para cambiar tamaño.");
             }
         }
 
@@ -349,24 +351,46 @@
         window.buildBoard = () => {
             if(!S.data || !S.data.points || !group) return;
             while(group.children.length > 0) group.remove(group.children[0]);
-            pts = [];
-            const geo=new THREE.SphereGeometry(0.03,32,32); 
-            // MATERIAL MÁS BRILLANTE PARA AR
-            const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:3.0}); 
-            const hGeo=new THREE.SphereGeometry(0.1); const hMat=new THREE.MeshBasicMaterial({visible:false});
             
+            // LIMPIAR FANTASMA TAMBIÉN
+            if(ghostGroup) { while(ghostGroup.children.length > 0) ghostGroup.remove(ghostGroup.children[0]); }
+            else if(scene) { ghostGroup = new THREE.Group(); scene.add(ghostGroup); }
+
+            pts = [];
+            
+            const geo=new THREE.SphereGeometry(0.03,32,32); 
+            const mat=new THREE.MeshStandardMaterial({color:0x111111, emissive:0x00f3ff, emissiveIntensity:2}); 
+            const hGeo=new THREE.SphereGeometry(0.1); const hMat=new THREE.MeshBasicMaterial({visible:false}); 
+            
+            // Material Fantasma (Semi-transparente)
+            const ghostMat = new THREE.MeshBasicMaterial({color: 0x00f3ff, transparent: true, opacity: 0.3});
+
             S.data.points.forEach((p,i)=>{
+                // MESH REAL
                 const m=new THREE.Mesh(geo,mat.clone()); m.position.set(p.x,p.y,p.z); m.userData.id=i;
                 m.add(new THREE.Mesh(hGeo,hMat)); 
-                m.add(new THREE.Mesh(new THREE.SphereGeometry(0.05,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.5})));
+                m.add(new THREE.Mesh(new THREE.SphereGeometry(0.05,16,16), new THREE.MeshBasicMaterial({color:0x00f3ff, transparent:true, opacity:0.3})));
                 group.add(m); pts.push(m);
+                
+                // MESH FANTASMA (Para preview)
+                if(ghostGroup) {
+                    const gm = new THREE.Mesh(geo, ghostMat);
+                    gm.position.set(p.x, p.y, p.z);
+                    ghostGroup.add(gm);
+                }
             });
+            
             window.draw();
             if (ren && !ren.xr.isPresenting) { 
                 group.visible = true; placed = true; window.recenter(); 
+                if(ghostGroup) ghostGroup.visible = false;
             } else {
                 currentScale = 0.1; 
                 group.scale.set(0.1, 0.1, 0.1);
+                if(ghostGroup) {
+                    ghostGroup.scale.set(0.1, 0.1, 0.1);
+                    ghostGroup.visible = false; // Solo visible cuando reticle es visible
+                }
             }
         }
 
@@ -440,27 +464,13 @@
         }
         
         window.goHome = () => {
-            if (ren && ren.xr.isPresenting) { 
-                // Intentar terminar sesión AR y luego ir al Home
-                ren.xr.getSession().end().then(() => performGoHome()).catch(() => performGoHome()); 
-            } else { 
-                performGoHome(); 
-            }
+            if (ren && ren.xr.isPresenting) { ren.xr.getSession().end().then(() => { performGoHome(); }); } else { performGoHome(); }
         }
 
-        // --- FIX PANTALLA BLANCA ---
-        // Esta función fuerza la limpieza de estados de AR
         function performGoHome() {
-            document.body.classList.remove('ar-active');
-            const bg = document.getElementById('bg-canvas');
-            if(bg) { bg.style.opacity = '1'; bg.style.display = 'block'; }
-            
             if(roomUnsub) roomUnsub(); roomUnsub=null; S.room = null; S.data = null;
             nav('s-menu'); isArHost = false; placementAccepted = false; hideArControls();
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
-            
-            // Resetear cámara 3D normal
-            window.recenter();
         }
         
         window.goHomeAfterWin = () => { setTimeout(window.goHome, 500); }
@@ -572,24 +582,40 @@
             else { b.style.opacity=0; dv.innerText=d.dice||"?"; dv.style.borderColor=d.dice?'#00f3ff':'#444'; dv.style.color=d.dice?'#00f3ff':'#555'; }
 
             if(ren && ren.xr.isPresenting) {
+                // MOSTRAR BOTÓN SALIR AR
                 document.getElementById('btn-exit-ar').classList.remove('hidden');
+                
+                // OCULTAR UI NO NECESARIA
+                document.getElementById('btn-rec').style.display = 'none';
+
                 if(d.arPos && (!S.cpu || placed)) { 
                     if(!S.cpu) {
                         const pos = new THREE.Vector3().fromArray(d.arPos); const rot = new THREE.Euler().fromArray(d.arRot);
-                        if (!placed || !d.arAccepted) { group.position.copy(pos); group.rotation.copy(rot); group.visible = true; placed = true; reticle.visible = false; }
+                        if (!placed || !d.arAccepted) { 
+                            group.position.copy(pos); group.rotation.copy(rot); group.visible = true; 
+                            placed = true; reticle.visible = false; 
+                            if(ghostGroup) ghostGroup.visible = false; 
+                        }
                         currentScale = d.arScale || 1.0; group.scale.set(currentScale, currentScale, currentScale);
                         placementAccepted = d.arAccepted;
                     }
-                    if (S.cpu || d.arAccepted) { hideArControls(); document.getElementById('ar-scan-text').innerText = "EN JUEGO"; document.getElementById('ar-hint').style.display = 'none'; } 
-                    else {
-                        showArControls(); document.getElementById('ar-scan-text').innerText = "AJUSTANDO...";
+                    if (S.cpu || d.arAccepted) { 
+                        hideArControls(); 
+                        document.getElementById('ar-instructions').style.display='none';
+                    } else {
+                        showArControls();
+                        document.getElementById('ar-instr-txt').innerText = "AJUSTANDO POSICIÓN...";
                         document.getElementById('btn-ar-accept').innerText = isArHost ? "FIJAR" : "ESPERANDO HOST...";
                         document.getElementById('btn-ar-accept').disabled = !isArHost; 
                         document.getElementById('btn-ar-recal').style.display = isArHost ? 'inline-block' : 'none';
                     }
-                } else if (isArHost && !placed) { document.getElementById('ar-scan-text').innerText = "ESCANEA PISO"; document.getElementById('ar-hint').style.display = 'flex'; } 
+                } else if (isArHost && !placed) { 
+                    document.getElementById('ar-instructions').style.display='block';
+                    document.getElementById('ar-instr-txt').innerText = "ESCANEA PISO Y TOCA EL CÍRCULO";
+                } 
             } else { 
                 document.getElementById('btn-exit-ar').classList.add('hidden');
+                document.getElementById('ar-instructions').style.display='none';
                 currentScale = d.scale || 1.0; if(group) group.scale.set(currentScale, currentScale, currentScale); 
             }
             window.draw();
@@ -644,23 +670,48 @@
 
             ren.xr.addEventListener('sessionstart', async (e)=>{
                 document.body.classList.add('ar-active');
-                document.getElementById('btn-start-ar-float').classList.add('hidden');
+                document.getElementById('btn-start-ar-float').classList.add('hidden'); // Ocultar flotante
+                document.getElementById('btn-rec').style.display='none'; // Ocultar reciente
+                
                 try {
                     const session = ren.xr.getSession(); arRefSpace = await session.requestReferenceSpace('local');
                     session.requestHitTestSource({space: arRefSpace}).then(h => arHit = h);
                 } catch (e) { console.error("AR Error", e); }
+                
                 placed = false; group.visible = false; reticle.visible = true; 
-                document.getElementById('ar-hint').style.display = 'flex'; 
-                document.getElementById('ar-scan-text').innerText = "MUEVE EL MÓVIL SUAVEMENTE";
-                document.getElementById('btn-rec').style.display='none';
+                document.getElementById('ar-instructions').style.display = 'block';
+                document.getElementById('ar-instr-txt').innerText = "ESCANEA EL SUELO MOVIENDO EL MÓVIL";
+
                 const c = ren.xr.getController(0); c.addEventListener('select', window.onControllerSelect);
             });
 
-            ren.xr.addEventListener('sessionend',()=>{ performGoHome(); });
+            ren.xr.addEventListener('sessionend',()=>{ 
+                document.body.classList.remove('ar-active'); 
+                const bg = document.getElementById('bg-canvas'); if(bg) { bg.style.opacity = '1'; bg.style.display = 'block'; }
+                window.recenter(); 
+                document.getElementById('btn-rec').style.display='flex';
+                document.getElementById('ar-instructions').style.display='none';
+                document.getElementById('btn-exit-ar').classList.add('hidden');
+                
+                // Mostrar botón flotante si estamos en juego
+                if(document.getElementById('s-game').classList.contains('hidden') === false) {
+                     document.getElementById('btn-start-ar-float').classList.remove('hidden');
+                }
+                
+                hideArControls(); placed = false; reticle.visible = false; arHit = null; 
+            });
             
             scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); group=new THREE.Group(); scene.add(group);
-            reticle=new THREE.Mesh(new THREE.RingGeometry(0.1,0.11,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffff00}));
+            
+            // RETÍCULO MEJORADO (VISUALIZACIÓN DE PISO)
+            reticle=new THREE.Group();
+            const rRing = new THREE.Mesh(new THREE.RingGeometry(0.15,0.16,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
+            const rDot = new THREE.Mesh(new THREE.CircleGeometry(0.02,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff}));
+            reticle.add(rRing); reticle.add(rDot);
             reticle.visible=false; reticle.matrixAutoUpdate=false; scene.add(reticle);
+            
+            ghostGroup = new THREE.Group(); scene.add(ghostGroup);
+
             ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
             
             // GESTOS PINCH (SCALE)
@@ -679,6 +730,7 @@
                         const scaleFactor = dist / initialPinchDistance;
                         currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.05), 3.0);
                         if(group) group.scale.set(currentScale, currentScale, currentScale);
+                        if(ghostGroup) ghostGroup.scale.set(currentScale, currentScale, currentScale);
                     }
                     e.preventDefault(); 
                 }
@@ -728,10 +780,26 @@
                 if (frame && arRefSpace && arHit) {
                     const h=frame.getHitTestResults(arHit);
                     if(!placed && h.length && isArHost) { 
-                        reticle.visible=true; reticle.matrix.fromArray(h[0].getPose(arRefSpace).transform.matrix);
-                        document.getElementById('ar-scan-text').innerText = "DETECTADO - TOCA PARA FIJAR";
-                        document.getElementById('ar-hint').classList.remove('opacity-50');
-                    } else if (!placed && !isArHost) { reticle.visible = false; } else { reticle.visible=false; }
+                        reticle.visible=true; 
+                        reticle.matrix.fromArray(h[0].getPose(arRefSpace).transform.matrix);
+                        
+                        // MOVER FANTASMA DONDE ESTÉ EL RETÍCULO
+                        if(ghostGroup) {
+                            ghostGroup.visible = true;
+                            ghostGroup.position.setFromMatrixPosition(reticle.matrix);
+                            ghostGroup.rotation.setFromRotationMatrix(reticle.matrix);
+                        }
+
+                        document.getElementById('ar-instr-txt').innerText = "TOCA PARA FIJAR EL JUEGO";
+                        document.getElementById('ar-hand-anim').classList.remove('fa-mobile-alt');
+                        document.getElementById('ar-hand-anim').classList.add('fa-hand-pointer');
+                    } else if (!placed) { 
+                        reticle.visible = false; 
+                        if(ghostGroup) ghostGroup.visible = false;
+                        document.getElementById('ar-instr-txt').innerText = "BUSCANDO PISO...";
+                        document.getElementById('ar-hand-anim').classList.add('fa-mobile-alt');
+                        document.getElementById('ar-hand-anim').classList.remove('fa-hand-pointer');
+                    }
                 }
             }
             ren.render(scene,cam);
