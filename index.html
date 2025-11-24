@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V43.0 TOUCH FIX</title>
+    <title>3 LINE-AR | V44.0 DRAG & DROP</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -21,7 +21,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        html, body { background-color: #000000; height: 100%; width: 100%; overflow: hidden; touch-action: none; } /* Touch-action none es vital */
+        html, body { background-color: #000000; height: 100%; width: 100%; overflow: hidden; touch-action: none; } 
         body { margin: 0; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
         body.ar-active { background-color: transparent !important; }
         body.ar-active #bg-canvas { display: none !important; }
@@ -87,7 +87,7 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     
-    <div class="version-tag">V43.0 TOUCH FIX</div>
+    <div class="version-tag">V44.0 DRAG & DROP</div>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
@@ -108,7 +108,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V43.0 TOUCH CONTROLS</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V44.0 ARQUITECTURA</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon btn-disabled w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">VERIFICANDO...</span>
@@ -295,6 +295,12 @@
         let arInitialized = false, isArHost = false, placementAccepted = false; 
         let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace, arBtn, ghostGroup;
         let initialPinchDistance = 0; let initialScale = 0.1;
+        
+        // VARIABLES PARA ARRASTRAR (DRAG)
+        let isDragging = false;
+        let dragPlane = new THREE.Plane();
+        let dragOffset = new THREE.Vector3();
+        const raycaster = new THREE.Raycaster();
 
         function nav(id) {
             ['s-login','s-menu','s-game','s-waiting','win-screen'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); if(i==='s-waiting') el.classList.remove('active');} });
@@ -334,7 +340,6 @@
 
         window.startARSession = () => { if(arBtn) arBtn.click(); }
 
-        // FUNCIÓN PARA FIJAR LA POSICIÓN (LLAMADA POR CONTROL O TOQUE)
         window.doPlace = () => {
             if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
                 placed = true; reticle.visible = false;
@@ -344,7 +349,7 @@
                 if(ghostGroup) ghostGroup.visible = false;
                 document.getElementById('ar-instructions').style.display='none';
                 showArControls();
-                window.gameToast("FIJADO", "Pellizca para cambiar tamaño.");
+                window.gameToast("FIJADO", "Pellizca para escalar o arrastra para mover.");
             }
         }
 
@@ -654,7 +659,6 @@
             } else { 
                 document.getElementById('btn-exit-ar').classList.add('hidden');
                 document.getElementById('ar-instructions').style.display='none';
-                // En modo 3D, aseguramos que la escala se aplique también
                 currentScale = d.scale || 1.0; 
                 if(group) group.scale.set(currentScale, currentScale, currentScale); 
             }
@@ -713,6 +717,8 @@
                 document.getElementById('btn-start-ar-float').classList.add('hidden'); 
                 document.getElementById('btn-rec').style.display='none'; 
                 
+                if(controls) controls.enabled = false; // DESACTIVAR CONTROLES DE CÁMARA EN AR PARA PERMITIR ARRASTRE
+
                 try {
                     const session = ren.xr.getSession(); arRefSpace = await session.requestReferenceSpace('local');
                     session.requestHitTestSource({space: arRefSpace}).then(h => arHit = h);
@@ -728,12 +734,12 @@
             ren.xr.addEventListener('sessionend',()=>{ 
                 document.body.classList.remove('ar-active'); 
                 const bg = document.getElementById('bg-canvas'); if(bg) { bg.style.opacity = '1'; bg.style.display = 'block'; }
+                if(controls) controls.enabled = true; // REACTIVAR CONTROLES AL SALIR
                 performGoHome();
             });
             
             scene.add(new THREE.HemisphereLight(0xffffff,0x222222,3)); group=new THREE.Group(); scene.add(group);
             
-            // RETÍCULO MEJORADO
             reticle=new THREE.Group();
             const rRing = new THREE.Mesh(new THREE.RingGeometry(0.2,0.22,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x00f3ff}));
             const rCross1 = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.02).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({color: 0x00f3ff}));
@@ -745,40 +751,68 @@
 
             ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
             
-            // --- GESTIÓN TÁCTIL UNIVERSAL (AR Y 3D) ---
+            // --- GESTIÓN TÁCTIL ARQUITECTURA ---
+            
             window.addEventListener('touchstart', (e) => {
-                // Si tocamos con 2 dedos, iniciamos el escalado
+                // 2 Dedos: Escalado
                 if (e.touches.length === 2) {
                     const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
                     initialPinchDistance = Math.sqrt(dx * dx + dy * dy); initialScale = currentScale;
                 }
                 
-                // FALLBACK PARA COLOCACIÓN EN AR (Si el controller select falla)
+                // 1 Dedo: Arrastrar (Si ya está colocado y en AR)
+                if (ren.xr.isPresenting && placed && e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    const mouse = new THREE.Vector2((touch.pageX / window.innerWidth) * 2 - 1, -(touch.pageY / window.innerHeight) * 2 + 1);
+                    
+                    raycaster.setFromCamera(mouse, cam);
+                    dragPlane.setFromNormalAndCoplanarPoint(new THREE.Vector3(0, 1, 0), group.position);
+                    const target = new THREE.Vector3();
+                    raycaster.ray.intersectPlane(dragPlane, target);
+                    
+                    if (target) {
+                        isDragging = true;
+                        dragOffset.subVectors(group.position, target);
+                    }
+                }
+
+                // 1 Dedo: Colocar (Si NO está colocado)
                 if (ren.xr.isPresenting && !placed && e.touches.length === 1) {
-                    // Un toque simple en pantalla también intenta colocar el tablero
                     window.doPlace();
                 }
             }, {passive: false});
 
             window.addEventListener('touchmove', (e) => {
-                // Lógica de escalado con 2 dedos
+                // Escalado
                 if (e.touches.length === 2) {
                     const dx = e.touches[0].pageX - e.touches[1].pageX; const dy = e.touches[0].pageY - e.touches[1].pageY;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (initialPinchDistance > 0) {
                         const scaleFactor = dist / initialPinchDistance;
-                        // Limitamos la escala para que no desaparezca ni sea gigante
                         currentScale = Math.min(Math.max(initialScale * scaleFactor, 0.05), 5.0);
-                        
                         if(group) group.scale.set(currentScale, currentScale, currentScale);
                         if(ghostGroup) ghostGroup.scale.set(currentScale, currentScale, currentScale);
-                        
-                        // Mostrar feedback visual
                         window.gameToast("TAMAÑO", `${currentScale.toFixed(2)}x`);
                     }
-                    e.preventDefault(); // Prevenir zoom nativo del navegador
+                    e.preventDefault();
+                }
+                
+                // Arrastre (Move)
+                if (ren.xr.isPresenting && placed && isDragging && e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    const mouse = new THREE.Vector2((touch.pageX / window.innerWidth) * 2 - 1, -(touch.pageY / window.innerHeight) * 2 + 1);
+                    raycaster.setFromCamera(mouse, cam);
+                    const target = new THREE.Vector3();
+                    raycaster.ray.intersectPlane(dragPlane, target);
+                    
+                    if (target) {
+                        const newPos = new THREE.Vector3().addVectors(target, dragOffset);
+                        group.position.set(newPos.x, group.position.y, newPos.z);
+                    }
                 }
             }, {passive: false});
+            
+            window.addEventListener('touchend', () => { isDragging = false; });
 
             window.addEventListener('pointerdown', (e)=>{
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone')) return; if(ren.xr.isPresenting) return;
@@ -788,14 +822,16 @@
                 const obj=h.find(x=>x.object.parent && x.object.parent.userData.id!==undefined); 
                 if(obj) window.clickPt(obj.object.parent.userData.id);
             });
+            
             controls=new OrbitControls(cam,ren.domElement); 
-            controls.enableDamping = true; // Suavizado
+            controls.enableDamping = true;
             window.recenter();
         }
 
         // BUCLE DE AR CON "MODO FLOTANTE" (FALLBACK)
         window.loop = (t, frame) => {
-            if(controls) controls.update();
+            if(controls && controls.enabled) controls.update(); // Solo actualizar si están habilitados
+            
             if(ren.xr.isPresenting) {
                 if(!placed && isArHost) {
                     reticle.visible = true;
@@ -803,34 +839,27 @@
 
                     let hitFound = false;
                     
-                    // 1. Intentar detectar superficie real
                     if (frame && arRefSpace && arHit) {
                         const h = frame.getHitTestResults(arHit);
                         if(h.length > 0) {
                             const hitPose = h[0].getPose(arRefSpace);
                             reticle.matrix.fromArray(hitPose.transform.matrix);
-                            // Color Verde/Cian para indicar éxito
                             reticle.children.forEach(c => c.material.color.setHex(0x39ff14));
                             hitFound = true;
                             document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>PISO DETECTADO</span><br>Toca pantalla para fijar";
                         }
                     }
 
-                    // 2. Fallback: Si no hay hit, ponerlo flotando frente a cámara (50cm)
                     if(!hitFound && frame) {
                         const viewerPose = frame.getViewerPose(arRefSpace);
                         if(viewerPose) {
                             const p = viewerPose.transform.position;
                             const r = viewerPose.transform.orientation;
-                            
-                            // Vector frente a cámara
                             const dir = new THREE.Vector3(0, 0, -0.5).applyQuaternion(new THREE.Quaternion(r.x, r.y, r.z, r.w));
                             const targetPos = new THREE.Vector3(p.x, p.y, p.z).add(dir);
-                            
                             reticle.position.copy(targetPos);
                             reticle.lookAt(p.x, p.y, p.z); 
                             reticle.updateMatrix();
-                            
                             reticle.children.forEach(c => c.material.color.setHex(0xffcc00));
                             document.getElementById('ar-instr-txt').innerHTML = "<span class='text-warn'>MODO AÉREO</span><br>Toca para fijar en el aire";
                         }
