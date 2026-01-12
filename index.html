@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:; style-src * 'self' 'unsafe-inline'; script-src * 'self' 'unsafe-inline' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V46.1 STABLE</title>
+    <title>3 LINE-AR | V46.2 CONNECT FIX</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -124,7 +124,7 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     
-    <div class="version-tag">V46.1 STABLE</div>
+    <div class="version-tag">V46.2 CONNECT FIX</div>
     
     <!-- Botón de Idioma -->
     <button onclick="window.showLangPicker()" class="lang-btn interactive">
@@ -149,7 +149,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V46.1</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V46.2</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt" data-i18n="login">INICIAR SESIÓN</span>
@@ -873,18 +873,12 @@
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { 
-                        // Stop heartbeat if game starts
                         if(heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval=null; }
                         
-                        const waitScreen = document.getElementById('s-waiting');
-                        const matchScreen = document.getElementById('s-matchmaking');
-                        
-                        if((waitScreen && waitScreen.classList.contains('active')) || (matchScreen && !matchScreen.classList.contains('hidden'))) {
-                             nav('s-game');
-                             window.systemToast("GO", "START!");
-                             playSfx('click'); 
-                        } else if(document.getElementById('s-game').classList.contains('hidden')) {
+                        // --- FIX: SIEMPRE usar window.start() para inicializar todo correctamente ---
+                        if(document.getElementById('s-game').classList.contains('hidden')) {
                              window.start(); 
+                             playSfx('click');
                         }
                         window.ui(); 
                     }
