@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:; style-src * 'self' 'unsafe-inline'; script-src * 'self' 'unsafe-inline' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V46.0 GLOBAL</title>
+    <title>3 LINE-AR | V46.1 STABLE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -124,9 +124,9 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     
-    <div class="version-tag">V46.0 GLOBAL</div>
+    <div class="version-tag">V46.1 STABLE</div>
     
-    <!-- Botón de Idioma (Visible siempre en capas superiores) -->
+    <!-- Botón de Idioma -->
     <button onclick="window.showLangPicker()" class="lang-btn interactive">
         <i class="fas fa-globe"></i> <span id="cur-lang-code">ES</span>
     </button>
@@ -149,7 +149,7 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V46.0</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V46.1</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt" data-i18n="login">INICIAR SESIÓN</span>
@@ -463,47 +463,39 @@
         let arInitialized = false, isArHost = false, placementAccepted = false; 
         let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace, arBtn, ghostGroup;
         let isMatchmaking = false;
+        let heartbeatInterval = null; // --- FIX: VARIABLE PARA EL LATIDO DEL HOST ---
         
         // --- GESTIÓN DE IDIOMA ---
         window.detectLanguage = () => {
             const l = navigator.language || navigator.userLanguage;
             const code = l.split('-')[0].toLowerCase();
-            return (TR[code]) ? code : 'en'; // Inglés por defecto si no es soportado
+            return (TR[code]) ? code : 'en'; 
         }
 
         window.setLanguage = (lang) => {
             S.lang = lang;
             document.getElementById('cur-lang-code').innerText = lang.toUpperCase();
-            
-            // Actualizar fuentes
             document.body.classList.remove('lang-zh', 'lang-ru');
             if(lang === 'zh') document.body.classList.add('lang-zh');
             if(lang === 'ru') document.body.classList.add('lang-ru');
-
-            // Actualizar textos estáticos
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if(TR[lang][key]) el.innerText = TR[lang][key];
             });
-            
-            // Cerrar picker si está abierto
             document.getElementById('custom-modal').style.display='none';
         }
 
-        // Helper para obtener texto dinámico
         window.t = (key) => TR[S.lang][key] || key;
 
         window.showLangPicker = () => {
             const opts = Object.keys(TR).map(k => 
                 `<div class="lang-opt ${S.lang===k?'active':''}" onclick="window.setLanguage('${k}')">${k.toUpperCase()}</div>`
             ).join('');
-            
             window.showModal(`
                 <h3 class="text-lg font-bold text-cyber mb-3">IDIOMA / LANGUAGE</h3>
                 <div class="lang-grid">${opts}</div>
             `);
         }
-        // --- FIN GESTIÓN IDIOMA ---
 
         function nav(id) {
             ['s-login','s-menu','s-game','s-waiting','win-screen','s-matchmaking'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); if(i==='s-waiting') el.classList.remove('active');} });
@@ -527,27 +519,20 @@
             });
         }
         
-        // Inicializar idioma al cargar
         window.setLanguage(window.detectLanguage());
 
         async function registerUserAccess(u) { 
             const userRef = doc(db, 'artifacts', appId, 'users', u.uid); 
             const snap = await getDoc(userRef);
-            let currentPoints = 1000;
-            let currentWins = 0;
-            let currentLosses = 0;
+            let currentPoints = 1000; let currentWins = 0; let currentLosses = 0;
             if(snap.exists()) {
                 const data = snap.data();
-                currentPoints = data.points || 1000;
-                currentWins = data.wins || 0;
-                currentLosses = data.losses || 0;
+                currentPoints = data.points || 1000; currentWins = data.wins || 0; currentLosses = data.losses || 0;
                 await updateDoc(userRef, { lastLogin: Date.now() });
             } else {
                 await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online', points: 1000, wins:0, losses:0 }, { merge: true });
             }
-            S.points = currentPoints;
-            S.wins = currentWins;
-            S.losses = currentLosses;
+            S.points = currentPoints; S.wins = currentWins; S.losses = currentLosses;
         }
         
         window.updateMenuButtons = (enabled) => { 
@@ -592,10 +577,7 @@
             } 
         };
 
-        window.doGuestLogin = async () => {
-             if(!auth) return;
-             try { await signInAnonymously(auth); } catch(e) { window.systemToast("ERROR", "Guest Failed"); }
-        };
+        window.doGuestLogin = async () => { if(!auth) return; try { await signInAnonymously(auth); } catch(e) { window.systemToast("ERROR", "Guest Failed"); } };
 
         window.cancelLogin = () => {
              clearTimeout(loginTimeout);
@@ -613,10 +595,7 @@
                 placed = true; reticle.visible = false;
                 group.position.setFromMatrixPosition(reticle.matrix); 
                 group.rotation.setFromRotationMatrix(reticle.matrix);
-                if(reticle.matrixAutoUpdate) {
-                    group.position.copy(reticle.position);
-                    group.rotation.copy(reticle.rotation);
-                }
+                if(reticle.matrixAutoUpdate) { group.position.copy(reticle.position); group.rotation.copy(reticle.rotation); }
                 group.visible = true;
                 if(ghostGroup) ghostGroup.visible = false;
                 document.getElementById('ar-instructions').style.display='none';
@@ -739,9 +718,18 @@
             document.getElementById('modal-confirm-btn').onclick = () => { document.getElementById('custom-modal').style.display='none'; onConfirm(); };
         }
         
+        // --- FIX: SAFETY TIMEOUT PARA EVITAR PANTALLA NEGRA ---
         window.goHome = () => {
             if (ren && ren.xr.isPresenting) { 
-                ren.xr.getSession().end().catch(e => { console.log(e); performGoHome(); }); 
+                const safetyTimer = setTimeout(() => {
+                    console.warn("Forzando salida AR...");
+                    performGoHome();
+                    window.location.reload(); 
+                }, 1500);
+
+                ren.xr.getSession().end()
+                    .then(() => clearTimeout(safetyTimer))
+                    .catch(e => { console.error(e); clearTimeout(safetyTimer); performGoHome(); }); 
             } else { 
                 performGoHome(); 
             }
@@ -749,12 +737,12 @@
 
         function performGoHome() {
             if(roomUnsub) roomUnsub(); roomUnsub=null; S.room = null; S.data = null;
+            if(heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval=null; }
             nav('s-menu'); isArHost = false; placementAccepted = false; hideArControls(); isMatchmaking = false;
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
-            
+            arHit = null; reticle.visible = false;
             document.body.classList.remove('ar-active');
-            const bg = document.getElementById('bg-canvas');
-            if(bg) { bg.style.display = 'block'; bg.style.opacity = '1'; }
+            const bg = document.getElementById('bg-canvas'); if(bg) { bg.style.display = 'block'; bg.style.opacity = '1'; }
             window.recenter();
         }
         
@@ -772,13 +760,12 @@
         
         function showArControls() { 
             const c=document.getElementById('ar-controls'); if(c) { c.classList.remove('hidden'); c.classList.add('flex'); } 
-            // Mostrar slider de tamaño si es anfitrión
             if(isArHost) document.getElementById('size-slider-container').style.display='flex';
         }
 
         const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
-        // --- SISTEMA DE MATCHMAKING PÚBLICO MEJORADO ---
+        // --- SISTEMA DE MATCHMAKING PÚBLICO MEJORADO (FIXED) ---
         window.quickMatch = async () => {
             if(!S.user) return window.systemToast("ERROR", t('login_req'));
             S.cpu=false; isMatchmaking = true;
@@ -790,12 +777,13 @@
             try {
                 const q = await getDocs(ROOMS_COLL); 
                 let foundId = null;
-                const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
+                // --- FIX: Filtro estricto de 15 segundos para encontrar jugadores ACTIVOS ---
+                const activeThreshold = Date.now() - 15000; 
 
                 const openRooms = [];
                 q.forEach(d => { 
                     const r = d.data(); 
-                    if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest && r.lastUpdate > tenMinutesAgo) {
+                    if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest && r.lastUpdate > activeThreshold) {
                         openRooms.push(d.id);
                     }
                 });
@@ -819,6 +807,7 @@
 
         window.cancelMatchmaking = () => {
             isMatchmaking = false;
+            // Si creamos sala, la cerramos para que no quede fantasma
             if(S.room && S.role === 'host') {
                  updateDoc(doc(db,'artifacts',appId,'public', 'data', 'rooms',`room_${S.room}`), { stat: 'end' });
             }
@@ -844,7 +833,14 @@
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             try {
                 await setDoc(docRef, { host:S.user.uid, hostName: S.user.displayName || "Jugador 1", stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, scale:1.0, arPos: null, arRot: null, arScale: 1.0, arAccepted: false, lastUpdate: Date.now() });
-                if(!pub) {
+                
+                // --- FIX: HEARTBEAT PARA SALAS PUBLICAS ---
+                if(pub) {
+                    if(heartbeatInterval) clearInterval(heartbeatInterval);
+                    heartbeatInterval = setInterval(() => {
+                        updateDoc(docRef, { lastUpdate: Date.now() }).catch(() => clearInterval(heartbeatInterval));
+                    }, 5000);
+                } else {
                     showLoad(false);
                     document.getElementById('waiting-code').innerText = c;
                     nav('s-waiting'); 
@@ -877,6 +873,9 @@
                 if(s.exists()) {
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { 
+                        // Stop heartbeat if game starts
+                        if(heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval=null; }
+                        
                         const waitScreen = document.getElementById('s-waiting');
                         const matchScreen = document.getElementById('s-matchmaking');
                         
@@ -906,6 +905,7 @@
         window.endGame = async (d) => {
             if(document.getElementById('s-game').classList.contains('hidden')) return;
             nav('win-screen'); playSfx('end');
+            if(heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval=null; }
             
             const myS = S.role === 'host' ? d.sc.host : d.sc.guest; 
             const rivS = S.role === 'host' ? d.sc.guest : d.sc.host;
@@ -937,7 +937,6 @@
                 elo.className = "text-hot font-bold text-lg mb-6";
             }
             
-            // Actualizar Puntos en Firebase (Solo si no es CPU)
             if(!S.cpu && S.user) {
                 const newPoints = (S.points || 1000) + ptsChange;
                 S.points = newPoints; 
@@ -961,7 +960,7 @@
             hideArControls();
         }
 
-        // --- SISTEMA DE LEADERBOARD (BOTS + REAL) ---
+        // --- SISTEMA DE LEADERBOARD ---
         function mulberry32(a) {
             return function() {
               var t = a += 0x6D2B79F5;
@@ -995,18 +994,15 @@
             
             window.showModal(`
                 <h3 class="text-lg font-bold text-cyber mb-4 border-b border-cyber/30 pb-2">${t('ranking')}</h3>
-                
                 <div class="rank-header">
                     <div style="width:25px">#</div>
                     <div style="flex-grow:1">${t('agent')}</div>
                     <div style="width:50px; text-align:center">W / L</div>
                     <div style="width:50px; text-align:right">${t('pts')}</div>
                 </div>
-
                 <div id="lb-list" class="flex flex-col gap-1 mb-4 h-64 overflow-y-auto">
                     <div class="text-center mt-10"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-cyber mx-auto"></div></div>
                 </div>
-                
                 <div class="bg-white/10 p-2 rounded flex justify-between items-center text-xs border-t border-white/10 mt-2">
                     <span class="text-gray-400">YOUR RANK:</span>
                     <span class="text-neon font-bold" id="my-rank-pts">${S.points} ${t('pts')}</span>
@@ -1046,7 +1042,6 @@
                     `;
                 });
             } catch(e) {
-                console.error(e);
                 document.getElementById('lb-list').innerHTML = "<p class='text-red-500 text-xs'>Error</p>";
             }
         };
@@ -1078,7 +1073,7 @@
 
             if(ren && ren.xr.isPresenting) {
                 document.getElementById('btn-exit-ar').classList.remove('hidden');
-                document.getElementById('pc-controls').style.display = 'none'; // Esconder controles PC
+                document.getElementById('pc-controls').style.display = 'none'; 
 
                 if(d.arPos && (!S.cpu || placed)) { 
                     if(!S.cpu) {
@@ -1196,9 +1191,16 @@
                 
                 try {
                     const session = ren.xr.getSession();
+                    // --- FIX: SOLICITAR VIEWER SPACE PARA HIT TEST (CORRIGE DETECCIÓN) ---
+                    const viewerSpace = await session.requestReferenceSpace('viewer');
                     arRefSpace = await session.requestReferenceSpace('local');
-                    try { arHit = await session.requestHitTestSource({space: arRefSpace}); } 
-                    catch(err) { console.warn("Hit Test no soportado, modo aéreo activo"); arHit = null; }
+                    
+                    try { 
+                        arHit = await session.requestHitTestSource({ space: viewerSpace }); 
+                    } catch(err) { 
+                        console.warn("Hit Test no soportado, modo aéreo activo"); 
+                        arHit = null; 
+                    }
                 } catch (e) { console.error("Error AR", e); window.goHome(); return; }
                 
                 placed = false; group.visible = false; reticle.visible = true; 
@@ -1210,6 +1212,11 @@
                 document.body.classList.remove('ar-active'); 
                 const bg = document.getElementById('bg-canvas'); if(bg) { bg.style.opacity = '1'; bg.style.display = 'block'; }
                 if(controls) controls.enabled = true; 
+                
+                // --- FIX: LIMPIEZA PARA EVITAR GLITCHES ---
+                arHit = null;
+                if(reticle) reticle.visible = false;
+                
                 performGoHome();
             });
             
