@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:; style-src * 'self' 'unsafe-inline'; script-src * 'self' 'unsafe-inline' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V45.1 RANKING UPDATE</title>
+    <title>3 LINE-AR | V46.0 GLOBAL</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -20,10 +20,17 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Fuente para caracteres Chinos y Cirílicos de respaldo -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700&display=swap" rel="stylesheet">
     
     <style>
+        /* Ajuste de fuentes para soporte multi-idioma */
         html, body { background-color: #000000; height: 100%; width: 100%; overflow: hidden; touch-action: none; } 
-        body { margin: 0; user-select: none; font-family: 'Orbitron', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; user-select: none; font-family: 'Orbitron', 'Noto Sans SC', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Clases especificas para idiomas que necesitan otra fuente */
+        body.lang-zh, body.lang-ru { font-family: 'Noto Sans SC', sans-serif, 'Orbitron'; letter-spacing: 0; font-weight: bold; }
+        
         body.ar-active { background-color: transparent !important; }
         body.ar-active #bg-canvas { display: none !important; }
         
@@ -82,13 +89,11 @@
         #s-waiting { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 55; display: none; flex-direction: column; justify-content: center; align-items: center; }
         #s-waiting.active { display: flex; }
         
-        /* SLIDER DE TAMAÑO */
         #size-slider-container { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 40; height: 200px; display: none; flex-direction: column; align-items: center; gap: 10px; pointer-events: auto; }
         #size-slider { -webkit-appearance: none; width: 150px; height: 6px; background: rgba(0, 243, 255, 0.3); border-radius: 3px; outline: none; transform: rotate(-90deg); margin: 70px -70px; }
         #size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 25px; height: 25px; border-radius: 50%; background: #00f3ff; cursor: pointer; box-shadow: 0 0 10px #00f3ff; border: 2px solid white; }
         .size-icon { color: #00f3ff; font-size: 12px; text-shadow: 0 0 5px #00f3ff; }
 
-        /* Estilos para Leaderboard */
         .rank-header { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid #00f3ff; font-size: 9px; color: #00f3ff; font-weight: bold; margin-bottom: 4px; }
         .rank-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 10px; }
         .rank-row:last-child { border-bottom: none; }
@@ -104,6 +109,14 @@
 
         .stat-w { color: #39ff14; }
         .stat-l { color: #ff0055; }
+        
+        /* Language Picker Styles */
+        .lang-btn { position: absolute; top: 10px; left: 10px; z-index: 60; color: #00f3ff; border: 1px solid #00f3ff; padding: 5px 10px; border-radius: 20px; font-size: 10px; background: rgba(0,0,0,0.5); cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .lang-btn:hover { background: rgba(0, 243, 255, 0.2); }
+        .lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .lang-opt { padding: 10px; border: 1px solid #333; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 12px; }
+        .lang-opt:hover { border-color: #00f3ff; color: #00f3ff; background: rgba(0,243,255,0.1); }
+        .lang-opt.active { background: #00f3ff; color: black; border-color: #00f3ff; font-weight: bold; }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -111,7 +124,12 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     
-    <div class="version-tag">V45.1 RANKING UPDATE</div>
+    <div class="version-tag">V46.0 GLOBAL</div>
+    
+    <!-- Botón de Idioma (Visible siempre en capas superiores) -->
+    <button onclick="window.showLangPicker()" class="lang-btn interactive">
+        <i class="fas fa-globe"></i> <span id="cur-lang-code">ES</span>
+    </button>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
@@ -131,16 +149,16 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V45.1</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V46.0</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
-                    <i class="fab fa-google"></i> <span id="login-btn-txt">INICIAR SESIÓN</span>
+                    <i class="fab fa-google"></i> <span id="login-btn-txt" data-i18n="login">INICIAR SESIÓN</span>
                 </button>
                 
-                <button onclick="window.doGuestLogin()" class="text-[10px] text-gray-500 underline hover:text-white">Jugar como Invitado (Sin Google)</button>
+                <button onclick="window.doGuestLogin()" class="text-[10px] text-gray-500 underline hover:text-white" data-i18n="guest_login">Jugar como Invitado</button>
                 
-                <p id="login-msg" class="text-[9px] text-gray-600 hidden">INTENTANDO CONECTAR...</p>
-                <button id="btn-cancel-login" onclick="window.cancelLogin()" class="hidden btn-neon danger py-1 px-3 text-[9px]">CANCELAR</button>
+                <p id="login-msg" class="text-[9px] text-gray-600 hidden" data-i18n="connecting">CONECTANDO...</p>
+                <button id="btn-cancel-login" onclick="window.cancelLogin()" class="hidden btn-neon danger py-1 px-3 text-[9px]" data-i18n="cancel">CANCELAR</button>
             </div>
         </div>
 
@@ -151,14 +169,14 @@
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
                     <div class="flex items-center gap-2">
                         <img id="u-photo" src="" class="w-8 h-8 rounded-full border border-cyber hidden">
-                        <div><span class="text-[9px] text-cyber block tracking-widest">AGENTE</span><span id="u-name" class="text-white font-bold text-lg">...</span></div>
+                        <div><span class="text-[9px] text-cyber block tracking-widest" data-i18n="agent">AGENTE</span><span id="u-name" class="text-white font-bold text-lg">...</span></div>
                     </div>
                     <button onclick="window.confirmLogout()" class="w-8 h-8 rounded border border-danger text-danger flex items-center justify-center hover:bg-danger hover:text-white transition"><i class="fas fa-power-off"></i></button>
                 </div>
 
                 <div class="bg-white/5 p-4 rounded border border-white/10 pointer-events-auto">
                     <div class="flex justify-between items-center mb-4">
-                        <span class="text-[9px] text-gray-400 font-bold">COLOR</span>
+                        <span class="text-[9px] text-gray-400 font-bold" data-i18n="color">COLOR</span>
                         <div class="flex gap-3" id="c-pick">
                             <div onclick="window.setProf('c','#00f3ff',this)" class="opt bg-[#00f3ff] active" style="box-shadow:0 0 15px #00f3ff"></div>
                             <div onclick="window.setProf('c','#ff0055',this)" class="opt bg-[#ff0055]"></div>
@@ -167,7 +185,7 @@
                         </div>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-[9px] text-gray-400 font-bold">MARCA</span>
+                        <span class="text-[9px] text-gray-400 font-bold" data-i18n="mark">MARCA</span>
                         <div class="flex gap-4 text-lg" id="i-pick">
                             <i onclick="window.setProf('i','gem',this)" class="opt-i fas fa-gem active"></i>
                             <i onclick="window.setProf('i','bolt',this)" class="opt-i fas fa-bolt"></i>
@@ -178,30 +196,28 @@
                 </div>
 
                 <button id="btn-quick-match" onclick="window.quickMatch()" class="btn-neon btn-disabled py-5 text-lg shadow-lg relative overflow-hidden group">
-                    <span class="relative z-10"><i class="fas fa-globe mr-2"></i> PARTIDA PÚBLICA</span>
+                    <span class="relative z-10"><i class="fas fa-globe mr-2"></i> <span data-i18n="quick_match">PARTIDA PÚBLICA</span></span>
                     <div class="absolute inset-0 bg-cyber/20 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
                 </button>
                 
                 <div class="grid grid-cols-2 gap-3">
-                    <button id="btn-create-room" onclick="window.createRoom()" class="btn-neon btn-disabled py-3 text-xs">CREAR SALA</button>
-                    <button id="btn-join-room" onclick="window.showJoin()" class="btn-neon btn-disabled py-3 text-xs">UNIRSE</button>
+                    <button id="btn-create-room" onclick="window.createRoom()" class="btn-neon btn-disabled py-3 text-xs" data-i18n="create_room">CREAR SALA</button>
+                    <button id="btn-join-room" onclick="window.showJoin()" class="btn-neon btn-disabled py-3 text-xs" data-i18n="join_room">UNIRSE</button>
                 </div>
                 
                 <div id="join-box" class="hidden flex gap-2 mt-1 animate-fade-in">
-                    <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CÓDIGO" maxlength="4">
+                    <input id="code-in" class="bg-black/50 border border-cyber text-white w-full text-center p-3 uppercase font-mono text-lg tracking-widest" placeholder="CODE" maxlength="4">
                     <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 
                 <div class="flex gap-2 mt-2">
-                    <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs flex-1"><i class="fas fa-microchip mr-2"></i> VS CPU</button>
-                    <!-- BOTÓN INVITAR DESACTIVADO -->
-                    <button onclick="window.systemToast('INFO', 'Próximamente en Play Store')" class="btn-neon flex-1 py-3 text-xs border-gray-600 text-gray-500 opacity-50 cursor-not-allowed"><i class="fas fa-share-nodes mr-2"></i> INVITAR</button>
+                    <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs flex-1"><i class="fas fa-microchip mr-2"></i> <span data-i18n="vs_cpu">VS CPU</span></button>
+                    <button onclick="window.systemToast('INFO', 'Próximamente')" class="btn-neon flex-1 py-3 text-xs border-gray-600 text-gray-500 opacity-50 cursor-not-allowed"><i class="fas fa-share-nodes mr-2"></i> <span data-i18n="invite">INVITAR</span></button>
                 </div>
 
-                <!-- NUEVO BOTÓN RANKING ABAJO -->
-                <button onclick="window.showLeaderboard()" class="btn-neon mt-2 py-3 text-xs border-yellow-500 text-yellow-400 shadow-[0_0_10px_rgba(255,215,0,0.2)]"><i class="fas fa-trophy mr-2"></i> RANKING MUNDIAL</button>
+                <button onclick="window.showLeaderboard()" class="btn-neon mt-2 py-3 text-xs border-yellow-500 text-yellow-400 shadow-[0_0_10px_rgba(255,215,0,0.2)]"><i class="fas fa-trophy mr-2"></i> <span data-i18n="ranking">RANKING</span></button>
 
-                <div id="ar-status" class="text-center mt-1 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
+                <div id="ar-status" class="text-center mt-1 text-[9px] text-gray-500 font-mono" data-i18n="check_hw">VERIFICANDO HARDWARE...</div>
             </div>
         </div>
 
@@ -213,9 +229,9 @@
                     <div class="absolute inset-0 border-4 border-t-cyber border-r-transparent border-b-cyber border-l-transparent rounded-full animate-spin"></div>
                     <i class="fas fa-globe text-4xl text-cyber absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></i>
                 </div>
-                <h2 class="text-2xl font-black text-white italic" id="match-status-title">BUSCANDO RIVAL</h2>
-                <p class="text-cyber font-mono text-xs tracking-widest mt-2 animate-pulse" id="match-status-desc">ESCANEANDO JUGADORES...</p>
-                <button onclick="window.cancelMatchmaking()" class="mt-8 btn-neon danger py-2 px-6 text-xs">CANCELAR</button>
+                <h2 class="text-2xl font-black text-white italic" id="match-status-title" data-i18n="searching">BUSCANDO RIVAL</h2>
+                <p class="text-cyber font-mono text-xs tracking-widest mt-2 animate-pulse" id="match-status-desc" data-i18n="scanning">ESCANEANDO RED...</p>
+                <button onclick="window.cancelMatchmaking()" class="mt-8 btn-neon danger py-2 px-6 text-xs" data-i18n="cancel">CANCELAR</button>
             </div>
         </div>
 
@@ -223,12 +239,12 @@
         <div id="s-waiting" class="interactive">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6 relative">
                 <div class="absolute top-4 right-4 cursor-pointer text-gray-500 hover:text-white" onclick="window.goHome()"><i class="fas fa-times"></i></div>
-                <h2 class="text-xl font-bold text-white">SALA PRIVADA</h2>
-                <div class="text-sm text-gray-400">COMPARTE ESTE CÓDIGO:</div>
+                <h2 class="text-xl font-bold text-white" data-i18n="private_room">SALA PRIVADA</h2>
+                <div class="text-sm text-gray-400" data-i18n="share_code">COMPARTE CÓDIGO:</div>
                 <div id="waiting-code" class="text-5xl font-black text-cyber tracking-widest border-2 border-dashed border-cyber/50 p-4 rounded-lg bg-black/50 select-all">----</div>
                 <div class="flex items-center gap-2 mt-2">
                     <div class="w-2 h-2 rounded-full bg-neon animate-pulse"></div>
-                    <span class="text-[10px] text-neon font-mono">ESPERANDO JUGADOR...</span>
+                    <span class="text-[10px] text-neon font-mono" data-i18n="waiting_player">ESPERANDO JUGADOR...</span>
                 </div>
             </div>
         </div>
@@ -244,12 +260,12 @@
 
             <!-- BOTÓN SALIR AR -->
             <div id="btn-exit-ar" class="hidden interactive absolute top-4 left-4 z-50">
-                <button onclick="window.goHome()" class="bg-red-600/90 text-white border border-red-400 font-bold py-2 px-4 rounded-lg shadow-lg text-xs backdrop-blur"><i class="fas fa-times mr-2"></i> SALIR AR</button>
+                <button onclick="window.goHome()" class="bg-red-600/90 text-white border border-red-400 font-bold py-2 px-4 rounded-lg shadow-lg text-xs backdrop-blur"><i class="fas fa-times mr-2"></i> <span data-i18n="exit_ar">SALIR AR</span></button>
             </div>
 
             <div class="interactive glass-panel p-3 flex justify-between items-start mt-8 mx-2 backdrop-blur-md">
                 <div class="text-center w-20">
-                    <span class="text-[8px] text-gray-400 block tracking-widest">PUNTAJE</span>
+                    <span class="text-[8px] text-gray-400 block tracking-widest" data-i18n="score">PUNTAJE</span>
                     <span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span>
                 </div>
                 <div class="flex flex-col items-center -mt-10 z-20">
@@ -259,12 +275,12 @@
                         <p id="t-body" class="text-sm tracking-wide">Mensaje</p>
                     </div>
                     <div id="mov-hud" class="bg-black/90 px-3 py-1 mt-3 rounded border border-cyber text-center opacity-0 transition-opacity min-w-[120px] shadow-lg flex items-center justify-between gap-2">
-                        <div><p class="text-[7px] text-gray-400 tracking-widest">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p></div>
-                        <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold leading-tight">SIN<br>JUGADAS</button>
+                        <div><p class="text-[7px] text-gray-400 tracking-widest" data-i18n="lines">LÍNEAS</p><p id="mov-cnt" class="text-xl text-cyber font-bold leading-none">0</p></div>
+                        <button onclick="window.skipTurn()" class="text-[8px] text-red-500 border border-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white transition font-bold leading-tight" data-i18n="skip">SIN<br>JUGADAS</button>
                     </div>
                 </div>
                 <div class="text-center w-20">
-                    <span class="text-[8px] text-gray-400 block tracking-widest">RIVAL</span>
+                    <span class="text-[8px] text-gray-400 block tracking-widest" data-i18n="rival">RIVAL</span>
                     <span id="sc-p2" class="text-3xl text-white font-black leading-none">0</span>
                 </div>
             </div>
@@ -273,7 +289,7 @@
                  <span class="room-badge">ID: <span id="room-lbl">--</span></span>
             </div>
 
-            <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber">CARGANDO...</span></div>
+            <div id="mini-loader" class="hidden text-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyber mx-auto mb-2"></div><span id="mini-load-txt" class="bg-black/80 text-cyber text-[10px] px-2 py-1 rounded border border-cyber" data-i18n="loading">CARGANDO...</span></div>
 
             <div id="ar-instructions">
                 <div class="instr-card" id="ar-instr-txt"></div>
@@ -284,36 +300,36 @@
             </div>
 
             <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end w-full px-4" id="pc-controls">
-                <button onclick="window.confirmFinishGame()" class="btn-end flex items-center gap-1"><i class="fas fa-flag-checkered"></i> RENDIRSE</button>
-                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition z-50"><i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span></button>
-                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
+                <button onclick="window.confirmFinishGame()" class="btn-end flex items-center gap-1"><i class="fas fa-flag-checkered"></i> <span data-i18n="surrender">RENDIRSE</span></button>
+                <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition z-50"><i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1" data-i18n="home">INICIO</span></button>
+                <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> <span data-i18n="recenter">RE-CENTRAR</span></button>
             </div>
             
             <div id="btn-start-ar-float" class="hidden interactive">
-                <button onclick="window.startARSession()" class="btn-neon py-3 px-6 text-xs shadow-[0_0_20px_#00f3ff] animate-bounce bg-black/80"><i class="fas fa-cube mr-2"></i> INICIAR MODO AR</button>
+                <button onclick="window.startARSession()" class="btn-neon py-3 px-6 text-xs shadow-[0_0_20px_#00f3ff] animate-bounce bg-black/80"><i class="fas fa-cube mr-2"></i> <span data-i18n="start_ar">INICIAR MODO AR</span></button>
             </div>
             
             <div id="ar-controls" class="interactive absolute bottom-6 left-1/2 -translate-x-1/2 hidden justify-center gap-4 z-40 w-full px-4">
-                <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn flex-1"><i class="fas fa-check mr-2"></i> FIJAR</button>
-                <button onclick="window.recalibrate()" id="btn-ar-recal" class="ar-sync-btn flex-1 bg-gray-800/80 border-gray-500 !text-gray-200"><i class="fas fa-sync-alt mr-2"></i> MOVER</button>
+                <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn flex-1"><i class="fas fa-check mr-2"></i> <span data-i18n="fix">FIJAR</span></button>
+                <button onclick="window.recalibrate()" id="btn-ar-recal" class="ar-sync-btn flex-1 bg-gray-800/80 border-gray-500 !text-gray-200"><i class="fas fa-sync-alt mr-2"></i> <span data-i18n="move">MOVER</span></button>
             </div>
         </div>
 
         <!-- WIN SCREEN -->
         <div id="win-screen">
-            <h1 id="win-title" class="text-4xl md:text-6xl font-black text-cyber mb-2 animate-pulse text-center px-4">VICTORIA</h1>
+            <h1 id="win-title" class="text-4xl md:text-6xl font-black text-cyber mb-2 animate-pulse text-center px-4" data-i18n="victory">VICTORIA</h1>
             <p id="win-msg" class="text-white font-mono mb-2 tracking-widest text-center text-sm px-4">MENSAJE MOTIVACIONAL</p>
             <p id="elo-change" class="text-neon font-bold text-lg mb-6 animate-bounce">+0 PUNTOS</p>
             
             <div class="glass-panel p-6 mb-8 w-full max-w-sm mx-4">
                 <div class="flex justify-between items-center text-center">
-                    <div><span class="text-gray-500 text-[10px] block tracking-widest mb-1">TU PUNTAJE</span><span id="final-p1" class="text-5xl font-bold text-white">0</span></div>
+                    <div><span class="text-gray-500 text-[10px] block tracking-widest mb-1" data-i18n="score">TU PUNTAJE</span><span id="final-p1" class="text-5xl font-bold text-white">0</span></div>
                     <div class="h-10 w-px bg-white/20"></div>
-                    <div><span class="text-gray-500 text-[10px] block tracking-widest mb-1">RIVAL</span><span id="final-p2" class="text-5xl font-bold text-white">0</span></div>
+                    <div><span class="text-gray-500 text-[10px] block tracking-widest mb-1" data-i18n="rival">RIVAL</span><span id="final-p2" class="text-5xl font-bold text-white">0</span></div>
                 </div>
             </div>
             <div class="flex flex-col gap-3 w-full max-w-xs px-4">
-                <button onclick="window.goHomeAfterWin()" class="btn-neon py-3 px-6 text-sm w-full"><i class="fas fa-bars mr-2"></i> VOLVER AL MENÚ</button>
+                <button onclick="window.goHomeAfterWin()" class="btn-neon py-3 px-6 text-sm w-full"><i class="fas fa-bars mr-2"></i> <span data-i18n="back_menu">VOLVER AL MENÚ</span></button>
             </div>
         </div>
     </div>
@@ -327,6 +343,100 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDoc, getDocs, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, signInAnonymously, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- SISTEMA DE TRADUCCIÓN (I18N) ---
+        const TR = {
+            es: {
+                login: "INICIAR SESIÓN", guest_login: "Jugar como Invitado", connecting: "CONECTANDO...", cancel: "CANCELAR",
+                agent: "AGENTE", color: "COLOR", mark: "MARCA", quick_match: "PARTIDA PÚBLICA", create_room: "CREAR SALA",
+                join_room: "UNIRSE", vs_cpu: "VS CPU", invite: "INVITAR", ranking: "RANKING", check_hw: "VERIFICANDO HARDWARE...",
+                searching: "BUSCANDO RIVAL", scanning: "ESCANEANDO RED...", private_room: "SALA PRIVADA", share_code: "COMPARTE CÓDIGO:",
+                waiting_player: "ESPERANDO JUGADOR...", exit_ar: "SALIR AR", score: "PUNTAJE", lines: "LÍNEAS", skip: "SIN JUGADAS",
+                rival: "RIVAL", loading: "CARGANDO...", surrender: "RENDIRSE", home: "INICIO", recenter: "RE-CENTRAR",
+                start_ar: "INICIAR MODO AR", fix: "FIJAR", move: "MOVER", victory: "VICTORIA", defeat: "DERROTA", draw: "EMPATE",
+                back_menu: "VOLVER AL MENÚ", wait_turn: "Turno Rival", play_turn: "Usa tus líneas", roll_dice: "Lanza el dado",
+                energy: "ENERGÍA", pass: "PASO", turn_skipped: "Turno cedido", error: "ERROR", login_req: "Login requerido",
+                room_full: "Sala llena", ar_scan: "MODO ESCANEO", ar_tap_fix: "Toca para fijar", ar_floor: "PISO DETECTADO",
+                ar_air: "MODO AÉREO", ar_adjust: "AJUSTANDO...", ar_sync: "OK", ar_sync_msg: "Tablero sincronizado.",
+                pts: "PTS", win_msg: "DOMINIO TOTAL", lose_msg: "BUEN INTENTO", draw_msg: "EQUILIBRIO",
+                blocked: "BLOQUEADO", range: "RANGO", occupied: "OCUPADO", conquest: "¡Nexo Cerrado!", link: "Enlace establecido"
+            },
+            en: {
+                login: "LOGIN", guest_login: "Play as Guest", connecting: "CONNECTING...", cancel: "CANCEL",
+                agent: "AGENT", color: "COLOR", mark: "MARK", quick_match: "QUICK MATCH", create_room: "CREATE ROOM",
+                join_room: "JOIN ROOM", vs_cpu: "VS CPU", invite: "INVITE", ranking: "RANKING", check_hw: "CHECKING HARDWARE...",
+                searching: "SEARCHING RIVAL", scanning: "SCANNING NETWORK...", private_room: "PRIVATE ROOM", share_code: "SHARE CODE:",
+                waiting_player: "WAITING PLAYER...", exit_ar: "EXIT AR", score: "SCORE", lines: "LINES", skip: "SKIP TURN",
+                rival: "RIVAL", loading: "LOADING...", surrender: "GIVE UP", home: "HOME", recenter: "RE-CENTER",
+                start_ar: "START AR MODE", fix: "PLACE", move: "MOVE", victory: "VICTORY", defeat: "DEFEAT", draw: "DRAW",
+                back_menu: "BACK TO MENU", wait_turn: "Opponent's Turn", play_turn: "Your Turn", roll_dice: "Roll Dice",
+                energy: "ENERGY", pass: "PASS", turn_skipped: "Turn Skipped", error: "ERROR", login_req: "Login Required",
+                room_full: "Room Full", ar_scan: "SCAN MODE", ar_tap_fix: "Tap to Place", ar_floor: "FLOOR DETECTED",
+                ar_air: "AIR MODE", ar_adjust: "ADJUSTING...", ar_sync: "OK", ar_sync_msg: "Board Synced.",
+                pts: "PTS", win_msg: "TOTAL DOMINATION", lose_msg: "NICE TRY", draw_msg: "BALANCE",
+                blocked: "BLOCKED", range: "RANGE", occupied: "OCCUPIED", conquest: "Nexus Closed!", link: "Link Established"
+            },
+            zh: {
+                login: "登录", guest_login: "游客模式", connecting: "连接中...", cancel: "取消",
+                agent: "特工", color: "颜色", mark: "标志", quick_match: "快速匹配", create_room: "创建房间",
+                join_room: "加入房间", vs_cpu: "人机对战", invite: "邀请", ranking: "排行榜", check_hw: "检查硬件...",
+                searching: "寻找对手", scanning: "扫描网络...", private_room: "私人房间", share_code: "分享代码:",
+                waiting_player: "等待玩家...", exit_ar: "退出AR", score: "得分", lines: "线条", skip: "跳过",
+                rival: "对手", loading: "加载中...", surrender: "投降", home: "主页", recenter: "重置",
+                start_ar: "启动AR", fix: "放置", move: "移动", victory: "胜利", defeat: "失败", draw: "平局",
+                back_menu: "返回菜单", wait_turn: "对手回合", play_turn: "你的回合", roll_dice: "掷骰子",
+                energy: "能量", pass: "跳过", turn_skipped: "回合跳过", error: "错误", login_req: "需要登录",
+                room_full: "房间已满", ar_scan: "扫描模式", ar_tap_fix: "点击放置", ar_floor: "检测到地面",
+                ar_air: "空中模式", ar_adjust: "调整中...", ar_sync: "好", ar_sync_msg: "棋盘同步",
+                pts: "分", win_msg: "完全统治", lose_msg: "再接再厉", draw_msg: "势均力敌",
+                blocked: "受阻", range: "范围", occupied: "已占", conquest: "连接完成!", link: "链接建立"
+            },
+            fr: {
+                login: "CONNEXION", guest_login: "Mode Invité", connecting: "CONNEXION...", cancel: "ANNULER",
+                agent: "AGENT", color: "COULEUR", mark: "MARQUE", quick_match: "PARTIE RAPIDE", create_room: "CRÉER SALLE",
+                join_room: "REJOINDRE", vs_cpu: "VS CPU", invite: "INVITER", ranking: "CLASSEMENT", check_hw: "VÉRIFICATION...",
+                searching: "RECHERCHE...", scanning: "SCAN RÉSEAU...", private_room: "SALLE PRIVÉE", share_code: "CODE:",
+                waiting_player: "EN ATTENTE...", exit_ar: "QUITTER AR", score: "SCORE", lines: "LIGNES", skip: "PASSER",
+                rival: "RIVAL", loading: "CHARGEMENT...", surrender: "ABANDON", home: "ACCUEIL", recenter: "RECENTRER",
+                start_ar: "MODE AR", fix: "PLACER", move: "BOUGER", victory: "VICTOIRE", defeat: "DÉFAITE", draw: "ÉGALITÉ",
+                back_menu: "MENU", wait_turn: "Tour Adverse", play_turn: "À vous", roll_dice: "Lancer Dé",
+                energy: "ÉNERGIE", pass: "PASSE", turn_skipped: "Tour passé", error: "ERREUR", login_req: "Connexion requise",
+                room_full: "Complet", ar_scan: "SCAN", ar_tap_fix: "Toucher pour placer", ar_floor: "SOL DÉTECTÉ",
+                ar_air: "MODE AÉRIEN", ar_adjust: "AJUSTEMENT...", ar_sync: "OK", ar_sync_msg: "Sync. Terminée",
+                pts: "PTS", win_msg: "DOMINATION", lose_msg: "BIEN ESSAYÉ", draw_msg: "ÉQUILIBRE",
+                blocked: "BLOQUÉ", range: "DISTANCE", occupied: "OCCUPÉ", conquest: "Nexus Fermé!", link: "Lien Établi"
+            },
+            de: {
+                login: "ANMELDEN", guest_login: "Als Gast", connecting: "VERBINDEN...", cancel: "ABBRECHEN",
+                agent: "AGENT", color: "FARBE", mark: "ZEICHEN", quick_match: "SCHNELLES SPIEL", create_room: "RAUM ERSTELLEN",
+                join_room: "BEITRETEN", vs_cpu: "GEGEN CPU", invite: "EINLADEN", ranking: "RANGLISTE", check_hw: "PRÜFUNG...",
+                searching: "SUCHE GEGNER", scanning: "SCANNE...", private_room: "PRIVATRAUM", share_code: "CODE TEILEN:",
+                waiting_player: "WARTE...", exit_ar: "AR BEENDEN", score: "PUNKTE", lines: "LINIEN", skip: "ÜBERSPRINGEN",
+                rival: "GEGNER", loading: "LADEN...", surrender: "AUFGEBEN", home: "HOME", recenter: "ZENTRIEREN",
+                start_ar: "AR STARTEN", fix: "PLATZIEREN", move: "BEWEGEN", victory: "SIEG", defeat: "NIEDERLAGE", draw: "UNENTSCHIEDEN",
+                back_menu: "HAUPTMENÜ", wait_turn: "Gegnerzug", play_turn: "Dein Zug", roll_dice: "Würfeln",
+                energy: "ENERGIE", pass: "PASSEN", turn_skipped: "Zug übersprungen", error: "FEHLER", login_req: "Login nötig",
+                room_full: "Raum voll", ar_scan: "SCAN-MODUS", ar_tap_fix: "Tippen zum Platzieren", ar_floor: "BODEN ERKANNT",
+                ar_air: "LUFT-MODUS", ar_adjust: "ANPASSEN...", ar_sync: "OK", ar_sync_msg: "Synchronisiert",
+                pts: "PKT", win_msg: "DOMINATION", lose_msg: "GUTER VERSUCH", draw_msg: "BALANCE",
+                blocked: "BLOCKIERT", range: "REICHWEITE", occupied: "BESETZT", conquest: "Nexus Geschlossen!", link: "Verbunden"
+            },
+            ru: {
+                login: "ВОЙТИ", guest_login: "Гостевой режим", connecting: "ПОДКЛЮЧЕНИЕ...", cancel: "ОТМЕНА",
+                agent: "АГЕНТ", color: "ЦВЕТ", mark: "ЗНАК", quick_match: "БЫСТРАЯ ИГРА", create_room: "СОЗДАТЬ",
+                join_room: "ВОЙТИ", vs_cpu: "ПРОТИВ CPU", invite: "ПРИГЛАСИТЬ", ranking: "РЕЙТИНГ", check_hw: "ПРОВЕРКА...",
+                searching: "ПОИСК...", scanning: "СКАНИРОВАНИЕ...", private_room: "ПРИВАТНАЯ", share_code: "КОД:",
+                waiting_player: "ОЖИДАНИЕ...", exit_ar: "ВЫХОД AR", score: "СЧЕТ", lines: "ЛИНИИ", skip: "ПРОПУСК",
+                rival: "СОПЕРНИК", loading: "ЗАГРУЗКА...", surrender: "СДАТЬСЯ", home: "ДОМОЙ", recenter: "ЦЕНТР",
+                start_ar: "СТАРТ AR", fix: "СТАВИТЬ", move: "ДВИГАТЬ", victory: "ПОБЕДА", defeat: "ПОРАЖЕНИЕ", draw: "НИЧЬЯ",
+                back_menu: "МЕНЮ", wait_turn: "Ход соперника", play_turn: "Твой ход", roll_dice: "Бросить куб",
+                energy: "ЭНЕРГИЯ", pass: "ПАС", turn_skipped: "Пропуск хода", error: "ОШИБКА", login_req: "Нужен вход",
+                room_full: "Мест нет", ar_scan: "СКАНИРОВАНИЕ", ar_tap_fix: "Нажми чтобы поставить", ar_floor: "ПОЛ НАЙДЕН",
+                ar_air: "РЕЖИМ ВОЗДУХА", ar_adjust: "НАСТРОЙКА...", ar_sync: "ОК", ar_sync_msg: "Синхронизация",
+                pts: "ОЧК", win_msg: "ДОМИНИРОВАНИЕ", lose_msg: "ХОРОШАЯ ПОПЫТКА", draw_msg: "БАЛАНС",
+                blocked: "БЛОК", range: "ДАЛЕКО", occupied: "ЗАНЯТО", conquest: "Связь создана!", link: "Соединено"
+            }
+        };
 
         const manualConfig = { apiKey: "AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain: "ar-3lilne.firebaseapp.com", projectId: "ar-3lilne", appId: "1:382966716480:web:ee244825bb34bc35c667a5" };
         const firebaseConfig = (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : manualConfig);
@@ -348,12 +458,53 @@
             else if(type === 'roll') { osc.type='square'; osc.frequency.setValueAtTime(100,now); gain.gain.setValueAtTime(0.05,now); gain.gain.exponentialRampToValueAtTime(0.01,now+0.15); osc.start(now); osc.stop(0.15); } 
         }
 
-        let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'}, points: 1000, wins: 0, losses: 0 };
+        let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'}, points: 1000, wins: 0, losses: 0, lang: 'es' };
         let pts=[], selPt=null, placed=false, roomUnsub=null, currentScale=0.1; 
         let arInitialized = false, isArHost = false, placementAccepted = false; 
         let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace, arBtn, ghostGroup;
         let isMatchmaking = false;
         
+        // --- GESTIÓN DE IDIOMA ---
+        window.detectLanguage = () => {
+            const l = navigator.language || navigator.userLanguage;
+            const code = l.split('-')[0].toLowerCase();
+            return (TR[code]) ? code : 'en'; // Inglés por defecto si no es soportado
+        }
+
+        window.setLanguage = (lang) => {
+            S.lang = lang;
+            document.getElementById('cur-lang-code').innerText = lang.toUpperCase();
+            
+            // Actualizar fuentes
+            document.body.classList.remove('lang-zh', 'lang-ru');
+            if(lang === 'zh') document.body.classList.add('lang-zh');
+            if(lang === 'ru') document.body.classList.add('lang-ru');
+
+            // Actualizar textos estáticos
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(TR[lang][key]) el.innerText = TR[lang][key];
+            });
+            
+            // Cerrar picker si está abierto
+            document.getElementById('custom-modal').style.display='none';
+        }
+
+        // Helper para obtener texto dinámico
+        window.t = (key) => TR[S.lang][key] || key;
+
+        window.showLangPicker = () => {
+            const opts = Object.keys(TR).map(k => 
+                `<div class="lang-opt ${S.lang===k?'active':''}" onclick="window.setLanguage('${k}')">${k.toUpperCase()}</div>`
+            ).join('');
+            
+            window.showModal(`
+                <h3 class="text-lg font-bold text-cyber mb-3">IDIOMA / LANGUAGE</h3>
+                <div class="lang-grid">${opts}</div>
+            `);
+        }
+        // --- FIN GESTIÓN IDIOMA ---
+
         function nav(id) {
             ['s-login','s-menu','s-game','s-waiting','win-screen','s-matchmaking'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); if(i==='s-waiting') el.classList.remove('active');} });
             const target = document.getElementById(id); if (target) { target.classList.remove('hidden'); if(id === 'win-screen' || id === 's-waiting') target.classList.add('active'); }
@@ -362,7 +513,7 @@
         if (auth) {
             onAuthStateChanged(auth, async (u) => {
                 if(u) {
-                    S.user = u; document.getElementById('login-btn-txt').innerText = "RECUPERANDO...";
+                    S.user = u; document.getElementById('login-btn-txt').innerText = t('connecting');
                     try { await registerUserAccess(u); } catch(e) {}
                     if (!document.getElementById('s-login').classList.contains('hidden')) {
                         const uName = document.getElementById('u-name'); if(uName) uName.innerText = u.displayName ? u.displayName.split(' ')[0].toUpperCase() : (u.isAnonymous ? "INVITADO" : u.uid.substring(0,8).toUpperCase()); 
@@ -371,10 +522,13 @@
                     window.checkAR(); 
                     setTimeout(() => window.updateMenuButtons(true), 500);
                 } else {
-                    S.user = null; nav('s-login'); document.getElementById('login-btn-txt').innerText = "INICIAR SESIÓN"; window.updateMenuButtons(false);
+                    S.user = null; nav('s-login'); document.getElementById('login-btn-txt').innerText = t('login'); window.updateMenuButtons(false);
                 }
             });
         }
+        
+        // Inicializar idioma al cargar
+        window.setLanguage(window.detectLanguage());
 
         async function registerUserAccess(u) { 
             const userRef = doc(db, 'artifacts', appId, 'users', u.uid); 
@@ -415,14 +569,14 @@
             const cancelBtn = document.getElementById('btn-cancel-login');
             
             btn.classList.add('btn-disabled');
-            txt.innerText = "ESPERANDO...";
+            txt.innerText = t('connecting');
             msg.classList.remove('hidden');
             cancelBtn.classList.remove('hidden');
 
             loginTimeout = setTimeout(() => {
-                msg.innerText = "TARDANDO DEMASIADO...";
+                msg.innerText = "TIMEOUT...";
                 btn.classList.remove('btn-disabled');
-                txt.innerText = "REINTENTAR";
+                txt.innerText = "RETRY";
             }, 8000);
             
             try{ 
@@ -434,20 +588,20 @@
             } catch(e) { 
                 console.error("Login Error:", e);
                 window.cancelLogin();
-                window.systemToast("INFO", "Intenta como Invitado."); 
+                window.systemToast("INFO", "Guest Mode"); 
             } 
         };
 
         window.doGuestLogin = async () => {
              if(!auth) return;
-             try { await signInAnonymously(auth); } catch(e) { window.systemToast("ERROR", "Fallo modo invitado"); }
+             try { await signInAnonymously(auth); } catch(e) { window.systemToast("ERROR", "Guest Failed"); }
         };
 
         window.cancelLogin = () => {
              clearTimeout(loginTimeout);
              const btn = document.getElementById('btn-login-google');
              if(btn) btn.classList.remove('btn-disabled');
-             document.getElementById('login-btn-txt').innerText = "INICIAR SESIÓN";
+             document.getElementById('login-btn-txt').innerText = t('login');
              document.getElementById('login-msg').classList.add('hidden');
              document.getElementById('btn-cancel-login').classList.add('hidden');
         };
@@ -467,7 +621,7 @@
                 if(ghostGroup) ghostGroup.visible = false;
                 document.getElementById('ar-instructions').style.display='none';
                 showArControls();
-                window.gameToast("FIJADO", "Puedes jugar o mover el tablero.");
+                window.gameToast(t('ar_sync'), t('ar_tap_fix'));
             }
         }
 
@@ -506,18 +660,18 @@
         }
 
         window.rollDice = () => {
-            const d=S.data; if(d.turn!==S.role) return window.gameToast("ESPERA","Turno Rival"); if(d.movs>0) return window.gameToast("JUEGA","Usa tus líneas");
+            const d=S.data; if(d.turn!==S.role) return window.gameToast("✋", t('wait_turn')); if(d.movs>0) return window.gameToast("🎮", t('play_turn'));
             const el=document.getElementById('dice-vis'); el.classList.add('rolling'); playSfx('roll');
-            setTimeout(()=>{ el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); window.update({dice:v, movs:v, skips:0}); window.gameToast("DADO",`ENERGÍA: ${v} líneas.`); },500);
+            setTimeout(()=>{ el.classList.remove('rolling'); const v=Math.ceil(Math.random()*6); window.update({dice:v, movs:v, skips:0}); window.gameToast(t('energy'), `${v} ${t('lines')}`); },500);
         };
         
         window.skipTurn = () => { 
-            const d=S.data; if(d.turn===S.role) { const newSkips = (d.skips || 0) + 1; if (newSkips >= 2) window.update({stat:'end'}); else { const t = d.turn==='host'?'guest':'host'; window.update({movs:0, turn:t, dice:null, skips: newSkips}); window.gameToast("PASO", "Turno cedido."); } } 
+            const d=S.data; if(d.turn===S.role) { const newSkips = (d.skips || 0) + 1; if (newSkips >= 2) window.update({stat:'end'}); else { const t_role = d.turn==='host'?'guest':'host'; window.update({movs:0, turn:t_role, dice:null, skips: newSkips}); window.gameToast(t('pass'), t('turn_skipped')); } } 
         }
 
         window.clickPt = (id) => {
-            const d=S.data; if(d.turn!==S.role || d.movs<=0) return window.gameToast("ERROR","Lanza el dado o espera tu turno");
-            if(ren.xr.isPresenting && !placementAccepted && !S.cpu) return window.gameToast("AR SYNC", "Espera confirmación.");
+            const d=S.data; if(d.turn!==S.role || d.movs<=0) return window.gameToast(t('error'), t('roll_dice'));
+            if(ren.xr.isPresenting && !placementAccepted && !S.cpu) return window.gameToast("AR SYNC", "Wait Sync");
             playSfx('click');
             if(selPt===null) { selPt=id; window.highlight(id,true); }
             else { if(selPt===id) { window.highlight(id,false); selPt=null; } else { window.tryLine(selPt,id); window.highlight(selPt,false); selPt=null; } }
@@ -525,16 +679,16 @@
 
         window.tryLine = (p1,p2) => {
             const d=S.data; const v1=pts[p1].position; const v2=pts[p2].position;
-            if(v1.distanceTo(v2) * currentScale > 1.3 * currentScale) return window.gameToast("RANGO","Demasiado lejos"); 
-            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return window.gameToast("OCUPADO","Enlace existente");
-            if(window.checkCollision(p1, p2)) { playSfx('error'); return window.gameToast("BLOQUEADO", "No puedes cruzar líneas"); }
+            if(v1.distanceTo(v2) * currentScale > 1.3 * currentScale) return window.gameToast(t('range'), t('error')); 
+            if(d.lines.some(l=>(l.s===p1&&l.e===p2)||(l.s===p2&&l.e===p1))) return window.gameToast(t('occupied'), t('error'));
+            if(window.checkCollision(p1, p2)) { playSfx('error'); return window.gameToast(t('blocked'), t('error')); }
             
             const nl=[...d.lines,{s:p1,e:p2,own:S.role}]; const nt=window.checkTri(p1,p2,S.role,nl); const sc={...d.sc}; 
-            if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); window.gameToast("CONQUISTA",`¡Nexo Cerrado! (+${nt.length})`); } 
-            else { window.gameToast("LÍNEA", "Enlace establecido."); }
+            if(nt.length) { sc[S.role]+=nt.length; playSfx('win'); window.gameToast("CONQUISTA", t('conquest')); } 
+            else { window.gameToast("LÍNEA", t('link')); }
             
-            let m=d.movs-1; let t=d.turn; let di=d.dice; if(m===0){ t=t==='host'?'guest':'host'; di=null; }
-            window.update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:t, dice:di, skips:0});
+            let m=d.movs-1; let trn=d.turn; let di=d.dice; if(m===0){ trn=trn==='host'?'guest':'host'; di=null; }
+            window.update({lines:nl, tris:[...d.tris,...nt], sc:sc, movs:m, turn:trn, dice:di, skips:0});
         }
         
         window.checkCollision = (p1, p2) => { 
@@ -563,8 +717,8 @@
             } return f;
         }
 
-        window.confirmLogout = () => { showConfirmModal("CERRAR SESIÓN", "¿Salir del sistema?", async () => { if (S.room && S.role === 'host') await window.update({ stat: 'end' }); signOut(auth).then(() => location.reload()); }); };
-        window.confirmFinishGame = () => { showConfirmModal("RENDIRSE", "¿Finalizar la partida?", () => window.update({stat: 'end'})); };
+        window.confirmLogout = () => { showConfirmModal("LOGOUT", "Exit?", async () => { if (S.room && S.role === 'host') await window.update({ stat: 'end' }); signOut(auth).then(() => location.reload()); }); };
+        window.confirmFinishGame = () => { showConfirmModal(t('surrender'), "?", () => window.update({stat: 'end'})); };
         
         window.showModal = (htmlContent) => {
             const modal = document.getElementById('custom-modal');
@@ -578,8 +732,8 @@
                 <h3 class="text-lg font-bold text-cyber mb-3">${title}</h3>
                 <p class="text-sm mb-6">${message}</p>
                 <div class="flex justify-center gap-4">
-                    <button onclick="document.getElementById('custom-modal').style.display='none'" class="btn-neon danger py-2 px-4 text-xs">CANCELAR</button>
-                    <button id="modal-confirm-btn" class="btn-neon py-2 px-4 text-xs">ACEPTAR</button>
+                    <button onclick="document.getElementById('custom-modal').style.display='none'" class="btn-neon danger py-2 px-4 text-xs">${t('cancel')}</button>
+                    <button id="modal-confirm-btn" class="btn-neon py-2 px-4 text-xs">OK</button>
                 </div>
             `);
             document.getElementById('modal-confirm-btn').onclick = () => { document.getElementById('custom-modal').style.display='none'; onConfirm(); };
@@ -626,12 +780,12 @@
 
         // --- SISTEMA DE MATCHMAKING PÚBLICO MEJORADO ---
         window.quickMatch = async () => {
-            if(!S.user) return window.systemToast("ERROR","Login requerido.");
+            if(!S.user) return window.systemToast("ERROR", t('login_req'));
             S.cpu=false; isMatchmaking = true;
             
             nav('s-matchmaking');
-            document.getElementById('match-status-title').innerText = "BUSCANDO RIVAL";
-            document.getElementById('match-status-desc').innerText = "ESCANEANDO RED MUNDIAL...";
+            document.getElementById('match-status-title').innerText = t('searching');
+            document.getElementById('match-status-desc').innerText = t('scanning');
             
             try {
                 const q = await getDocs(ROOMS_COLL); 
@@ -648,18 +802,18 @@
 
                 if(openRooms.length > 0) {
                     foundId = openRooms[Math.floor(Math.random() * openRooms.length)].replace('room_','');
-                    document.getElementById('match-status-title').innerText = "RIVAL ENCONTRADO";
-                    document.getElementById('match-status-desc').innerText = "EMPAREJANDO...";
+                    document.getElementById('match-status-title').innerText = "RIVAL FOUND";
+                    document.getElementById('match-status-desc').innerText = "CONNECTING...";
                     setTimeout(() => window.join(foundId), 1500); 
                 } else { 
-                    document.getElementById('match-status-title').innerText = "CREANDO SALA";
-                    document.getElementById('match-status-desc').innerText = "ESPERANDO CONTRINCANTE...";
+                    document.getElementById('match-status-title').innerText = t('create_room');
+                    document.getElementById('match-status-desc').innerText = t('waiting_player');
                     await window.create(true); 
                 }
             } catch(e) { 
                 console.error(e); 
                 nav('s-menu');
-                window.systemToast("ERROR","Error de red."); 
+                window.systemToast("ERROR", "Net Error"); 
             }
         };
 
@@ -672,10 +826,10 @@
         };
 
         window.createRoom = () => window.create(false);
-        window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) window.join(c); else window.systemToast("ERROR", "Código de 4 letras."); };
+        window.joinRoom = () => { const c=document.getElementById('code-in').value.toUpperCase(); if(c.length===4) window.join(c); else window.systemToast("ERROR", "CODE 4 CHARS"); };
         
         window.vsCpu = () => {
-            if(!S.user) return window.systemToast("ERROR", "Login requerido.");
+            if(!S.user) return window.systemToast("ERROR", t('login_req'));
             S.cpu=true; S.role='host'; S.room='CPU';
             S.data={ stat:'play', turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, p2:{c:'#ffffff',i:'atom'}, scale: 1.0, arPos: null, arRot: null, arScale: null, arAccepted: false };
             window.start();
@@ -685,7 +839,7 @@
             if(!S.user) return; if (S.room) window.goHome(); 
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
             
-            if(!pub) showLoad(true, "GENERANDO CÓDIGO...");
+            if(!pub) showLoad(true, "GENERATING...");
 
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             try {
@@ -701,19 +855,19 @@
 
         window.join = async (c) => {
             if(!S.user) return; S.role='guest'; S.room=c; 
-            if(!isMatchmaking) showLoad(true,"CONECTANDO...");
+            if(!isMatchmaking) showLoad(true, t('connecting'));
             
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             try {
                 const s = await getDoc(docRef);
-                if (!s.exists()) { showLoad(false); window.systemToast("ERROR", "Sala no existe."); S.room = null; return; }
+                if (!s.exists()) { showLoad(false); window.systemToast("ERROR", "404 ROOM"); S.room = null; return; }
                 const d = s.data();
-                if (d.guest && d.guest !== S.user.uid) { showLoad(false); window.systemToast("ERROR", "Sala llena."); S.room = null; return; }
+                if (d.guest && d.guest !== S.user.uid) { showLoad(false); window.systemToast("ERROR", t('room_full')); S.room = null; return; }
                 
                 let up = { guest:S.user.uid, guestName: S.user.displayName || "Jugador 2", stat:'play', p2:S.prof };
                 if(d.stat === 'wait') { up = {...up, dice: 6, movs: 6, skips: 0, turn: 'host', lastUpdate: Date.now()}; }
                 await updateDoc(docRef, up); window.sub(c); document.getElementById('room-lbl').innerText=c;
-            } catch(e) { showLoad(false); window.systemToast("ERROR", "Fallo al unir."); S.room = null; }
+            } catch(e) { showLoad(false); window.systemToast("ERROR", "JOIN FAIL"); S.room = null; }
         }
         
         window.sub = (c) => {
@@ -728,7 +882,7 @@
                         
                         if((waitScreen && waitScreen.classList.contains('active')) || (matchScreen && !matchScreen.classList.contains('hidden'))) {
                              nav('s-game');
-                             window.systemToast("CONECTADO", "¡La partida comienza!");
+                             window.systemToast("GO", "START!");
                              playSfx('click'); 
                         } else if(document.getElementById('s-game').classList.contains('hidden')) {
                              window.start(); 
@@ -736,13 +890,13 @@
                         window.ui(); 
                     }
                     else if(d.stat==='end') window.endGame(d);
-                } else if(S.room) { window.systemToast("FIN", "Sala cerrada."); window.goHome(); }
+                } else if(S.room) { window.systemToast("FIN", "Closed."); window.goHome(); }
             });
         }
 
         window.start = () => { 
             showLoad(false); nav('s-game'); window.init3D(); window.buildBoard(); 
-            window.systemToast("GO", "¡Partida iniciada!"); 
+            window.systemToast("GO", "START!"); 
             isArHost = S.cpu || (S.role === 'host'); 
             placementAccepted = !S.cpu && S.data.arAccepted === true;
             const rec = document.getElementById('btn-rec'); if(rec) rec.style.display = 'flex';
@@ -766,18 +920,18 @@
             let lossesChange = 0;
             
             if(win === 'DRAW') { 
-                tit.innerText = "EMPATE"; tit.className = "text-4xl md:text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "EQUILIBRIO PERFECTO";
+                tit.innerText = t('draw'); tit.className = "text-4xl md:text-6xl font-black text-warn mb-2 text-center"; msg.innerText = t('draw_msg');
                 ptsChange = 5;
                 elo.className = "text-warn font-bold text-lg mb-6";
             }
             else if(win === 'WIN') { 
-                tit.innerText = "VICTORIA"; tit.className = "text-4xl md:text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL";
+                tit.innerText = t('victory'); tit.className = "text-4xl md:text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = t('win_msg');
                 ptsChange = 25;
                 winsChange = 1;
                 elo.className = "text-neon font-bold text-lg mb-6 animate-bounce";
             }
             else { 
-                tit.innerText = "FIN DEL JUEGO"; tit.className = "text-4xl md:text-6xl font-black text-hot mb-2 text-center"; msg.innerText = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)];
+                tit.innerText = t('defeat'); tit.className = "text-4xl md:text-6xl font-black text-hot mb-2 text-center"; msg.innerText = t('lose_msg');
                 ptsChange = -10;
                 lossesChange = 1;
                 elo.className = "text-hot font-bold text-lg mb-6";
@@ -789,7 +943,7 @@
                 S.points = newPoints; 
                 S.wins += winsChange;
                 S.losses += lossesChange;
-                elo.innerText = (ptsChange >= 0 ? "+" : "") + ptsChange + " PUNTOS";
+                elo.innerText = (ptsChange >= 0 ? "+" : "") + ptsChange + " " + t('pts');
                 
                 try {
                     const userRef = doc(db, 'artifacts', appId, 'users', S.user.uid);
@@ -800,7 +954,7 @@
                     });
                 } catch(e) { console.error("Error saving stats", e); }
             } else {
-                elo.innerText = "MODO PRÁCTICA (Sin Puntos)";
+                elo.innerText = "TRAINING (No Pts)";
             }
 
             document.getElementById('final-p1').innerText = myS; document.getElementById('final-p2').innerText = rivS;
@@ -808,7 +962,6 @@
         }
 
         // --- SISTEMA DE LEADERBOARD (BOTS + REAL) ---
-        // Generador pseudo-aleatorio simple basado en seed
         function mulberry32(a) {
             return function() {
               var t = a += 0x6D2B79F5;
@@ -838,16 +991,16 @@
         }
 
         window.showLeaderboard = async () => {
-            if(!S.user) return window.systemToast("ERROR", "Inicia sesión para ver rankings");
+            if(!S.user) return window.systemToast("ERROR", t('login_req'));
             
             window.showModal(`
-                <h3 class="text-lg font-bold text-cyber mb-4 border-b border-cyber/30 pb-2">RANKING MUNDIAL (DIARIO)</h3>
+                <h3 class="text-lg font-bold text-cyber mb-4 border-b border-cyber/30 pb-2">${t('ranking')}</h3>
                 
                 <div class="rank-header">
                     <div style="width:25px">#</div>
-                    <div style="flex-grow:1">AGENTE</div>
+                    <div style="flex-grow:1">${t('agent')}</div>
                     <div style="width:50px; text-align:center">W / L</div>
-                    <div style="width:50px; text-align:right">PTS</div>
+                    <div style="width:50px; text-align:right">${t('pts')}</div>
                 </div>
 
                 <div id="lb-list" class="flex flex-col gap-1 mb-4 h-64 overflow-y-auto">
@@ -855,16 +1008,13 @@
                 </div>
                 
                 <div class="bg-white/10 p-2 rounded flex justify-between items-center text-xs border-t border-white/10 mt-2">
-                    <span class="text-gray-400">TU RANGO ACTUAL:</span>
-                    <span class="text-neon font-bold" id="my-rank-pts">${S.points} PTS</span>
+                    <span class="text-gray-400">YOUR RANK:</span>
+                    <span class="text-neon font-bold" id="my-rank-pts">${S.points} ${t('pts')}</span>
                 </div>
             `);
 
             try {
-                // 1. Obtener Bots Diarios
                 let allPlayers = getDailyBots();
-
-                // 2. Añadirme a mí mismo
                 const myData = { 
                     displayName: S.user.displayName || "YO", 
                     points: S.points || 1000, 
@@ -873,8 +1023,6 @@
                     isMe: true 
                 };
                 allPlayers.push(myData);
-
-                // 3. Ordenar
                 allPlayers.sort((a,b) => b.points - a.points);
                 
                 const list = document.getElementById('lb-list');
@@ -899,18 +1047,9 @@
                 });
             } catch(e) {
                 console.error(e);
-                document.getElementById('lb-list').innerHTML = "<p class='text-red-500 text-xs'>Error cargando ranking</p>";
+                document.getElementById('lb-list').innerHTML = "<p class='text-red-500 text-xs'>Error</p>";
             }
         };
-
-        // --- SISTEMA SOCIAL (Desactivado temporalmente) ---
-        /*
-        window.showShare = () => {
-             ... código anterior ...
-        };
-        */
-        // Placeholder
-        window.showShare = () => {};
 
         window.copyLink = (txt) => {
             const input = document.createElement('input');
@@ -919,7 +1058,7 @@
             input.select();
             document.execCommand('copy');
             document.body.removeChild(input);
-            window.systemToast("COPIADO", "Enlace en portapapeles");
+            window.systemToast("COPY", "Link Copied");
         };
 
         window.update = (o) => {
@@ -957,17 +1096,17 @@
                     if (S.cpu || d.arAccepted) { 
                         hideArControls(); 
                         document.getElementById('ar-instructions').style.display='none';
-                        if(isArHost) document.getElementById('size-slider-container').style.display='flex'; // Slider siempre disponible para host
+                        if(isArHost) document.getElementById('size-slider-container').style.display='flex'; 
                     } else {
                         showArControls();
-                        document.getElementById('ar-instr-txt').innerText = "AJUSTANDO...";
-                        document.getElementById('btn-ar-accept').innerText = isArHost ? "FIJAR" : "ESPERANDO...";
+                        document.getElementById('ar-instr-txt').innerText = t('ar_adjust');
+                        document.getElementById('btn-ar-accept').innerText = isArHost ? t('fix') : t('waiting_player');
                         document.getElementById('btn-ar-accept').disabled = !isArHost; 
                         document.getElementById('btn-ar-recal').style.display = isArHost ? 'inline-block' : 'none';
                     }
                 } else if (isArHost && !placed) { 
                     document.getElementById('ar-instructions').style.display='block';
-                    document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>MODO ESCANEO</span><br>Toca pantalla para fijar";
+                    document.getElementById('ar-instr-txt').innerHTML = `<span class='text-neon'>${t('ar_scan')}</span><br>${t('ar_tap_fix')}`;
                 } 
             } else { 
                 document.getElementById('btn-exit-ar').classList.add('hidden');
@@ -1000,20 +1139,20 @@
             let m=null; 
             for(let i=0; i<pts.length; i++) { for(let j=i+1; j<pts.length; j++) { if(pts[i].position.distanceTo(pts[j].position)<1.3 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j)) { const testLines = [...S.data.lines, {s:i,e:j,own:'guest'}]; if (window.checkTri(i, j, 'guest', testLines).length > 0) { m={s:i,e:j}; break; } } } if(m) break; }
             if(!m) { const candidates = []; for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++) if(pts[i].position.distanceTo(pts[j].position)<1.3 && !S.data.lines.some(l=>(l.s===i&&l.e===j)||(l.s===j&&l.e===i)) && !window.checkCollision(i,j)) candidates.push({s:i,e:j}); if(candidates.length > 0) m = candidates[Math.floor(Math.random() * candidates.length)]; }
-            if(m) { const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=window.checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length; let mo=S.data.movs-1; let t=S.data.turn; let di=S.data.dice; if(mo===0){t='host'; di=null;} window.update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:t, dice:di, skips:0}); } else { window.update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1}); }
+            if(m) { const nl=[...S.data.lines,{s:m.s,e:m.e,own:'guest'}]; const nt=window.checkTri(m.s,m.e,'guest',nl); const sc={...S.data.sc}; if(nt.length) sc.guest+=nt.length; let mo=S.data.movs-1; let trn=S.data.turn; let di=S.data.dice; if(mo===0){trn='host'; di=null;} window.update({lines:nl, tris:[...S.data.tris,...nt], sc:sc, movs:mo, turn:trn, dice:di, skips:0}); } else { window.update({movs:0, turn:'host', dice:null, skips: S.data.skips + 1}); }
         }
 
         window.checkAR = () => {
             const el = document.getElementById('ar-status');
             if('xr' in navigator) {
                 navigator.xr.isSessionSupported('immersive-ar').then(ok => {
-                    el.innerHTML= ok ? '<span class="text-neon font-bold">AR DISPONIBLE</span>' : 'MODO 3D (No AR)';
+                    el.innerHTML= ok ? '<span class="text-neon font-bold">AR OK</span>' : '3D MODE';
                     if(ok) {
                         document.getElementById('btn-start-ar-float').classList.remove('hidden');
                         if(!arInitialized) window.init3D();
                     }
                 });
-            } else el.innerText="MODO PC";
+            } else el.innerText="3D MODE (PC)";
         }
 
         window.recenter = () => {
@@ -1064,7 +1203,7 @@
                 
                 placed = false; group.visible = false; reticle.visible = true; 
                 document.getElementById('ar-instructions').style.display = 'block';
-                document.getElementById('ar-instr-txt').innerHTML = "ESCANEANDO...";
+                document.getElementById('ar-instr-txt').innerHTML = t('scanning');
             });
 
             ren.xr.addEventListener('sessionend',()=>{ 
@@ -1129,7 +1268,7 @@
                             reticle.matrixAutoUpdate = false;
                             reticle.children.forEach(c => c.material.color.setHex(0x39ff14));
                             hitFound = true;
-                            document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>PISO DETECTADO</span><br>Toca para fijar";
+                            document.getElementById('ar-instr-txt').innerHTML = `<span class='text-neon'>${t('ar_floor')}</span><br>${t('ar_tap_fix')}`;
                         }
                     }
                     if(!hitFound && frame) {
@@ -1143,7 +1282,7 @@
                             reticle.position.lerp(targetPos, 0.2);
                             reticle.lookAt(p.x, p.y, p.z); 
                             reticle.children.forEach(c => c.material.color.setHex(0xffcc00));
-                            document.getElementById('ar-instr-txt').innerHTML = "<span class='text-warn'>MODO AÉREO</span><br>Toca para fijar";
+                            document.getElementById('ar-instr-txt').innerHTML = `<span class='text-warn'>${t('ar_air')}</span><br>${t('ar_tap_fix')}`;
                         }
                     }
                     if(ghostGroup) { 
@@ -1217,7 +1356,7 @@
             if (!ren.xr.isPresenting || !isArHost || !placed) return;
             const pos = group.position.toArray(); const rot = group.rotation.toArray().slice(0, 3);
             window.update({ arPos: pos, arRot: rot, arScale: currentScale, arAccepted: true });
-            window.gameToast("OK", "Tablero sincronizado.");
+            window.gameToast(t('ar_sync'), t('ar_sync_msg'));
         }
 
         window.recalibrate = () => {
@@ -1235,7 +1374,7 @@
         
         window.systemToast = (t,m) => {
             const e=document.getElementById('toast');
-            document.getElementById('s-head').innerText="SISTEMA"; document.getElementById('s-body').innerText=`${t}: ${m}`;
+            document.getElementById('s-head').innerText="SYSTEM"; document.getElementById('s-body').innerText=`${t}: ${m}`;
             e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),3000);
         }
     </script>
