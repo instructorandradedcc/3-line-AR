@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: gap: content:; style-src * 'self' 'unsafe-inline'; script-src * 'self' 'unsafe-inline' 'unsafe-eval';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3 LINE-AR | V44.3 FINAL TOUCH FIX</title>
+    <title>3 LINE-AR | V45.0 SOCIAL RANK</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { 
             theme: { 
                 extend: { 
-                    colors: { glass: 'rgba(5, 10, 20, 0.95)', cyber: '#00f3ff', neon: '#39ff14', hot: '#ff0055', warn: '#ffcc00' },
+                    colors: { glass: 'rgba(5, 10, 20, 0.95)', cyber: '#00f3ff', neon: '#39ff14', hot: '#ff0055', warn: '#ffcc00', rank1: '#ffd700', rank2: '#c0c0c0', rank3: '#cd7f32' },
                     fontFamily: { orbitron: ['Orbitron', 'sans-serif'], mono: ['monospace'] },
-                    animation: { 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                    animation: { 'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite', 'spin-slow': 'spin 3s linear infinite' }
                 } 
             } 
         }
@@ -60,14 +60,14 @@
         #ar-zone button { display: none !important; }
 
         #btn-rec { display: flex; }
-        .ar-sync-btn { background: rgba(255, 204, 0, 0.1) !important; border: 1px solid #ffcc00 !important; color: #ffcc00 !important; font-family: 'Orbitron' !important; padding: 8px 16px !important; border-radius: 6px !important; text-transform: uppercase !important; font-size: 10px; font-weight: bold; }
-        .ar-sync-btn:active { transform: scale(0.95); background: #ffcc00; color: #000; }
+        .ar-sync-btn { background: rgba(0, 0, 0, 0.8) !important; border: 2px solid #ffcc00 !important; color: #ffcc00 !important; font-family: 'Orbitron' !important; padding: 12px 24px !important; border-radius: 8px !important; text-transform: uppercase !important; font-size: 12px; font-weight: bold; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); }
+        .ar-sync-btn:active { transform: scale(0.95); background: #ffcc00 !important; color: #000 !important; }
         
         .btn-end { background: rgba(255, 0, 85, 0.1); border: 1px solid #ff0055; color: #ff0055; font-size: 10px; padding: 8px 12px; border-radius: 8px; font-weight: bold; transition: all 0.2s; }
         .btn-end:active { transform: scale(0.95); background: #ff0055; color: #000; }
 
-        #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100; display: none; justify-content: center; align-items: center; }
-        #modal-content { background: rgba(8, 12, 18, 0.98); backdrop-filter: blur(20px); border: 2px solid #00f3ff; border-radius: 12px; padding: 24px; max-width: 300px; width: 90%; text-align: center; color: white; box-shadow: 0 0 50px rgba(0, 243, 255, 0.3); }
+        #custom-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; justify-content: center; align-items: center; }
+        #modal-content { background: rgba(8, 12, 18, 0.98); backdrop-filter: blur(20px); border: 2px solid #00f3ff; border-radius: 12px; padding: 24px; max-width: 320px; width: 95%; text-align: center; color: white; box-shadow: 0 0 50px rgba(0, 243, 255, 0.3); position: relative; }
         
         #btn-start-ar-float { position: absolute; bottom: 180px; left: 50%; transform: translateX(-50%); z-index: 50; width: auto; white-space: nowrap; }
         
@@ -82,11 +82,29 @@
         #s-waiting { position: absolute; inset: 0; background: rgba(0,0,0,0.95); z-index: 55; display: none; flex-direction: column; justify-content: center; align-items: center; }
         #s-waiting.active { display: flex; }
         
-        /* NUEVO SLIDER DE TAMAÑO */
-        #size-slider-container { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); z-index: 40; height: 200px; display: none; flex-direction: column; align-items: center; gap: 10px; pointer-events: auto; }
+        /* SLIDER DE TAMAÑO - Posición ajustada */
+        #size-slider-container { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 40; height: 200px; display: none; flex-direction: column; align-items: center; gap: 10px; pointer-events: auto; }
         #size-slider { -webkit-appearance: none; width: 150px; height: 6px; background: rgba(0, 243, 255, 0.3); border-radius: 3px; outline: none; transform: rotate(-90deg); margin: 70px -70px; }
-        #size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #00f3ff; cursor: pointer; box-shadow: 0 0 10px #00f3ff; }
+        #size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 25px; height: 25px; border-radius: 50%; background: #00f3ff; cursor: pointer; box-shadow: 0 0 10px #00f3ff; border: 2px solid white; }
         .size-icon { color: #00f3ff; font-size: 12px; text-shadow: 0 0 5px #00f3ff; }
+
+        /* Estilos para Leaderboard */
+        .rank-row { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 11px; }
+        .rank-row:last-child { border-bottom: none; }
+        .rank-pos { width: 20px; font-weight: bold; }
+        .rank-name { flex-grow: 1; text-align: left; padding-left: 10px; }
+        .rank-pts { font-family: monospace; color: #00f3ff; }
+        .rank-1 .rank-pos { color: #ffd700; text-shadow: 0 0 5px #ffd700; }
+        .rank-2 .rank-pos { color: #c0c0c0; }
+        .rank-3 .rank-pos { color: #cd7f32; }
+
+        /* Iconos sociales */
+        .social-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; color: white; transition: 0.2s; }
+        .sb-fb { background: #1877f2; }
+        .sb-x { background: #000; border: 1px solid #333; }
+        .sb-wa { background: #25d366; }
+        .sb-ig { background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d); }
+        .social-btn:active { transform: scale(0.9); }
     </style>
 
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
@@ -94,17 +112,16 @@
 <body>
     <canvas id="bg-canvas"></canvas>
     
-    <div class="version-tag">V44.3 FINAL TOUCH</div>
+    <div class="version-tag">V45.0 SOCIAL RANK</div>
 
     <div id="ui-layer" class="flex flex-col justify-between p-4 h-full">
         
+        <!-- MODAL GENÉRICO -->
         <div id="custom-modal" class="interactive">
             <div id="modal-content">
-                <h3 class="text-lg font-bold text-cyber mb-3" id="modal-title"></h3>
-                <p class="text-sm mb-6" id="modal-message"></p>
-                <div class="flex justify-center gap-4">
-                    <button id="modal-cancel" class="btn-neon danger py-2 px-4 text-xs">CANCELAR</button>
-                    <button id="modal-confirm" class="btn-neon py-2 px-4 text-xs">ACEPTAR</button>
+                <button onclick="document.getElementById('custom-modal').style.display='none'" class="absolute top-2 right-2 text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
+                <div id="modal-body-content">
+                    <!-- CONTENIDO DINÁMICO -->
                 </div>
             </div>
         </div>
@@ -115,13 +132,12 @@
                 <div class="text-6xl text-cyber animate-pulse-fast"><i class="fas fa-globe-network"></i></div>
                 <div>
                     <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V44.3</p>
+                    <p class="text-gray-500 text-[9px] font-mono tracking-[0.4em] mt-2">V45.0</p>
                 </div>
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon w-full py-4 flex justify-center items-center gap-3 text-sm hover:bg-cyber/10">
                     <i class="fab fa-google"></i> <span id="login-btn-txt">INICIAR SESIÓN</span>
                 </button>
                 
-                <!-- Opción de respaldo -->
                 <button onclick="window.doGuestLogin()" class="text-[10px] text-gray-500 underline hover:text-white">Jugar como Invitado (Sin Google)</button>
                 
                 <p id="login-msg" class="text-[9px] text-gray-600 hidden">INTENTANDO CONECTAR...</p>
@@ -131,7 +147,10 @@
 
         <!-- 2. MENU -->
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center bg-black/90 z-40 hidden">
-            <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-5">
+            <div class="glass-panel p-6 w-full max-w-xs flex flex-col gap-4 relative">
+                <!-- RANKING BUTTON -->
+                <button onclick="window.showLeaderboard()" class="absolute -top-12 right-0 bg-black/50 border border-cyber text-cyber p-2 rounded-full w-10 h-10 flex items-center justify-center shadow-[0_0_10px_#00f3ff] hover:bg-cyber hover:text-black transition"><i class="fas fa-trophy"></i></button>
+                
                 <div class="flex justify-between items-center border-b border-white/10 pb-3">
                     <div class="flex items-center gap-2">
                         <img id="u-photo" src="" class="w-8 h-8 rounded-full border border-cyber hidden">
@@ -176,12 +195,30 @@
                     <button onclick="window.joinRoom()" class="btn-neon w-14"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 
-                <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs mt-2"><i class="fas fa-microchip mr-2"></i> JUGAR VS CPU</button>
-                <div id="ar-status" class="text-center mt-2 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
+                <div class="flex gap-2 mt-2">
+                    <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger btn-disabled py-3 text-xs flex-1"><i class="fas fa-microchip mr-2"></i> VS CPU</button>
+                    <button onclick="window.showShare()" class="btn-neon flex-1 py-3 text-xs border-purple-500 text-purple-400"><i class="fas fa-share-nodes mr-2"></i> INVITAR</button>
+                </div>
+
+                <div id="ar-status" class="text-center mt-1 text-[9px] text-gray-500 font-mono">VERIFICANDO HARDWARE...</div>
             </div>
         </div>
 
-        <!-- PANTALLA DE ESPERA (SALA PRIVADA) -->
+        <!-- PANTALLA DE CARGA MATCHMAKING -->
+        <div id="s-matchmaking" class="interactive absolute inset-0 flex items-center justify-center bg-black/95 z-50 hidden">
+            <div class="text-center">
+                <div class="relative w-24 h-24 mx-auto mb-6">
+                    <div class="absolute inset-0 border-4 border-cyber/30 rounded-full animate-ping"></div>
+                    <div class="absolute inset-0 border-4 border-t-cyber border-r-transparent border-b-cyber border-l-transparent rounded-full animate-spin"></div>
+                    <i class="fas fa-globe text-4xl text-cyber absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></i>
+                </div>
+                <h2 class="text-2xl font-black text-white italic" id="match-status-title">BUSCANDO RIVAL</h2>
+                <p class="text-cyber font-mono text-xs tracking-widest mt-2 animate-pulse" id="match-status-desc">ESCANEANDO JUGADORES...</p>
+                <button onclick="window.cancelMatchmaking()" class="mt-8 btn-neon danger py-2 px-6 text-xs">CANCELAR</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA DE ESPERA PRIVADA -->
         <div id="s-waiting" class="interactive">
             <div class="glass-panel p-8 text-center w-full max-w-xs flex flex-col items-center gap-6 relative">
                 <div class="absolute top-4 right-4 cursor-pointer text-gray-500 hover:text-white" onclick="window.goHome()"><i class="fas fa-times"></i></div>
@@ -192,7 +229,7 @@
                     <div class="w-2 h-2 rounded-full bg-neon animate-pulse"></div>
                     <span class="text-[10px] text-neon font-mono">ESPERANDO JUGADOR...</span>
                 </div>
-                <p class="text-[9px] text-gray-500 mt-2">El juego iniciará automáticamente cuando se unan.</p>
+                <button onclick="window.showShare()" class="text-xs text-cyber underline mt-2"><i class="fas fa-share-alt"></i> Enviar Invitación</button>
             </div>
         </div>
 
@@ -205,7 +242,12 @@
                 <i class="fas fa-minus size-icon"></i>
             </div>
 
-            <div class="interactive glass-panel p-3 flex justify-between items-start mt-2 mx-2 backdrop-blur-md">
+            <!-- BOTÓN SALIR AR -->
+            <div id="btn-exit-ar" class="hidden interactive absolute top-4 left-4 z-50">
+                <button onclick="window.goHome()" class="bg-red-600/90 text-white border border-red-400 font-bold py-2 px-4 rounded-lg shadow-lg text-xs backdrop-blur"><i class="fas fa-times mr-2"></i> SALIR AR</button>
+            </div>
+
+            <div class="interactive glass-panel p-3 flex justify-between items-start mt-8 mx-2 backdrop-blur-md">
                 <div class="text-center w-20">
                     <span class="text-[8px] text-gray-400 block tracking-widest">PUNTAJE</span>
                     <span id="sc-p1" class="text-3xl text-white font-black leading-none">0</span>
@@ -241,7 +283,7 @@
                 <div id="toast" class="toast-box text-center"><p id="s-head" class="font-bold text-cyber text-xs mb-1 border-b border-white/10 pb-1 uppercase tracking-widest">3 LINE-AR</p><p id="s-body" class="text-sm tracking-wide">Mensaje</p></div>
             </div>
 
-            <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end w-full px-4">
+            <div class="interactive flex justify-center gap-6 pb-24 md:pb-10 items-end w-full px-4" id="pc-controls">
                 <button onclick="window.confirmFinishGame()" class="btn-end flex items-center gap-1"><i class="fas fa-flag-checkered"></i> RENDIRSE</button>
                 <button onclick="window.goHome()" class="w-14 h-14 rounded-full bg-gray-800/90 border border-gray-600 text-gray-300 flex flex-col items-center justify-center shadow-lg hover:border-white hover:text-white transition z-50"><i class="fas fa-home text-lg"></i><span class="text-[8px] font-bold mt-1">INICIO</span></button>
                 <button onclick="window.recenter()" id="btn-rec" class="px-6 h-12 rounded-full bg-cyber/10 border border-cyber text-cyber text-xs font-mono shadow-[0_0_15px_rgba(0,243,255,0.2)] hover:bg-cyber/30 hover:text-white transition flex items-center gap-2"><i class="fas fa-compress-arrows-alt"></i> RE-CENTRAR</button>
@@ -250,21 +292,18 @@
             <div id="btn-start-ar-float" class="hidden interactive">
                 <button onclick="window.startARSession()" class="btn-neon py-3 px-6 text-xs shadow-[0_0_20px_#00f3ff] animate-bounce bg-black/80"><i class="fas fa-cube mr-2"></i> INICIAR MODO AR</button>
             </div>
-
-            <div id="btn-exit-ar" class="hidden interactive absolute bottom-8 right-4 z-50">
-                <button onclick="window.goHome()" class="bg-red-600/90 text-white border border-red-400 font-bold py-3 px-6 rounded-lg shadow-lg text-xs backdrop-blur"><i class="fas fa-times-circle mr-2"></i> SALIR AR</button>
-            </div>
             
-            <div id="ar-controls" class="interactive absolute bottom-4 left-1/2 -translate-x-1/2 hidden justify-center gap-4 z-40 w-full px-4">
-                <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn flex-1"><i class="fas fa-check mr-2"></i> JUGAR AQUÍ</button>
-                <button onclick="window.recalibrate()" id="btn-ar-recal" class="ar-sync-btn flex-1"><i class="fas fa-sync-alt mr-2"></i> MOVER</button>
+            <div id="ar-controls" class="interactive absolute bottom-6 left-1/2 -translate-x-1/2 hidden justify-center gap-4 z-40 w-full px-4">
+                <button onclick="window.acceptScaleAndPosition()" id="btn-ar-accept" class="ar-sync-btn flex-1"><i class="fas fa-check mr-2"></i> FIJAR</button>
+                <button onclick="window.recalibrate()" id="btn-ar-recal" class="ar-sync-btn flex-1 bg-gray-800/80 border-gray-500 !text-gray-200"><i class="fas fa-sync-alt mr-2"></i> MOVER</button>
             </div>
         </div>
 
         <!-- WIN SCREEN -->
         <div id="win-screen">
             <h1 id="win-title" class="text-4xl md:text-6xl font-black text-cyber mb-2 animate-pulse text-center px-4">VICTORIA</h1>
-            <p id="win-msg" class="text-white font-mono mb-8 tracking-widest text-center text-sm px-4">MENSAJE MOTIVACIONAL</p>
+            <p id="win-msg" class="text-white font-mono mb-2 tracking-widest text-center text-sm px-4">MENSAJE MOTIVACIONAL</p>
+            <p id="elo-change" class="text-neon font-bold text-lg mb-6 animate-bounce">+0 PUNTOS</p>
             
             <div class="glass-panel p-6 mb-8 w-full max-w-sm mx-4">
                 <div class="flex justify-between items-center text-center">
@@ -286,7 +325,7 @@
         import { ARButton } from 'three/addons/webxr/ARButton.js';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, updateDoc, onSnapshot, getDoc, getDocs, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithPopup, signInAnonymously, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const manualConfig = { apiKey: "AIzaSyBbPYnUPaO-kzWWStS8013SOvdTSuK3KP4", authDomain: "ar-3lilne.firebaseapp.com", projectId: "ar-3lilne", appId: "1:382966716480:web:ee244825bb34bc35c667a5" };
@@ -309,20 +348,14 @@
             else if(type === 'roll') { osc.type='square'; osc.frequency.setValueAtTime(100,now); gain.gain.setValueAtTime(0.05,now); gain.gain.exponentialRampToValueAtTime(0.01,now+0.15); osc.start(now); osc.stop(now+0.15); } 
         }
 
-        let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'} };
+        let S = { user:null, room:null, role:null, cpu:false, data:null, prof:{c:'#00f3ff', i:'gem'}, points: 1000 };
         let pts=[], selPt=null, placed=false, roomUnsub=null, currentScale=0.1; 
         let arInitialized = false, isArHost = false, placementAccepted = false; 
         let scene, cam, ren, group, ray, reticle, arHit, controls, arRefSpace, arBtn, ghostGroup;
-        let initialPinchDistance = 0; let initialScale = 0.1;
+        let isMatchmaking = false;
         
-        // VARIABLES PARA ARRASTRAR (DRAG)
-        let isDragging = false;
-        let dragPlane = new THREE.Plane();
-        let dragOffset = new THREE.Vector3();
-        const raycaster = new THREE.Raycaster();
-
         function nav(id) {
-            ['s-login','s-menu','s-game','s-waiting','win-screen'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); if(i==='s-waiting') el.classList.remove('active');} });
+            ['s-login','s-menu','s-game','s-waiting','win-screen','s-matchmaking'].forEach(i => { const el = document.getElementById(i); if (el) { el.classList.add('hidden'); if(i === 'win-screen') el.classList.remove('active'); if(i==='s-waiting') el.classList.remove('active');} });
             const target = document.getElementById(id); if (target) { target.classList.remove('hidden'); if(id === 'win-screen' || id === 's-waiting') target.classList.add('active'); }
         }
 
@@ -343,7 +376,18 @@
             });
         }
 
-        async function registerUserAccess(u) { const userRef = doc(db, 'artifacts', appId, 'users', u.uid); await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online' }, { merge: true }); }
+        async function registerUserAccess(u) { 
+            const userRef = doc(db, 'artifacts', appId, 'users', u.uid); 
+            const snap = await getDoc(userRef);
+            let currentPoints = 1000;
+            if(snap.exists()) {
+                currentPoints = snap.data().points || 1000;
+                await updateDoc(userRef, { lastLogin: Date.now() });
+            } else {
+                await setDoc(userRef, { uid: u.uid, lastLogin: Date.now(), displayName: u.displayName || 'Anon', status: 'online', points: 1000 }, { merge: true });
+            }
+            S.points = currentPoints;
+        }
         
         window.updateMenuButtons = (enabled) => { 
             ['btn-quick-match', 'btn-create-room', 'btn-join-room', 'btn-vs-cpu'].forEach(id => { 
@@ -355,7 +399,6 @@
             }); 
         };
         
-        // --- LOGIN CORREGIDO CON RETRY ---
         let loginTimeout;
         window.doLogin = async () => { 
             if(!auth) return; 
@@ -405,15 +448,19 @@
         window.startARSession = () => { if(arBtn) arBtn.click(); }
 
         window.doPlace = () => {
-            if (ren.xr.isPresenting && isArHost && !placed && reticle.visible) {
+            if (ren.xr.isPresenting && isArHost && !placed) {
                 placed = true; reticle.visible = false;
                 group.position.setFromMatrixPosition(reticle.matrix); 
                 group.rotation.setFromRotationMatrix(reticle.matrix);
+                if(reticle.matrixAutoUpdate) {
+                    group.position.copy(reticle.position);
+                    group.rotation.copy(reticle.rotation);
+                }
                 group.visible = true;
                 if(ghostGroup) ghostGroup.visible = false;
                 document.getElementById('ar-instructions').style.display='none';
                 showArControls();
-                window.gameToast("FIJADO", "Deslizador o pellizco para escalar.");
+                window.gameToast("FIJADO", "Puedes jugar o mover el tablero.");
             }
         }
 
@@ -512,12 +559,23 @@
         window.confirmLogout = () => { showConfirmModal("CERRAR SESIÓN", "¿Salir del sistema?", async () => { if (S.room && S.role === 'host') await window.update({ stat: 'end' }); signOut(auth).then(() => location.reload()); }); };
         window.confirmFinishGame = () => { showConfirmModal("RENDIRSE", "¿Finalizar la partida?", () => window.update({stat: 'end'})); };
         
-        function showConfirmModal(title, message, onConfirm) {
-            const modal = document.getElementById('custom-modal'); if(!modal) return;
-            document.getElementById('modal-title').innerText = title; document.getElementById('modal-message').innerText = message;
+        window.showModal = (htmlContent) => {
+            const modal = document.getElementById('custom-modal');
+            const body = document.getElementById('modal-body-content');
+            body.innerHTML = htmlContent;
             modal.style.display = 'flex';
-            document.getElementById('modal-confirm').onclick = () => { modal.style.display='none'; onConfirm(); };
-            document.getElementById('modal-cancel').onclick = () => { modal.style.display='none'; };
+        };
+
+        function showConfirmModal(title, message, onConfirm) {
+            window.showModal(`
+                <h3 class="text-lg font-bold text-cyber mb-3">${title}</h3>
+                <p class="text-sm mb-6">${message}</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="document.getElementById('custom-modal').style.display='none'" class="btn-neon danger py-2 px-4 text-xs">CANCELAR</button>
+                    <button id="modal-confirm-btn" class="btn-neon py-2 px-4 text-xs">ACEPTAR</button>
+                </div>
+            `);
+            document.getElementById('modal-confirm-btn').onclick = () => { document.getElementById('custom-modal').style.display='none'; onConfirm(); };
         }
         
         window.goHome = () => {
@@ -530,7 +588,7 @@
 
         function performGoHome() {
             if(roomUnsub) roomUnsub(); roomUnsub=null; S.room = null; S.data = null;
-            nav('s-menu'); isArHost = false; placementAccepted = false; hideArControls();
+            nav('s-menu'); isArHost = false; placementAccepted = false; hideArControls(); isMatchmaking = false;
             if(group) { while(group.children.length>0) group.remove(group.children[0]); }
             
             document.body.classList.remove('ar-active');
@@ -559,36 +617,59 @@
 
         const ROOMS_COLL = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
 
+        // --- SISTEMA DE MATCHMAKING PÚBLICO MEJORADO ---
         window.quickMatch = async () => {
             if(!S.user) return window.systemToast("ERROR","Login requerido.");
-            S.cpu=false; 
-            showLoad(true, "BUSCANDO OPONENTE...");
+            S.cpu=false; isMatchmaking = true;
+            
+            // Mostrar modal de búsqueda
+            nav('s-matchmaking');
+            document.getElementById('match-status-title').innerText = "BUSCANDO RIVAL";
+            document.getElementById('match-status-desc').innerText = "ESCANEANDO RED MUNDIAL...";
             
             try {
+                // Paso 1: Buscar cualquier sala pública abierta
                 const q = await getDocs(ROOMS_COLL); 
-                let found = null;
+                let foundId = null;
                 const tenMinutesAgo = Date.now() - (10 * 60 * 1000);
 
+                // Filtrar en memoria por eficiencia y cumplir restricciones
+                const openRooms = [];
                 q.forEach(d => { 
                     const r = d.data(); 
-                    if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest) {
-                         if(r.lastUpdate && r.lastUpdate > tenMinutesAgo) {
-                            found = d.id.replace('room_','');
-                         }
+                    // Debe ser pública, estar en espera, no ser yo el host, y no estar llena
+                    if(r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest && r.lastUpdate > tenMinutesAgo) {
+                        openRooms.push(d.id);
                     }
                 });
 
-                if(found) {
-                     window.systemToast("ÉXITO", "Oponente encontrado.");
-                     await window.join(found); 
+                if(openRooms.length > 0) {
+                    // Unirse a una aleatoria
+                    foundId = openRooms[Math.floor(Math.random() * openRooms.length)].replace('room_','');
+                    document.getElementById('match-status-title').innerText = "RIVAL ENCONTRADO";
+                    document.getElementById('match-status-desc').innerText = "EMPAREJANDO...";
+                    setTimeout(() => window.join(foundId), 1500); // Pequeña pausa dramática
                 } else { 
-                     window.systemToast("INFO", "Nadie en línea. Creando sala pública..."); 
-                     await window.create(true); 
+                    // No hay salas, crear una
+                    document.getElementById('match-status-title').innerText = "CREANDO SALA";
+                    document.getElementById('match-status-desc').innerText = "ESPERANDO CONTRINCANTE...";
+                    await window.create(true); 
                 }
             } catch(e) { 
-                console.error(e); showLoad(false); 
-                window.systemToast("ERROR","Error de red. Intenta de nuevo."); 
+                console.error(e); 
+                nav('s-menu');
+                window.systemToast("ERROR","Error de red."); 
             }
+        };
+
+        window.cancelMatchmaking = () => {
+            isMatchmaking = false;
+            // Si ya creamos sala, la borramos o salimos
+            if(S.room && S.role === 'host') {
+                 // Opción: borrar sala o marcar como cerrada
+                 updateDoc(doc(db,'artifacts',appId,'public', 'data', 'rooms',`room_${S.room}`), { stat: 'end' });
+            }
+            window.goHome();
         };
 
         window.createRoom = () => window.create(false);
@@ -604,30 +685,35 @@
         window.create = async (pub) => {
             if(!S.user) return; if (S.room) window.goHome(); 
             S.role='host'; const c=Math.random().toString(36).substring(2,6).toUpperCase(); S.room=c;
-            showLoad(true, pub ? "CREANDO PÚBLICA..." : "GENERANDO CÓDIGO...");
+            
+            if(!pub) showLoad(true, "GENERANDO CÓDIGO...");
+
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             try {
-                await setDoc(docRef, { host:S.user.uid, stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, scale:1.0, arPos: null, arRot: null, arScale: 1.0, arAccepted: false, lastUpdate: Date.now() });
+                await setDoc(docRef, { host:S.user.uid, hostName: S.user.displayName || "Jugador 1", stat:'wait', pub:pub, turn:'host', points:genPoints(), lines:[], tris:[], sc:{host:0,guest:0}, dice:null, movs:0, skips:0, p1:S.prof, scale:1.0, arPos: null, arRot: null, arScale: 1.0, arAccepted: false, lastUpdate: Date.now() });
                 if(!pub) {
                     showLoad(false);
                     document.getElementById('waiting-code').innerText = c;
                     nav('s-waiting'); 
                 } else {
-                     document.getElementById('room-lbl').innerText="PÚBLICA";
+                     // Si es pública, nos quedamos en la pantalla de matchmaking esperando
                 }
                 window.sub(c); 
             } catch (e) { showLoad(false); window.systemToast("ERROR", "Permisos insuficientes."); }
         }
 
         window.join = async (c) => {
-            if(!S.user) return; S.role='guest'; S.room=c; showLoad(true,"CONECTANDO...");
+            if(!S.user) return; S.role='guest'; S.room=c; 
+            if(!isMatchmaking) showLoad(true,"CONECTANDO...");
+            
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             try {
                 const s = await getDoc(docRef);
                 if (!s.exists()) { showLoad(false); window.systemToast("ERROR", "Sala no existe."); S.room = null; return; }
                 const d = s.data();
                 if (d.guest && d.guest !== S.user.uid) { showLoad(false); window.systemToast("ERROR", "Sala llena."); S.room = null; return; }
-                let up = { guest:S.user.uid, stat:'play', p2:S.prof };
+                
+                let up = { guest:S.user.uid, guestName: S.user.displayName || "Jugador 2", stat:'play', p2:S.prof };
                 if(d.stat === 'wait') { up = {...up, dice: 6, movs: 6, skips: 0, turn: 'host', lastUpdate: Date.now()}; }
                 await updateDoc(docRef, up); window.sub(c); document.getElementById('room-lbl').innerText=c;
             } catch(e) { showLoad(false); window.systemToast("ERROR", "Fallo al unir."); S.room = null; }
@@ -641,16 +727,19 @@
                     const d=s.data(); S.data=d;
                     if(d.stat==='play') { 
                         const waitScreen = document.getElementById('s-waiting');
-                        if(waitScreen && waitScreen.classList.contains('active')) {
+                        const matchScreen = document.getElementById('s-matchmaking');
+                        
+                        if((waitScreen && waitScreen.classList.contains('active')) || (matchScreen && !matchScreen.classList.contains('hidden'))) {
                              nav('s-game');
-                             window.systemToast("JUGADOR CONECTADO", "¡La partida comienza!");
+                             window.systemToast("CONECTADO", "¡La partida comienza!");
+                             playSfx('click'); // Sonido de inicio
                         } else if(document.getElementById('s-game').classList.contains('hidden')) {
                              window.start(); 
                         }
                         window.ui(); 
                     }
                     else if(d.stat==='wait') { 
-                        if(S.role==='host' && d.pub) showLoad(true,"ESPERANDO RIVAL (PÚBLICO)..."); 
+                        // Esperando...
                     }
                     else if(d.stat==='end') window.endGame(d);
                 } else if(S.room) { window.systemToast("FIN", "Sala cerrada."); window.goHome(); }
@@ -665,19 +754,130 @@
             const rec = document.getElementById('btn-rec'); if(rec) rec.style.display = 'flex';
         }
 
-        window.endGame = (d) => {
+        // --- SISTEMA DE RANKING Y FIN DE PARTIDA ---
+        window.endGame = async (d) => {
             if(document.getElementById('s-game').classList.contains('hidden')) return;
             nav('win-screen'); playSfx('end');
-            const myS = S.role === 'host' ? d.sc.host : d.sc.guest; const rivS = S.role === 'host' ? d.sc.guest : d.sc.host;
-            const win = myS > rivS ? 'WIN' : (myS < rivS ? 'LOSE' : 'DRAW');
-            const tit = document.getElementById('win-title'); const msg = document.getElementById('win-msg');
             
-            if(win === 'DRAW') { tit.innerText = "EMPATE"; tit.className = "text-4xl md:text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "EQUILIBRIO"; }
-            else if(win === 'WIN') { tit.innerText = "VICTORIA"; tit.className = "text-4xl md:text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL"; }
-            else { tit.innerText = "FIN DEL JUEGO"; tit.className = "text-4xl md:text-6xl font-black text-hot mb-2 text-center"; msg.innerText = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)]; }
+            const myS = S.role === 'host' ? d.sc.host : d.sc.guest; 
+            const rivS = S.role === 'host' ? d.sc.guest : d.sc.host;
+            const win = myS > rivS ? 'WIN' : (myS < rivS ? 'LOSE' : 'DRAW');
+            
+            const tit = document.getElementById('win-title'); 
+            const msg = document.getElementById('win-msg');
+            const elo = document.getElementById('elo-change');
+            
+            let ptsChange = 0;
+            
+            if(win === 'DRAW') { 
+                tit.innerText = "EMPATE"; tit.className = "text-4xl md:text-6xl font-black text-warn mb-2 text-center"; msg.innerText = "EQUILIBRIO PERFECTO";
+                ptsChange = 5;
+                elo.className = "text-warn font-bold text-lg mb-6";
+            }
+            else if(win === 'WIN') { 
+                tit.innerText = "VICTORIA"; tit.className = "text-4xl md:text-6xl font-black text-neon mb-2 animate-pulse text-center"; msg.innerText = "DOMINIO TOTAL";
+                ptsChange = 25;
+                elo.className = "text-neon font-bold text-lg mb-6 animate-bounce";
+            }
+            else { 
+                tit.innerText = "FIN DEL JUEGO"; tit.className = "text-4xl md:text-6xl font-black text-hot mb-2 text-center"; msg.innerText = LOSE_MSGS[Math.floor(Math.random() * LOSE_MSGS.length)];
+                ptsChange = -10;
+                elo.className = "text-hot font-bold text-lg mb-6";
+            }
+            
+            // Actualizar Puntos en Firebase (Solo si no es CPU)
+            if(!S.cpu && S.user) {
+                const newPoints = (S.points || 1000) + ptsChange;
+                S.points = newPoints; // Actualizar local
+                elo.innerText = (ptsChange >= 0 ? "+" : "") + ptsChange + " PUNTOS";
+                
+                // Guardar en DB
+                try {
+                    const userRef = doc(db, 'artifacts', appId, 'users', S.user.uid);
+                    await updateDoc(userRef, { points: increment(ptsChange) });
+                } catch(e) { console.error("Error saving points", e); }
+            } else {
+                elo.innerText = "MODO PRÁCTICA (Sin Puntos)";
+            }
+
             document.getElementById('final-p1').innerText = myS; document.getElementById('final-p2').innerText = rivS;
             hideArControls();
         }
+
+        // --- SISTEMA DE LEADERBOARD ---
+        window.showLeaderboard = async () => {
+            if(!S.user) return window.systemToast("ERROR", "Inicia sesión para ver rankings");
+            
+            window.showModal(`
+                <h3 class="text-lg font-bold text-cyber mb-4 border-b border-cyber/30 pb-2">RANKING MUNDIAL</h3>
+                <div id="lb-list" class="flex flex-col gap-1 mb-4 h-48 overflow-y-auto">
+                    <div class="text-center mt-10"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-cyber mx-auto"></div></div>
+                </div>
+                <div class="bg-white/10 p-2 rounded flex justify-between items-center text-xs">
+                    <span class="text-gray-400">TU RANGO:</span>
+                    <span class="text-neon font-bold" id="my-rank-pts">${S.points} PTS</span>
+                </div>
+            `);
+
+            try {
+                // Obtener usuarios (Simulado con ordenamiento JS por restricciones de índices compuestos)
+                const usersRef = collection(db, 'artifacts', appId, 'users');
+                const snap = await getDocs(usersRef);
+                const users = [];
+                snap.forEach(doc => users.push(doc.data()));
+                
+                // Ordenar por puntos (descendente)
+                users.sort((a,b) => (b.points || 0) - (a.points || 0));
+                
+                const list = document.getElementById('lb-list');
+                list.innerHTML = "";
+                
+                users.slice(0, 10).forEach((u, i) => {
+                    const rankClass = i === 0 ? "rank-1" : (i === 1 ? "rank-2" : (i === 2 ? "rank-3" : ""));
+                    const name = u.displayName ? u.displayName.split(' ')[0] : "Anónimo";
+                    const pts = u.points || 1000;
+                    
+                    list.innerHTML += `
+                        <div class="rank-row ${rankClass}">
+                            <div class="rank-pos">#${i+1}</div>
+                            <div class="rank-name text-white/80">${name.toUpperCase()}</div>
+                            <div class="rank-pts">${pts}</div>
+                        </div>
+                    `;
+                });
+            } catch(e) {
+                document.getElementById('lb-list').innerHTML = "<p class='text-red-500 text-xs'>Error cargando ranking</p>";
+            }
+        };
+
+        // --- SISTEMA SOCIAL DE COMPARTIR ---
+        window.showShare = () => {
+            const url = window.location.href;
+            const msg = "¡Te reto a una partida de 3 LINE-AR! El juego de estrategia en Realidad Aumentada.";
+            const code = S.room ? ` Código de sala: ${S.room}` : "";
+            const fullMsg = msg + code + " " + url;
+
+            window.showModal(`
+                <h3 class="text-lg font-bold text-cyber mb-4">INVITAR AMIGOS</h3>
+                <div class="flex justify-center gap-4 mb-6">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}" target="_blank" class="social-btn sb-fb"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(msg + code)}&url=${encodeURIComponent(url)}" target="_blank" class="social-btn sb-x"><i class="fab fa-x-twitter"></i></a>
+                    <a href="https://wa.me/?text=${encodeURIComponent(fullMsg)}" target="_blank" class="social-btn sb-wa"><i class="fab fa-whatsapp"></i></a>
+                    <div onclick="window.copyLink('${url}')" class="social-btn sb-ig cursor-pointer"><i class="far fa-copy"></i></div>
+                </div>
+                <p class="text-[10px] text-gray-500">Toca el icono para compartir o copiar enlace.</p>
+            `);
+        };
+
+        window.copyLink = (txt) => {
+            const input = document.createElement('input');
+            input.value = txt;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            window.systemToast("COPIADO", "Enlace en portapapeles");
+        };
 
         window.update = (o) => {
             if(S.cpu) { Object.assign(S.data,o); if(S.data.stat === 'end') window.endGame(S.data); else window.ui(); } 
@@ -696,7 +896,7 @@
 
             if(ren && ren.xr.isPresenting) {
                 document.getElementById('btn-exit-ar').classList.remove('hidden');
-                document.getElementById('btn-rec').style.display = 'none';
+                document.getElementById('pc-controls').style.display = 'none'; // Esconder controles PC
 
                 if(d.arPos && (!S.cpu || placed)) { 
                     if(!S.cpu) {
@@ -728,6 +928,7 @@
                 } 
             } else { 
                 document.getElementById('btn-exit-ar').classList.add('hidden');
+                document.getElementById('pc-controls').style.display = 'flex';
                 document.getElementById('ar-instructions').style.display='none';
                 document.getElementById('size-slider-container').style.display='none';
                 currentScale = d.scale || 1.0; 
@@ -789,7 +990,6 @@
         window.manualScale = (val) => {
             currentScale = parseFloat(val);
             if(group) group.scale.set(currentScale, currentScale, currentScale);
-            // Sincronizar con red si es host en AR
             if(ren && ren.xr.isPresenting && isArHost) {
                 window.update({ arScale: currentScale });
             }
@@ -811,10 +1011,14 @@
                 document.getElementById('btn-start-ar-float').classList.add('hidden'); 
                 document.getElementById('btn-rec').style.display='none'; 
                 if(controls) controls.enabled = false; 
+                
                 try {
-                    const session = ren.xr.getSession(); arRefSpace = await session.requestReferenceSpace('local');
-                    session.requestHitTestSource({space: arRefSpace}).then(h => arHit = h);
-                } catch (e) { console.error("AR Error", e); }
+                    const session = ren.xr.getSession();
+                    arRefSpace = await session.requestReferenceSpace('local');
+                    try { arHit = await session.requestHitTestSource({space: arRefSpace}); } 
+                    catch(err) { console.warn("Hit Test no soportado, modo aéreo activo"); arHit = null; }
+                } catch (e) { console.error("Error AR", e); window.goHome(); return; }
+                
                 placed = false; group.visible = false; reticle.visible = true; 
                 document.getElementById('ar-instructions').style.display = 'block';
                 document.getElementById('ar-instr-txt').innerHTML = "ESCANEANDO...";
@@ -840,45 +1044,24 @@
 
             ray=new THREE.Raycaster(); ren.setAnimationLoop(window.loop);
             
-            // --- GESTOR DE ENTRADA UNIFICADO Y ROBUSTO ---
             const handleInput = (clientX, clientY) => {
-                 // Si estamos en AR y NO está colocado, intentar colocar
-                if (ren.xr.isPresenting && !placed && isArHost) {
-                    window.doPlace();
-                    return;
-                }
+                if (ren.xr.isPresenting && !placed && isArHost) { window.doPlace(); return; }
 
-                // Raycasting para juego
                 const m = new THREE.Vector2((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
                 ray.setFromCamera(m, cam);
                 const h = ray.intersectObjects(group.children, true);
                 const obj = h.find(x => x.object.parent && x.object.parent.userData.id !== undefined);
-                if (obj) {
-                    // Click en punto
-                    window.clickPt(obj.object.parent.userData.id);
-                } else if(ren.xr.isPresenting && placed && isArHost) {
-                    // Lógica de arrastre en AR (si no se tocó un punto)
-                    // ... (Simplificado para priorizar Slider de escala y movimiento con botón) ...
-                }
+                if (obj) { window.clickPt(obj.object.parent.userData.id); }
             };
 
-            // Touch Start (Móvil/AR)
             window.addEventListener('touchstart', (e) => {
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone') || e.target.closest('#size-slider-container')) return;
-                
-                if (e.touches.length === 1) {
-                    // Pequeño delay para diferenciar tap de scroll/pinch
-                    const touch = e.touches[0];
-                    handleInput(touch.clientX, touch.clientY);
-                }
+                if (e.touches.length === 1) { const touch = e.touches[0]; handleInput(touch.clientX, touch.clientY); }
             }, {passive: false});
 
-            // Click Mouse (PC)
             window.addEventListener('click', (e) => {
                 if(e.target.closest('.interactive') || e.target.closest('#ar-zone') || e.target.closest('#size-slider-container')) return;
-                if(!ren.xr.isPresenting) {
-                    handleInput(e.clientX, e.clientY);
-                }
+                if(!ren.xr.isPresenting) { handleInput(e.clientX, e.clientY); }
             });
             
             controls=new OrbitControls(cam,ren.domElement); 
@@ -889,14 +1072,18 @@
         window.loop = (t, frame) => {
             if(controls && controls.enabled) controls.update(); 
             if(ren.xr.isPresenting) {
+                if(!arRefSpace) return; 
+                
                 if(!placed && isArHost) {
                     reticle.visible = true; if(ghostGroup) ghostGroup.visible = true;
                     let hitFound = false;
-                    if (frame && arRefSpace && arHit) {
+                    
+                    if (frame && arHit) {
                         const h = frame.getHitTestResults(arHit);
                         if(h.length > 0) {
                             const hitPose = h[0].getPose(arRefSpace);
                             reticle.matrix.fromArray(hitPose.transform.matrix);
+                            reticle.matrixAutoUpdate = false;
                             reticle.children.forEach(c => c.material.color.setHex(0x39ff14));
                             hitFound = true;
                             document.getElementById('ar-instr-txt').innerHTML = "<span class='text-neon'>PISO DETECTADO</span><br>Toca para fijar";
@@ -905,24 +1092,26 @@
                     if(!hitFound && frame) {
                         const viewerPose = frame.getViewerPose(arRefSpace);
                         if(viewerPose) {
+                            reticle.matrixAutoUpdate = true;
                             const p = viewerPose.transform.position;
                             const r = viewerPose.transform.orientation;
                             const dir = new THREE.Vector3(0, 0, -0.5).applyQuaternion(new THREE.Quaternion(r.x, r.y, r.z, r.w));
                             const targetPos = new THREE.Vector3(p.x, p.y, p.z).add(dir);
-                            reticle.position.copy(targetPos);
+                            reticle.position.lerp(targetPos, 0.2);
                             reticle.lookAt(p.x, p.y, p.z); 
-                            reticle.updateMatrix();
                             reticle.children.forEach(c => c.material.color.setHex(0xffcc00));
                             document.getElementById('ar-instr-txt').innerHTML = "<span class='text-warn'>MODO AÉREO</span><br>Toca para fijar";
                         }
                     }
-                    if(ghostGroup) { ghostGroup.position.setFromMatrixPosition(reticle.matrix); ghostGroup.rotation.setFromRotationMatrix(reticle.matrix); }
+                    if(ghostGroup) { 
+                        if(reticle.matrixAutoUpdate) { ghostGroup.position.copy(reticle.position); ghostGroup.rotation.copy(reticle.rotation); }
+                        else { ghostGroup.position.setFromMatrixPosition(reticle.matrix); ghostGroup.rotation.setFromRotationMatrix(reticle.matrix); }
+                    }
                 }
             }
             ren.render(scene,cam);
         }
 
-        // --- SISTEMA DE VISUALIZACIÓN DE ÍCONOS (SPRITES) ---
         function createIconSprite(iconName, color) {
             const canvas = document.createElement('canvas');
             canvas.width = 128; canvas.height = 128;
@@ -931,16 +1120,11 @@
             ctx.fillStyle = color;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            
-            // Mapeo simple de nombres a caracteres Unicode de FontAwesome (Aproximado)
-            // Se usa texto directo si falla, o un caracter genérico
-            let char = '\uf005'; // Estella por defecto
+            let char = '\uf005'; 
             if(iconName === 'gem') char = '\uf3a5';
             else if(iconName === 'bolt') char = '\uf0e7';
             else if(iconName === 'atom') char = '\uf5d2';
-            
             ctx.fillText(char, 64, 64);
-            
             const tex = new THREE.CanvasTexture(canvas);
             const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
             const sprite = new THREE.Sprite(mat);
@@ -976,7 +1160,6 @@
                 const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:col, opacity:0.3, transparent:true, side:THREE.DoubleSide}));
                 mesh.userData.type='tri'; group.add(mesh);
                 
-                // --- AGREGAR ÍCONO EN EL CENTRO DEL TRIÁNGULO ---
                 const center = new THREE.Vector3().addVectors(p1, p2).add(p3).divideScalar(3);
                 const sprite = createIconSprite(icon, col);
                 sprite.position.copy(center);
