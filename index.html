@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#050a14">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>3 LINE-AR | V52.0 H5 ADS & ENCAPSULATION EDITION</title>
+    <title>3 LINE-AR | V55.0 P2P MULTIPLAYER & UNIVERSAL AR</title>
     
     <!-- ========================================================================= -->
     <!-- GOOGLE H5 GAMES ADS SDK (AdSense para Juegos HTML5)                       -->
@@ -58,6 +58,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Noto+Sans+SC:wght@700&display=swap" rel="stylesheet">
     
+    <!-- MOTOR DE CONEXIÓN DIRECTA ENTRE CELULARES (WebRTC P2P) Y ESCÁNER DE CÁMARA QR -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
     <style>
         html, body { background-color: #03060c; height: 100%; width: 100%; overflow: hidden; touch-action: none; overscroll-behavior: none; } 
         body { margin: 0; user-select: none; -webkit-user-select: none; font-family: 'Orbitron', 'Noto Sans SC', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -65,6 +69,14 @@
         
         body.ar-active { background-color: transparent !important; }
         body.ar-active #bg-canvas { display: none !important; }
+        
+        /* Video de Cámara AR Universal para todos los celulares */
+        #ar-camera-video {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 0; display: none; pointer-events: none;
+        }
+        body.ar-camera-mode #ar-camera-video { display: block !important; }
+        body.ar-camera-mode #bg-canvas { display: none !important; }
         
         #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
         canvas { display: block; outline: none; } 
@@ -193,9 +205,29 @@
     <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
 </head>
 <body>
+    <!-- Video en vivo para Realidad Aumentada Universal en cualquier celular -->
+    <video id="ar-camera-video" autoplay playsinline muted></video>
+
     <!-- Lienzo de red neuronal animado para los menús -->
     <canvas id="bg-canvas"></canvas>
     
+    <!-- MODAL DE ESCÁNER DE CÓDIGO QR CON CÁMARA -->
+    <div id="qr-scanner-modal" class="interactive fixed inset-0 bg-black/95 z-[150] hidden flex-col justify-center items-center p-4">
+        <div class="glass-panel p-5 w-full max-w-xs text-center border-2 border-neon relative">
+            <button onclick="window.stopQRScanner()" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-hot/20 border border-hot text-hot flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-sm font-black text-neon mb-1"><i class="fas fa-camera mr-1"></i> ESCANEAR QR DE SALA</h3>
+            <p class="text-[10px] text-gray-300 mb-3">Apunta con tu cámara al código QR que aparece en el otro celular:</p>
+            <div id="qr-reader" class="w-full rounded-xl overflow-hidden border-2 border-cyber bg-black min-h-[220px] mb-3"></div>
+            <p class="text-[10px] text-gray-400 mb-2">¿O prefieres escribir el código de 4 letras?</p>
+            <div class="flex gap-2">
+                <input id="scanner-code-in" class="bg-black/90 border border-cyber rounded-lg text-white w-full text-center p-2 uppercase font-mono text-base tracking-widest" placeholder="ABCD" maxlength="4">
+                <button onclick="window.joinFromScannerInput()" class="btn-neon px-4 text-xs">ENTRAR</button>
+            </div>
+        </div>
+    </div>
+
     <!-- OVERLAY DE PUBLICIDAD GOOGLE H5 GAMES ADS (Simulador activo hasta vincular ID real) -->
     <div id="h5-ad-overlay" class="interactive">
         <div class="glass-panel p-6 max-w-xs w-full text-center border-2 border-gold relative">
@@ -329,37 +361,36 @@
                     </div>
                 </div>
 
-                <!-- Botón Principal: Partida Pública (Matchmaking + Fallback Inteligente) -->
-                <button id="btn-quick-match" onclick="window.quickMatch()" class="btn-neon py-4 text-sm shadow-lg relative overflow-hidden group">
+                <!-- Botón Principal: Partida Online Automática (Conecta 2 celulares buscando partida al instante) -->
+                <button id="btn-quick-match" onclick="window.quickMatch()" class="btn-neon py-3.5 text-xs shadow-lg relative overflow-hidden group">
                     <span class="relative z-10 flex items-center justify-center gap-2">
                         <i class="fas fa-satellite-dish animate-pulse"></i> 
-                        <span data-i18n="quick_match">PARTIDA ONLINE</span>
+                        <span data-i18n="quick_match">BUSCAR RIVAL ONLINE</span>
                     </span>
                 </button>
                 
-                <!-- Crear Sala Privada / Unirse con Código -->
+                <!-- Crear Sala con QR / Escanear QR o Código desde otro Celular -->
                 <div class="grid grid-cols-2 gap-2.5">
-                    <button id="btn-create-room" onclick="window.createRoom()" class="btn-neon py-2.5 text-[10px]">
-                        <i class="fas fa-plus-square mr-1"></i> <span data-i18n="create_room">CREAR SALA</span>
+                    <button id="btn-create-room" onclick="window.createRoom()" class="btn-neon py-3 text-[10px] flex flex-col items-center justify-center gap-1 !border-neon !text-neon">
+                        <i class="fas fa-qrcode text-base"></i>
+                        <span data-i18n="create_room">CREAR SALA (QR)</span>
                     </button>
-                    <button id="btn-join-room" onclick="window.showJoin()" class="btn-neon py-2.5 text-[10px]">
-                        <i class="fas fa-sign-in-alt mr-1"></i> <span data-i18n="join_room">CONECTAR CÓDIGO</span>
+                    <button id="btn-join-room" onclick="window.openConnectModal()" class="btn-neon py-3 text-[10px] flex flex-col items-center justify-center gap-1 !border-cyber !text-cyber">
+                        <i class="fas fa-camera text-base"></i>
+                        <span data-i18n="join_room">ESCANEAR / CÓDIGO</span>
                     </button>
                 </div>
                 
-                <!-- Caja desplegable para meter código de amigo -->
+                <!-- Caja desplegable rápida para meter código manual -->
                 <div id="join-box" class="hidden flex gap-2 animate-fade-in">
                     <input id="code-in" class="bg-black/80 border border-cyber rounded-lg text-white w-full text-center p-2.5 uppercase font-mono text-base tracking-widest focus:outline-none focus:ring-2 focus:ring-cyber" placeholder="CÓDIGO (4)" maxlength="4">
                     <button onclick="window.joinRoom()" class="btn-neon px-4"><i class="fas fa-arrow-right"></i></button>
                 </div>
                 
-                <!-- VS CPU y Pasa y Juega (2 Jugadores en 1 Celular) -->
-                <div class="grid grid-cols-2 gap-2.5">
-                    <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger py-2.5 text-[10px]">
-                        <i class="fas fa-robot mr-1"></i> <span data-i18n="vs_cpu">VS IA BOT</span>
-                    </button>
-                    <button onclick="window.vsLocalPass()" class="btn-neon py-2.5 text-[10px] !border-purple !text-purple">
-                        <i class="fas fa-users mr-1"></i> <span data-i18n="pass_play">1 CELULAR (2J)</span>
+                <!-- VS IA BOT -->
+                <div class="grid grid-cols-1 gap-2">
+                    <button id="btn-vs-cpu" onclick="window.vsCpu()" class="btn-neon danger py-2.5 text-[11px] flex items-center justify-center gap-2">
+                        <i class="fas fa-robot"></i> <span data-i18n="vs_cpu">ENTRENAR CONTRA IA BOT (AR / 3D)</span>
                     </button>
                 </div>
 
@@ -410,20 +441,20 @@
         <div id="s-waiting" class="interactive">
             <div class="glass-panel p-6 text-center w-full max-w-xs flex flex-col items-center gap-4 relative">
                 <button class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/5 text-gray-400 hover:text-white" onclick="window.cancelWaitingRoom()"><i class="fas fa-times"></i></button>
-                <h2 class="text-lg font-black text-white tracking-wider" data-i18n="private_room">ENLACE DE SALA</h2>
+                <h2 class="text-lg font-black text-white tracking-wider" data-i18n="private_room">SALA MULTIJUGADOR</h2>
                 
-                <div class="text-[10px] text-gray-400" data-i18n="share_code">CÓDIGO DE CONEXIÓN:</div>
-                <div onclick="window.copyRoomCode()" id="waiting-code" class="text-4xl font-black text-cyber tracking-[0.25em] border-2 border-dashed border-cyber/60 py-3 px-6 rounded-xl bg-black/60 cursor-pointer hover:bg-cyber/10 transition">----</div>
+                <div class="text-[10px] text-gray-300" data-i18n="share_code">CÓDIGO PARA EL OTRO CELULAR:</div>
+                <div onclick="window.copyRoomCode()" id="waiting-code" class="text-4xl font-black text-neon tracking-[0.25em] border-2 border-dashed border-neon/80 py-2.5 px-6 rounded-xl bg-black/80 cursor-pointer hover:bg-neon/10 transition shadow-[0_0_20px_rgba(57,255,20,0.2)]">----</div>
                 
-                <!-- Código QR generado dinámicamente para que el otro celular lo escanee con la cámara -->
-                <div class="bg-white p-2.5 rounded-xl shadow-[0_0_20px_rgba(0,243,255,0.3)]">
-                    <img id="room-qr-img" src="" alt="QR Sala" class="w-32 h-32 block">
+                <!-- Código QR generado dinámicamente para que el otro celular lo escanee con el botón ESCANEAR QR -->
+                <div class="bg-white p-2.5 rounded-xl shadow-[0_0_25px_rgba(0,243,255,0.4)]">
+                    <img id="room-qr-img" src="" alt="QR Sala" class="w-36 h-36 block">
                 </div>
-                <p class="text-[9px] text-gray-400 leading-tight">Escanea el QR con el otro celular o envía el enlace directo:</p>
+                <p class="text-[10px] text-cyber font-bold leading-tight">En el otro celular toca "ESCANEAR / CÓDIGO" y apunta a este QR o escribe las 4 letras.</p>
 
                 <div class="flex gap-2 w-full">
                     <button onclick="window.shareRoomDirect()" class="btn-neon flex-1 py-2.5 text-[10px] flex items-center justify-center gap-1.5">
-                        <i class="fas fa-paper-plane"></i> COMPARTIR LINK
+                        <i class="fas fa-paper-plane"></i> ENVIAR LINK
                     </button>
                     <button onclick="window.copyRoomCode()" class="btn-neon gold py-2.5 px-3 text-[10px]" title="Copiar Código">
                         <i class="fas fa-copy"></i>
@@ -432,7 +463,7 @@
 
                 <div class="flex items-center gap-2 mt-1">
                     <div class="w-2.5 h-2.5 rounded-full bg-neon animate-ping"></div>
-                    <span class="text-[10px] text-neon font-mono" data-i18n="waiting_player">ESPERANDO CONEXIÓN DEL RIVAL...</span>
+                    <span id="waiting-status-lbl" class="text-[10px] text-neon font-mono" data-i18n="waiting_player">CANAL P2P LISTO. ESPERANDO RIVAL...</span>
                 </div>
             </div>
         </div>
@@ -510,14 +541,14 @@
 
             <!-- Controles Inferiores (Modo 3D y AR Unificados) -->
             <div class="interactive flex flex-col gap-2 pb-4 w-full px-2">
-                <!-- Botón flotante para entrar a Realidad Aumentada si el celular lo soporta -->
-                <div id="btn-start-ar-float" class="hidden flex justify-center mb-1">
-                    <button onclick="window.startARSession()" class="btn-neon py-2.5 px-5 text-xs shadow-[0_0_20px_#00f3ff] bg-black/90 flex items-center gap-2">
-                        <i class="fas fa-vr-cardboard text-neon"></i> <span data-i18n="start_ar">VER EN REALIDAD AUMENTADA (AR)</span>
+                <!-- Botón SIEMPRE VISIBLE para activar/desactivar Realidad Aumentada en cualquier celular -->
+                <div id="btn-start-ar-float" class="flex justify-center mb-1">
+                    <button id="btn-toggle-ar-main" onclick="window.toggleARMode()" class="btn-neon py-2.5 px-5 text-xs shadow-[0_0_20px_#00f3ff] bg-black/90 flex items-center gap-2 !border-neon !text-neon">
+                        <i class="fas fa-camera text-neon"></i> <span id="ar-btn-txt" data-i18n="start_ar">ACTIVAR REALIDAD AUMENTADA (AR)</span>
                     </button>
                 </div>
 
-                <!-- Controles cuando está dentro de AR -->
+                <!-- Controles cuando está dentro de WebXR Nativo -->
                 <div id="ar-controls" class="hidden justify-center gap-3 w-full">
                     <button onclick="window.lockLocalARBoard()" id="btn-ar-accept" class="ar-sync-btn flex-1">
                         <i class="fas fa-lock mr-1"></i> <span data-i18n="fix">FIJAR AQUÍ</span>
@@ -946,6 +977,13 @@
         let activeParticles = [];
         let previewLine = null; // Línea guía en tiempo real para saber exactamente qué puntos vas a unir
 
+        // Variables de Conexión Directa P2P (PeerJS) y Cámara AR Universal
+        let peer = null;
+        let peerConn = null;
+        let html5QrCode = null;
+        let arCameraStream = null;
+        let isCameraArActive = false;
+
         function saveLocalEconomy() {
             localStorage.setItem('3lar_pts', S.points);
             localStorage.setItem('3lar_coins', S.coins);
@@ -970,51 +1008,447 @@
         });
 
         // ==========================================
-        // 5. NAVEGACIÓN Y AUTENTICACIÓN ROBUSTA
+        // 8. MULTIJUGADOR P2P ENTRE CELULARES + ESCÁNER QR POR CÁMARA
+        // ==========================================
+        const ROOMS_COLL = db ? collection(db, 'artifacts', appId, 'public', 'data', 'rooms') : null;
+        const PEER_PREFIX = "3linear-v55-room-";
+
+        function cleanupPeer() {
+            if (peerConn) {
+                try { peerConn.close(); } catch (e) {}
+                peerConn = null;
+            }
+            if (peer) {
+                try { peer.destroy(); } catch (e) {}
+                peer = null;
+            }
+        }
+
+        // Modal unificado para Escanear QR con la Cámara o Escribir el Código de 4 letras
+        window.openConnectModal = () => {
+            const modal = document.getElementById('qr-scanner-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('scanner-code-in').value = '';
+
+            if (typeof Html5Qrcode !== 'undefined') {
+                if (html5QrCode) {
+                    try { html5QrCode.stop().catch(()=>{}); } catch(e){}
+                }
+                html5QrCode = new Html5Qrcode("qr-reader");
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 180, height: 180 } },
+                    (decodedText) => {
+                        // Extraer código de 4 letras del QR (ya sea URL completa o código directo)
+                        let code = decodedText.trim().toUpperCase();
+                        try {
+                            if (decodedText.includes('room=')) {
+                                const urlObj = new URL(decodedText);
+                                code = (urlObj.searchParams.get('room') || '').toUpperCase();
+                            }
+                        } catch (e) {
+                            const match = decodedText.match(/room=([A-Z0-9]{4})/i);
+                            if (match) code = match[1].toUpperCase();
+                        }
+                        if (code && code.length === 4) {
+                            playSfx('win');
+                            window.stopQRScanner();
+                            window.join(code);
+                        }
+                    },
+                    () => {}
+                ).catch((err) => {
+                    document.getElementById('qr-reader').innerHTML = `
+                        <div class="p-6 text-center text-xs text-gray-400">
+                            <i class="fas fa-keyboard text-2xl text-cyber mb-2 block"></i>
+                            Escribe abajo las 4 letras del código que aparece en el otro celular.
+                        </div>`;
+                });
+            }
+        };
+
+        window.stopQRScanner = () => {
+            const modal = document.getElementById('qr-scanner-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                }).catch(() => {});
+            }
+        };
+
+        window.joinFromScannerInput = () => {
+            const c = document.getElementById('scanner-code-in').value.trim().toUpperCase();
+            if (c.length === 4) {
+                window.stopQRScanner();
+                window.join(c);
+            } else {
+                window.systemToast("CÓDIGO", "Escribe las 4 letras de la sala");
+            }
+        };
+
+        // Partida Online Automática: Usa Lobby P2P Público + Respaldo Inteligente
+        window.quickMatch = async () => {
+            if (!S.user) return window.systemToast("INFO", t('login_req'));
+            S.cpu = false; S.passPlay = false; isMatchmaking = true;
+            cleanupPeer();
+
+            nav('s-matchmaking');
+            document.getElementById('match-status-title').innerText = t('searching');
+            document.getElementById('match-status-desc').innerText = "CONECTANDO AL LOBBY MUNDIAL...";
+
+            // Intentar unirse primero al slot de lobby público P2P; si está libre, nos convertimos en Host del Lobby Público
+            const publicLobbyCode = "PUB1";
+            if (typeof Peer !== 'undefined') {
+                const tempPeer = new Peer(PEER_PREFIX + publicLobbyCode);
+                tempPeer.on('open', () => {
+                    // Nadie estaba esperando en PUB1, así que nosotros esperamos como Host de PUB1
+                    peer = tempPeer;
+                    S.role = 'host';
+                    S.room = publicLobbyCode;
+                    S.data = {
+                        host: S.user.uid,
+                        hostName: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 1",
+                        stat: 'wait', pub: true, turn: 'host',
+                        points: genPoints(), lines: [], tris: [],
+                        sc: { host: 0, guest: 0 }, dice: null, movs: 0, skips: 0,
+                        p1: S.prof, scale: 1.0, lastUpdate: Date.now()
+                    };
+                    setupHostPeerListeners(peer);
+
+                    // Si en 10 segundos no entra otro celular al lobby rápido, inicia partida contra Bot Táctico
+                    if (matchmakingFallbackTimer) clearTimeout(matchmakingFallbackTimer);
+                    matchmakingFallbackTimer = setTimeout(() => {
+                        if (isMatchmaking && (!S.data || S.data.stat === 'wait')) {
+                            window.cancelMatchmaking(true);
+                            const botNames = ["CYBER_VIPER", "NEXUS_9", "KIRA_AR", "ZERO_COOL", "VALKYRIE"];
+                            const pickedBot = botNames[Math.floor(Math.random() * botNames.length)];
+                            window.vsCpu(pickedBot);
+                        }
+                    }, 10000);
+                });
+
+                tempPeer.on('error', (err) => {
+                    // Si el ID 'PUB1' ya está ocupado, ¡significa que hay otro jugador real esperando! Nos conectamos a él
+                    if (err.type === 'unavailable-id') {
+                        try { tempPeer.destroy(); } catch (e) {}
+                        document.getElementById('match-status-title').innerText = "¡RIVAL ENCONTRADO!";
+                        document.getElementById('match-status-desc').innerText = "ENLAZANDO CELULARES...";
+                        setTimeout(() => window.join(publicLobbyCode), 400);
+                    } else {
+                        setTimeout(() => {
+                            if (isMatchmaking) {
+                                isMatchmaking = false;
+                                window.vsCpu("NEXUS_PRIME");
+                            }
+                        }, 1500);
+                    }
+                });
+            } else {
+                setTimeout(() => {
+                    if (isMatchmaking) {
+                        isMatchmaking = false;
+                        window.vsCpu("NEXUS_PRIME");
+                    }
+                }, 1500);
+            }
+        };
+
+        window.cancelMatchmaking = (silent = false) => {
+            isMatchmaking = false;
+            if (matchmakingFallbackTimer) { clearTimeout(matchmakingFallbackTimer); matchmakingFallbackTimer = null; }
+            cleanupPeer();
+            if (!silent) window.goHome();
+        };
+
+        window.cancelWaitingRoom = () => {
+            cleanupPeer();
+            if (S.room && S.role === 'host' && db && !S.user?.isLocalFallback) {
+                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), { stat: 'end' }).catch(()=>{});
+            }
+            window.goHome();
+        };
+
+        window.createRoom = () => window.create(false);
+        window.joinRoom = () => { 
+            const c = document.getElementById('code-in').value.trim().toUpperCase(); 
+            if (c.length === 4) window.join(c); 
+            else window.systemToast("CÓDIGO", "Ingresa las 4 letras de la sala"); 
+        };
+        
+        // Modo VS IA Mejorado
+        window.vsCpu = (customBotName = "CPU TÁCTICO") => {
+            cleanupPeer();
+            S.cpu = true; S.passPlay = false; S.role = 'host'; S.room = 'IA-BOT';
+            const botColors = ['#ff0055', '#ffd700', '#b829ff'];
+            const botCol = botColors.find(c => c !== S.prof.c) || '#ff0055';
+            S.data = { 
+                stat: 'play', turn: 'host', 
+                hostName: S.user?.displayName ? S.user.displayName.split(' ')[0] : "TÚ",
+                guestName: customBotName,
+                points: genPoints(), lines: [], tris: [], 
+                sc: { host: 0, guest: 0 }, dice: null, movs: 0, skips: 0, 
+                p1: S.prof, p2: { c: botCol, i: 'atom' }, scale: 1.0 
+            };
+            window.start();
+        };
+
+        // Configurar el Host P2P para recibir al segundo celular instantáneamente
+        function setupHostPeerListeners(hostPeer) {
+            hostPeer.on('connection', (conn) => {
+                peerConn = conn;
+                conn.on('open', () => {
+                    console.log("Rival conectado por P2P directo");
+                });
+                conn.on('data', (msg) => {
+                    if (msg.type === 'JOIN_REQUEST') {
+                        let guestProf = msg.prof || { c: '#ff0055', i: 'bolt' };
+                        if (S.data.p1 && S.data.p1.c === guestProf.c) {
+                            guestProf.c = guestProf.c === '#00f3ff' ? '#ff0055' : '#00f3ff';
+                        }
+                        S.data.guest = msg.uid || 'guest_p2p';
+                        S.data.guestName = msg.name || 'AGENTE 2';
+                        S.data.p2 = guestProf;
+                        S.data.stat = 'play';
+                        S.data.lastUpdate = Date.now();
+
+                        // Enviar estado inicial completo al Celular 2
+                        conn.send({ type: 'SYNC_STATE', state: S.data });
+
+                        isMatchmaking = false;
+                        if (matchmakingFallbackTimer) { clearTimeout(matchmakingFallbackTimer); matchmakingFallbackTimer = null; }
+                        if (document.getElementById('s-game').classList.contains('hidden')) {
+                            window.start();
+                            playSfx('win');
+                        }
+                        window.ui();
+                    } else if (msg.type === 'STATE_PATCH') {
+                        Object.assign(S.data, msg.patch);
+                        if (S.data.stat === 'end') window.endGame(S.data);
+                        else window.ui();
+                    }
+                });
+                conn.on('close', () => {
+                    if (S.data && S.data.stat === 'play') {
+                        window.systemToast("DESCONECTADO", "El otro celular cerró la conexión");
+                        window.endGame(S.data);
+                    }
+                });
+            });
+        }
+
+        // Crear Sala con soporte P2P Directo + QR en Vivo
+        window.create = async (pub) => {
+            if (!S.user) return; 
+            cleanupPeer();
+            S.cpu = false; S.passPlay = false; S.role = 'host'; 
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let c = '';
+            for (let i = 0; i < 4; i++) c += chars.charAt(Math.floor(Math.random() * chars.length));
+            S.room = c;
+            
+            S.data = { 
+                host: S.user.uid, 
+                hostName: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 1", 
+                stat: 'wait', pub: pub, turn: 'host', 
+                points: genPoints(), lines: [], tris: [], 
+                sc: { host: 0, guest: 0 }, dice: null, movs: 0, skips: 0, 
+                p1: S.prof, scale: 1.0, lastUpdate: Date.now() 
+            };
+
+            if (!pub) {
+                document.getElementById('waiting-code').innerText = c;
+                const joinUrl = `${window.location.origin}${window.location.pathname}?room=${c}`;
+                document.getElementById('room-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(joinUrl)}`;
+                const statusLbl = document.getElementById('waiting-status-lbl');
+                if (statusLbl) statusLbl.innerText = "INICIANDO SEÑAL DE SALA...";
+                nav('s-waiting'); 
+            }
+
+            // 1. Abrir Canal P2P WebRTC directo (Funciona sin importar permisos de Firebase)
+            if (typeof Peer !== 'undefined') {
+                peer = new Peer(PEER_PREFIX + c);
+                peer.on('open', () => {
+                    const statusLbl = document.getElementById('waiting-status-lbl');
+                    if (statusLbl) statusLbl.innerText = "SALA ACTIVA. ESCANEA EL QR EN EL OTRO CELULAR...";
+                });
+                setupHostPeerListeners(peer);
+            }
+
+            // 2. Respaldo secundario en Firestore si está disponible
+            if (db && !S.user.isLocalFallback) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
+                    await setDoc(docRef, S.data);
+                    window.sub(c);
+                } catch (e) {
+                    console.log("Usando canal P2P directo para la sala:", c);
+                }
+            }
+        };
+
+        // Unirse a una Sala (por Escáner QR, Link o Código de 4 letras)
+        window.join = async (rawCode) => {
+            if (!S.user) return; 
+            const c = (rawCode || '').trim().toUpperCase();
+            if (c.length !== 4) return window.systemToast("CÓDIGO", "El código debe tener 4 caracteres");
+
+            cleanupPeer();
+            S.cpu = false; S.passPlay = false; S.role = 'guest'; S.room = c; 
+            showLoad(true, `CONECTANDO A SALA ${c}...`);
+            
+            let connectedViaP2P = false;
+
+            // 1. Conectar vía P2P WebRTC directo al Celular Host
+            if (typeof Peer !== 'undefined') {
+                peer = new Peer();
+                peer.on('open', () => {
+                    const conn = peer.connect(PEER_PREFIX + c, { reliable: true });
+                    peerConn = conn;
+
+                    const timeoutId = setTimeout(() => {
+                        if (!connectedViaP2P) {
+                            tryFirestoreJoinFallback(c);
+                        }
+                    }, 4500);
+
+                    conn.on('open', () => {
+                        connectedViaP2P = true;
+                        clearTimeout(timeoutId);
+                        conn.send({
+                            type: 'JOIN_REQUEST',
+                            uid: S.user.uid,
+                            name: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2",
+                            prof: S.prof
+                        });
+                    });
+
+                    conn.on('data', (msg) => {
+                        if (msg.type === 'SYNC_STATE') {
+                            S.data = msg.state;
+                            showLoad(false);
+                            isMatchmaking = false;
+                            if (document.getElementById('s-game').classList.contains('hidden')) {
+                                window.start();
+                                playSfx('win');
+                            }
+                            window.ui();
+                        } else if (msg.type === 'STATE_PATCH') {
+                            if (!S.data) return;
+                            Object.assign(S.data, msg.patch);
+                            if (S.data.stat === 'end') window.endGame(S.data);
+                            else window.ui();
+                        }
+                    });
+
+                    conn.on('close', () => {
+                        if (S.data && S.data.stat === 'play') {
+                            window.systemToast("DESCONECTADO", "El anfitrión salió de la partida");
+                            window.endGame(S.data);
+                        }
+                    });
+                });
+
+                peer.on('error', () => {
+                    if (!connectedViaP2P) tryFirestoreJoinFallback(c);
+                });
+            } else {
+                tryFirestoreJoinFallback(c);
+            }
+        };
+
+        async function tryFirestoreJoinFallback(c) {
+            if (!db) {
+                showLoad(false);
+                window.systemToast("NO ENCONTRADA", `Verifica que el otro celular tenga abierta la sala ${c}`);
+                S.room = null;
+                nav('s-menu');
+                return;
+            }
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
+            try {
+                const s = await getDoc(docRef);
+                if (!s.exists()) { 
+                    showLoad(false); 
+                    window.systemToast("SALA NO ACTIVA", `Asegúrate de que el otro celular esté en la pantalla del QR (${c})`); 
+                    S.room = null; 
+                    nav('s-menu');
+                    return; 
+                }
+                const d = s.data();
+                let guestProf = { ...S.prof };
+                if (d.p1 && d.p1.c === guestProf.c) {
+                    guestProf.c = guestProf.c === '#00f3ff' ? '#ff0055' : '#00f3ff';
+                }
+                let up = { 
+                    guest: S.user.uid, 
+                    guestName: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2", 
+                    stat: 'play', 
+                    p2: guestProf,
+                    lastUpdate: Date.now()
+                };
+                await updateDoc(docRef, up); 
+                window.sub(c); 
+                document.getElementById('room-lbl').innerText = c;
+            } catch(e) { 
+                showLoad(false); 
+                window.systemToast("CONEXIÓN", `No se encontró la sala ${c}`); 
+                S.room = null; 
+                nav('s-menu');
+            }
+        }
+
+        // ==========================================
+        // 5. GESTIÓN DE IDIOMA Y NAVEGACIÓN DE PANTALLAS
         // ==========================================
         window.detectLanguage = () => {
             const l = navigator.language || navigator.userLanguage || 'es';
             const code = l.split('-')[0].toLowerCase();
-            return TR[code] ? code : 'es'; 
+            return TR[code] ? code : 'es';
         };
 
         window.setLanguage = (lang) => {
             S.lang = TR[lang] ? lang : 'es';
-            document.getElementById('cur-lang-code').innerText = S.lang.toUpperCase();
+            const codeEl = document.getElementById('cur-lang-code');
+            if (codeEl) codeEl.innerText = S.lang.toUpperCase();
             document.body.classList.remove('lang-zh', 'lang-ru');
             if (S.lang === 'zh') document.body.classList.add('lang-zh');
+            if (S.lang === 'ru') document.body.classList.add('lang-ru');
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (TR[S.lang][key]) el.innerText = TR[S.lang][key];
+                if (TR[S.lang] && TR[S.lang][key]) el.innerText = TR[S.lang][key];
             });
-            document.getElementById('custom-modal').style.display = 'none';
+            const modal = document.getElementById('custom-modal');
+            if (modal) modal.style.display = 'none';
         };
 
         window.t = (key) => (TR[S.lang] && TR[S.lang][key]) ? TR[S.lang][key] : key;
 
         window.showLangPicker = () => {
-            const names = { es: 'Español', en: 'English', zh: '中文', fr: 'Français' };
             const opts = Object.keys(TR).map(k => 
-                `<div class="lang-opt ${S.lang===k?'active':''}" onclick="window.setLanguage('${k}')">${names[k] || k.toUpperCase()}</div>`
+                `<div class="lang-opt ${S.lang === k ? 'active' : ''}" onclick="window.setLanguage('${k}')">${k.toUpperCase()}</div>`
             ).join('');
             window.showModal(`
-                <h3 class="text-base font-bold text-cyber mb-3"><i class="fas fa-language mr-2"></i>IDIOMA / LANGUAGE</h3>
+                <h3 class="text-base font-bold text-cyber mb-3">IDIOMA / LANGUAGE</h3>
                 <div class="lang-grid">${opts}</div>
             `);
         };
 
         function nav(id) {
-            ['s-login','s-menu','s-game','s-waiting','win-screen','s-matchmaking'].forEach(i => { 
-                const el = document.getElementById(i); 
-                if (el) { 
-                    el.classList.add('hidden'); 
+            ['s-login', 's-menu', 's-game', 's-waiting', 'win-screen', 's-matchmaking'].forEach(i => {
+                const el = document.getElementById(i);
+                if (el) {
+                    el.classList.add('hidden');
                     if (i === 'win-screen' || i === 's-waiting') el.classList.remove('active');
-                } 
+                }
             });
-            const target = document.getElementById(id); 
-            if (target) { 
-                target.classList.remove('hidden'); 
-                if (id === 'win-screen' || id === 's-waiting') target.classList.add('active'); 
+            const target = document.getElementById(id);
+            if (target) {
+                target.classList.remove('hidden');
+                if (id === 'win-screen' || id === 's-waiting') target.classList.add('active');
             }
         }
 
@@ -1689,210 +2123,11 @@
         };
 
         // ==========================================
-        // 8. MULTIJUGADOR, ENLACE DE SALAS Y QR
+        // 8.5 SUSCRIPCIÓN DE RESPALDO Y COMPARTIR SALA
         // ==========================================
-        const ROOMS_COLL = db ? collection(db, 'artifacts', appId, 'public', 'data', 'rooms') : null;
-
-        // Partida Online con Emparejamiento Real + Fallback Inteligente
-        window.quickMatch = async () => {
-            if (!S.user) return window.systemToast("INFO", t('login_req'));
-            S.cpu = false; S.passPlay = false; isMatchmaking = true;
-            
-            nav('s-matchmaking');
-            document.getElementById('match-status-title').innerText = t('searching');
-            document.getElementById('match-status-desc').innerText = t('scanning');
-            
-            try {
-                if (!ROOMS_COLL || S.user.isLocalFallback) throw new Error("Local mode");
-                const q = await getDocs(ROOMS_COLL); 
-                const activeThreshold = Date.now() - 25000; 
-                const openRooms = [];
-
-                q.forEach(d => { 
-                    const r = d.data(); 
-                    if (r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest && r.lastUpdate > activeThreshold) {
-                        openRooms.push(d.id);
-                    }
-                });
-
-                if (openRooms.length > 0) {
-                    const foundId = openRooms[Math.floor(Math.random() * openRooms.length)].replace('room_', '');
-                    document.getElementById('match-status-title').innerText = "¡RIVAL ENCONTRADO!";
-                    document.getElementById('match-status-desc').innerText = "ESTABLECIENDO ENLACE...";
-                    setTimeout(() => window.join(foundId), 800); 
-                } else { 
-                    document.getElementById('match-status-title').innerText = "ESPERANDO JUGADOR";
-                    document.getElementById('match-status-desc').innerText = "SALA PÚBLICA ACTIVA...";
-                    await window.create(true); 
-                    // Si en 12 segundos no hay otro humano conectado, empareja con un Agente IA Táctico para que el usuario siempre pueda jugar
-                    if (matchmakingFallbackTimer) clearTimeout(matchmakingFallbackTimer);
-                    matchmakingFallbackTimer = setTimeout(() => {
-                        if (isMatchmaking && S.data && S.data.stat === 'wait') {
-                            window.cancelMatchmaking(true);
-                            const botNames = ["CYBER_VIPER", "NEXUS_9", "KIRA_AR", "ZERO_COOL", "VALKYRIE"];
-                            const pickedBot = botNames[Math.floor(Math.random() * botNames.length)];
-                            window.vsCpu(pickedBot);
-                        }
-                    }, 12000);
-                }
-            } catch(e) { 
-                // Si está sin conexión a Firebase, inicia partida contra Bot Táctico tras 2 seg
-                setTimeout(() => {
-                    if (isMatchmaking) {
-                        isMatchmaking = false;
-                        window.vsCpu("NEXUS_PRIME");
-                    }
-                }, 1800);
-            }
-        };
-
-        window.cancelMatchmaking = (silent = false) => {
-            isMatchmaking = false;
-            if (matchmakingFallbackTimer) { clearTimeout(matchmakingFallbackTimer); matchmakingFallbackTimer = null; }
-            if (S.room && S.role === 'host' && db && !S.user?.isLocalFallback) {
-                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), { stat: 'end' }).catch(()=>{});
-            }
-            if (!silent) window.goHome();
-        };
-
-        window.cancelWaitingRoom = () => {
-            if (S.room && S.role === 'host' && db && !S.user?.isLocalFallback) {
-                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), { stat: 'end' }).catch(()=>{});
-            }
-            window.goHome();
-        };
-
-        window.createRoom = () => window.create(false);
-        window.joinRoom = () => { 
-            const c = document.getElementById('code-in').value.trim().toUpperCase(); 
-            if (c.length === 4) window.join(c); 
-            else window.systemToast("CÓDIGO", "Ingresa las 4 letras de la sala"); 
-        };
-        
-        // Modo VS IA Mejorado
-        window.vsCpu = (customBotName = "CPU TÁCTICO") => {
-            S.cpu = true; S.passPlay = false; S.role = 'host'; S.room = 'IA-BOT';
-            const botColors = ['#ff0055', '#ffd700', '#b829ff'];
-            const botCol = botColors.find(c => c !== S.prof.c) || '#ff0055';
-            S.data = { 
-                stat: 'play', turn: 'host', 
-                hostName: S.user?.displayName || "TÚ",
-                guestName: customBotName,
-                points: genPoints(), lines: [], tris: [], 
-                sc: { host: 0, guest: 0 }, dice: null, movs: 0, skips: 0, 
-                p1: S.prof, p2: { c: botCol, i: 'atom' }, scale: 1.0 
-            };
-            window.start();
-        };
-
-        // Nuevo Modo Comercial: 2 Jugadores en 1 solo Celular (Pasa y Juega en AR o 3D)
-        window.vsLocalPass = () => {
-            S.cpu = false; S.passPlay = true; S.role = 'host'; S.room = 'LOCAL-2J';
-            const p2Col = S.prof.c === '#ff0055' ? '#39ff14' : '#ff0055';
-            S.data = { 
-                stat: 'play', turn: 'host', 
-                hostName: "JUGADOR 1",
-                guestName: "JUGADOR 2",
-                points: genPoints(), lines: [], tris: [], 
-                sc: { host: 0, guest: 0 }, dice: null, movs: 0, skips: 0, 
-                p1: S.prof, p2: { c: p2Col, i: 'bolt' }, scale: 1.0 
-            };
-            window.start();
-        };
-
-        window.create = async (pub) => {
-            if (!S.user) return; 
-            S.cpu = false; S.passPlay = false; S.role = 'host'; 
-            // Evitar letras confusas como O y 0 o I y 1
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let c = '';
-            for (let i = 0; i < 4; i++) c += chars.charAt(Math.floor(Math.random() * chars.length));
-            S.room = c;
-            
-            if (!pub) showLoad(true, "CREANDO SALA...");
-
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
-            try {
-                await setDoc(docRef, { 
-                    host: S.user.uid, 
-                    hostName: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 1", 
-                    stat: 'wait', pub: pub, turn: 'host', 
-                    points: genPoints(), lines: [], tris: [], 
-                    sc: { host: 0, guest: 0 }, dice: null, movs: 0, skips: 0, 
-                    p1: S.prof, scale: 1.0, lastUpdate: Date.now() 
-                });
-                
-                // FIX CRÍTICO: Heartbeat activo tanto para salas públicas como privadas
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
-                heartbeatInterval = setInterval(() => {
-                    updateDoc(docRef, { lastUpdate: Date.now() }).catch(() => clearInterval(heartbeatInterval));
-                }, 5000);
-
-                if (!pub) {
-                    showLoad(false);
-                    document.getElementById('waiting-code').innerText = c;
-                    const joinUrl = `${window.location.origin}${window.location.pathname}?room=${c}`;
-                    document.getElementById('room-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(joinUrl)}`;
-                    nav('s-waiting'); 
-                }
-                window.sub(c); 
-            } catch (e) { 
-                showLoad(false); 
-                window.systemToast("OFFLINE", "Iniciando modo local..."); 
-                window.vsLocalPass();
-            }
-        };
-
-        window.join = async (c) => {
-            if (!S.user) return; 
-            S.cpu = false; S.passPlay = false; S.role = 'guest'; S.room = c; 
-            if (!isMatchmaking) showLoad(true, t('connecting'));
-            
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
-            try {
-                const s = await getDoc(docRef);
-                if (!s.exists()) { 
-                    showLoad(false); 
-                    window.systemToast("NO ENCONTRADA", `La sala ${c} no existe.`); 
-                    S.room = null; 
-                    nav('s-menu');
-                    return; 
-                }
-                const d = s.data();
-                if (d.guest && d.guest !== S.user.uid) { 
-                    showLoad(false); 
-                    window.systemToast("OCUPADA", t('room_full')); 
-                    S.room = null; 
-                    nav('s-menu');
-                    return; 
-                }
-                
-                // Si el invitado tiene el mismo color que el host, se le asigna un color contrastante automáticamente
-                let guestProf = { ...S.prof };
-                if (d.p1 && d.p1.c === guestProf.c) {
-                    guestProf.c = guestProf.c === '#00f3ff' ? '#ff0055' : '#00f3ff';
-                }
-
-                let up = { 
-                    guest: S.user.uid, 
-                    guestName: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2", 
-                    stat: 'play', 
-                    p2: guestProf,
-                    lastUpdate: Date.now()
-                };
-                await updateDoc(docRef, up); 
-                window.sub(c); 
-                document.getElementById('room-lbl').innerText = c;
-            } catch(e) { 
-                showLoad(false); 
-                window.systemToast("ERROR DE RED", "No se pudo enlazar con la sala"); 
-                S.room = null; 
-                nav('s-menu');
-            }
-        };
-        
         window.sub = (c) => {
             if (roomUnsub) roomUnsub();
+            if (!db) return;
             const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
             roomUnsub = onSnapshot(docRef, s => {
                 if (s.exists()) {
@@ -1911,7 +2146,7 @@
                     } else if (d.stat === 'end') {
                         window.endGame(d);
                     }
-                } else if (S.room) { 
+                } else if (S.room && !(peerConn && peerConn.open)) { 
                     window.systemToast("SALA CERRADA", "El anfitrión finalizó la sesión"); 
                     window.goHome(); 
                 }
@@ -1965,12 +2200,21 @@
         // 9. INTERFAZ DE PARTIDA E INTELIGENCIA ARTIFICIAL
         // ==========================================
         window.update = (o) => {
-            if (S.cpu || S.passPlay) { 
-                Object.assign(S.data, o); 
-                if (S.data.stat === 'end') window.endGame(S.data); 
+            if (S.data) {
+                Object.assign(S.data, o);
+            }
+            // 1. Si hay conexión directa P2P entre celulares, enviar el movimiento en tiempo real (< 50ms)
+            if (peerConn && peerConn.open) {
+                peerConn.send({ type: 'STATE_PATCH', patch: o });
+            }
+            // 2. Actualizar UI local o fin de juego
+            if (S.cpu || S.passPlay || (peerConn && peerConn.open)) { 
+                if (S.data && S.data.stat === 'end') window.endGame(S.data); 
                 else window.ui(); 
-            } else if (db && S.room) { 
-                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), { ...o, lastUpdate: Date.now() }).catch(console.error); 
+            }
+            // 3. Si además está conectado a Firestore, respaldar estado
+            if (!S.cpu && !S.passPlay && db && S.room && !S.user?.isLocalFallback) { 
+                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), { ...o, lastUpdate: Date.now() }).catch(() => {}); 
             }
         };
         
@@ -2015,10 +2259,11 @@
                 dv.innerText = d.dice || "?"; 
                 dv.classList.remove('my-turn-pulse');
                 dv.style.borderColor = '#444'; 
-                dv.style.color = '#666'; 
+                dv.style.color = '#666';
             }
 
-            // Gestión limpia de UI en Realidad Aumentada (Independiente por dispositivo)
+            // Gestión limpia de UI en Realidad Aumentada (WebXR o Cámara AR Universal)
+            const arTxt = document.getElementById('ar-btn-txt');
             if (ren && ren.xr.isPresenting) {
                 document.getElementById('ar-controls').classList.remove('hidden');
                 document.getElementById('ar-controls').classList.add('flex');
@@ -2032,7 +2277,10 @@
                 document.getElementById('ar-controls').classList.add('hidden');
                 document.getElementById('ar-controls').classList.remove('flex');
                 document.getElementById('ar-instructions').style.display = 'none';
-                window.checkARButtonVisibility();
+                document.getElementById('btn-start-ar-float').classList.remove('hidden');
+                if (arTxt) {
+                    arTxt.innerText = isCameraArActive ? "VOLVER A FONDO 3D OSCURO" : t('start_ar');
+                }
             }
 
             window.draw();
@@ -2131,7 +2379,7 @@
         };
 
         // ==========================================
-        // 10. MOTOR 3D Y REALIDAD AUMENTADA (WEBXR)
+        // 10. MOTOR 3D Y REALIDAD AUMENTADA UNIVERSAL (WEBXR + CÁMARA AR)
         // ==========================================
         let arSupportedFlag = false;
         window.checkAR = () => {
@@ -2139,33 +2387,87 @@
             if ('xr' in navigator) {
                 navigator.xr.isSessionSupported('immersive-ar').then(ok => {
                     arSupportedFlag = ok;
-                    if (el) el.innerHTML = ok ? '<span class="text-neon font-bold"><i class="fas fa-check-circle mr-1"></i>CÁMARA AR LISTA</span>' : '<span class="text-cyber">MODO HOLOGRAMA 3D INTERACTIVO</span>';
-                    window.checkARButtonVisibility();
+                    if (el) el.innerHTML = '<span class="text-neon font-bold"><i class="fas fa-camera mr-1"></i>REALIDAD AUMENTADA (AR) LISTA</span>';
                     if (ok && !arInitialized) window.init3D();
                 }).catch(() => {
-                    if (el) el.innerText = "MODO HOLOGRAMA 3D ACTIVO";
+                    if (el) el.innerHTML = '<span class="text-neon font-bold"><i class="fas fa-camera mr-1"></i>CÁMARA AR UNIVERSAL LISTA</span>';
                 });
             } else {
-                if (el) el.innerText = "MODO HOLOGRAMA 3D ACTIVO";
+                if (el) el.innerHTML = '<span class="text-neon font-bold"><i class="fas fa-camera mr-1"></i>CÁMARA AR UNIVERSAL LISTA</span>';
             }
         };
 
         window.checkARButtonVisibility = () => {
             const btn = document.getElementById('btn-start-ar-float');
-            if (!btn) return;
-            if (arSupportedFlag && (!ren || !ren.xr.isPresenting)) {
-                btn.classList.remove('hidden');
+            if (btn) btn.classList.remove('hidden');
+        };
+
+        // Botón Inteligente de Realidad Aumentada:
+        // Activa la Cámara AR en vivo para proyectar el holograma 3D sobre el mundo real en CUALQUIER celular
+        window.toggleARMode = async () => {
+            // Si ya está en modo Cámara AR Universal, lo apaga y vuelve a fondo 3D oscuro
+            if (isCameraArActive) {
+                window.stopCameraAR();
+                return;
+            }
+            // Si está en sesión WebXR nativa, sale de ella
+            if (ren && ren.xr.isPresenting) {
+                window.exitAROnly();
+                return;
+            }
+
+            // Iniciar Cámara Trasera de Realidad Aumentada Universal (100% compatible con todos los Android y iPhone)
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: "environment" } },
+                        audio: false
+                    });
+                    arCameraStream = stream;
+                    const videoEl = document.getElementById('ar-camera-video');
+                    videoEl.srcObject = stream;
+                    await videoEl.play();
+                    isCameraArActive = true;
+                    document.body.classList.add('ar-camera-mode');
+                    document.getElementById('size-slider-container').style.display = 'flex';
+                    playSfx('win');
+                    window.gameToast("MODO AR ACTIVO", "Holograma proyectado en tu cámara. Usa 1 dedo para rotar y 2 para mover");
+                    window.ui();
+                    return;
+                } catch (err) {
+                    console.warn("Intentando WebXR nativo tras permiso de cámara:", err);
+                }
+            }
+
+            // Si el navegador bloqueó getUserMedia directo pero tiene WebXR nativo
+            if (arSupportedFlag && arBtn) {
+                arBtn.click();
             } else {
-                btn.classList.add('hidden');
+                window.systemToast("PERMISO DE CÁMARA", "Acepta el permiso de cámara en tu navegador para ver en Realidad Aumentada");
             }
         };
 
-        window.startARSession = () => { 
-            if (arBtn) arBtn.click(); 
-            else window.systemToast("AR", "Tu navegador actual usa Modo 3D Táctil");
+        window.stopCameraAR = () => {
+            isCameraArActive = false;
+            document.body.classList.remove('ar-camera-mode');
+            const videoEl = document.getElementById('ar-camera-video');
+            if (videoEl) {
+                videoEl.pause();
+                videoEl.srcObject = null;
+            }
+            if (arCameraStream) {
+                arCameraStream.getTracks().forEach(track => track.stop());
+                arCameraStream = null;
+            }
+            window.ui();
+        };
+
+        window.startARSession = () => {
+            window.toggleARMode();
         };
 
         window.exitAROnly = () => {
+            if (isCameraArActive) window.stopCameraAR();
             if (ren && ren.xr.isPresenting) {
                 ren.xr.getSession().end().catch(console.error);
             }
@@ -2252,9 +2554,9 @@
             ren.domElement.style.zIndex = '1';
             document.body.appendChild(ren.domElement);
             
+            // hit-test como opcional para que nunca bloquee teléfonos que no tienen sensor Depth API
             arBtn = ARButton.createButton(ren, { 
-                requiredFeatures: ['hit-test'], 
-                optionalFeatures: ['dom-overlay'], 
+                optionalFeatures: ['hit-test', 'dom-overlay'], 
                 domOverlay: { root: document.body } 
             });
             document.getElementById('ar-zone').appendChild(arBtn);
@@ -2886,6 +3188,9 @@
         };
 
         function performGoHome() {
+            window.stopCameraAR();
+            window.stopQRScanner();
+            cleanupPeer();
             if (roomUnsub) { roomUnsub(); roomUnsub = null; }
             if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
             if (matchmakingFallbackTimer) { clearTimeout(matchmakingFallbackTimer); matchmakingFallbackTimer = null; }
@@ -2897,7 +3202,7 @@
             }
             arHit = null; 
             if (reticle) reticle.visible = false;
-            document.body.classList.remove('ar-active');
+            document.body.classList.remove('ar-active', 'ar-camera-mode');
             document.getElementById('size-slider-container').style.display = 'none';
             nav('s-menu');
         }
