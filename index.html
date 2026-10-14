@@ -7,8 +7,24 @@
     <meta name="theme-color" content="#050a14">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>3 LINE-AR | V50.0 COMMERCIAL EDITION</title>
+    <title>3 LINE-AR | V52.0 H5 ADS & ENCAPSULATION EDITION</title>
     
+    <!-- ========================================================================= -->
+    <!-- GOOGLE H5 GAMES ADS SDK (AdSense para Juegos HTML5)                       -->
+    <!-- REEMPLAZA 'ca-pub-0000000000000000' CON TU ID DE EDITOR DE GOOGLE ADSENSE -->
+    <!-- ========================================================================= -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000" crossorigin="anonymous"></script>
+    <script>
+        window.adsbygoogle = window.adsbygoogle || [];
+        window.adBreak = window.adConfig = function(o) { window.adsbygoogle.push(o); };
+        // Inicialización de Google H5 Games Ads
+        window.adConfig({
+            preloadAdBreaks: 'on',
+            sound: 'on',
+            onReady: () => { console.log("Google H5 Games Ads SDK Ready"); }
+        });
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { 
@@ -153,6 +169,20 @@
         .lang-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
         .lang-opt { padding: 10px; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center; font-size: 11px; }
         .lang-opt.active { background: #00f3ff; color: black; border-color: #00f3ff; font-weight: bold; }
+
+        /* Logo Oficial con Resplandor Holográfico */
+        .official-logo {
+            filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.55));
+            transition: transform 0.3s ease;
+        }
+        .official-logo:hover { transform: scale(1.04); }
+
+        /* Overlay de Anuncio H5 (Fallback / Previsualización Comercial) */
+        #h5-ad-overlay {
+            position: fixed; inset: 0; background: rgba(2, 5, 12, 0.98);
+            z-index: 200; display: none; flex-direction: column;
+            justify-content: center; align-items: center; padding: 20px;
+        }
         
         /* Scrollbar estilizado */
         ::-webkit-scrollbar { width: 4px; }
@@ -166,6 +196,25 @@
     <!-- Lienzo de red neuronal animado para los menús -->
     <canvas id="bg-canvas"></canvas>
     
+    <!-- OVERLAY DE PUBLICIDAD GOOGLE H5 GAMES ADS (Simulador activo hasta vincular ID real) -->
+    <div id="h5-ad-overlay" class="interactive">
+        <div class="glass-panel p-6 max-w-xs w-full text-center border-2 border-gold relative">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
+                <span class="bg-gold text-black text-[9px] font-black px-2 py-0.5 rounded uppercase">ANUNCIO PATROCINADO</span>
+                <span id="ad-timer-badge" class="text-[10px] font-mono text-cyber">5s</span>
+            </div>
+            <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" alt="3 LINE-AR" class="w-24 h-24 object-contain mx-auto mb-3 official-logo" onerror="this.style.display='none'">
+            <h3 id="ad-modal-title" class="text-sm font-black text-white mb-1">GOOGLE H5 GAMES ADS</h3>
+            <p id="ad-modal-desc" class="text-[10px] text-gray-300 mb-4 leading-relaxed">Espacio publicitario conectado a la API <code class="text-neon">adBreak()</code> de Google AdSense.</p>
+            <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mb-4">
+                <div id="ad-progress-bar" class="bg-gold h-full w-0 transition-all duration-300"></div>
+            </div>
+            <button id="btn-close-ad" onclick="window.finishSimulatedAd()" class="btn-neon gold py-2.5 px-6 text-xs w-full btn-disabled">
+                ESPERANDO ANUNCIO...
+            </button>
+        </div>
+    </div>
+
     <!-- BARRA DE ESTADO SUPERIOR GLOBAL -->
     <div class="fixed top-3 left-3 right-3 flex justify-between items-center z-50 pointer-events-none">
         <div class="flex items-center gap-2 pointer-events-auto">
@@ -201,16 +250,17 @@
 
         <!-- 1. PANTALLA DE LOGIN -->
         <div id="s-login" class="interactive absolute inset-0 flex items-center justify-center bg-black/80 z-40 p-4">
-            <div class="glass-panel p-7 text-center w-full max-w-xs flex flex-col items-center gap-5">
+            <div class="glass-panel p-7 text-center w-full max-w-xs flex flex-col items-center gap-4">
                 <div class="relative">
-                    <div class="w-20 h-20 rounded-full bg-cyber/10 border border-cyber/40 flex items-center justify-center animate-float">
-                        <i class="fas fa-project-diagram text-4xl text-cyber drop-shadow-[0_0_12px_#00f3ff]"></i>
-                    </div>
-                    <span class="absolute -bottom-1 -right-2 bg-hot text-white text-[8px] font-black px-2 py-0.5 rounded-full tracking-wider">AR / 3D</span>
+                    <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
+                         alt="3 LINE-AR Logo" 
+                         class="w-36 h-36 object-contain official-logo animate-float mx-auto"
+                         onerror="this.outerHTML='<div class=\'w-20 h-20 rounded-full bg-cyber/10 border border-cyber/40 flex items-center justify-center animate-float\'><i class=\'fas fa-project-diagram text-4xl text-cyber\'></i></div>'">
+                    <span class="absolute -bottom-1 right-0 bg-hot text-white text-[8px] font-black px-2 py-0.5 rounded-full tracking-wider shadow-lg">AR / 3D</span>
                 </div>
                 <div>
-                    <h1 class="text-4xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
-                    <p class="text-cyber/70 text-[9px] font-mono tracking-[0.25em] mt-1">TACTICAL NEXUS V50.0</p>
+                    <h1 class="text-3xl font-black text-white italic tracking-tighter">3 LINE<span class="text-cyber">-AR</span></h1>
+                    <p class="text-cyber/70 text-[9px] font-mono tracking-[0.22em] mt-0.5">TACTICAL NEXUS EDITION</p>
                 </div>
                 
                 <button id="btn-login-google" onclick="window.doLogin()" class="btn-neon w-full py-3.5 flex justify-center items-center gap-3 text-xs">
@@ -228,16 +278,20 @@
 
         <!-- 2. MENÚ PRINCIPAL COMERCIAL -->
         <div id="s-menu" class="interactive absolute inset-0 flex items-center justify-center z-30 hidden p-4 pt-14">
-            <div class="glass-panel p-5 w-full max-w-xs flex flex-col gap-3.5 relative max-h-[90vh] overflow-y-auto">
+            <div class="glass-panel p-5 w-full max-w-xs flex flex-col gap-3 relative max-h-[90vh] overflow-y-auto">
                 
-                <!-- Perfil del Agente -->
-                <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                <!-- Cabecera con el Logo Oficial e Info del Agente -->
+                <div class="flex justify-between items-center border-b border-white/10 pb-2.5">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-lg bg-cyber/15 border border-cyber flex items-center justify-center text-cyber font-black text-sm" id="u-avatar">A</div>
+                        <img src="https://raw.githubusercontent.com/instructorandradedcc/3-line-AR/main/3line-ar-logo.png" 
+                             alt="Logo" 
+                             class="w-10 h-10 object-contain rounded-lg bg-black/50 p-0.5 border border-cyber/40"
+                             onerror="this.style.display='none'">
+                        <div class="w-9 h-9 rounded-lg bg-cyber/15 border border-cyber hidden items-center justify-center text-cyber font-black text-sm" id="u-avatar">A</div>
                         <div>
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[8px] text-cyber tracking-widest uppercase" data-i18n="agent">AGENTE</span>
-                                <span id="vip-badge" class="hidden bg-gold text-black text-[7px] font-black px-1.5 rounded">VIP</span>
+                                <span id="vip-badge" class="hidden bg-gold text-black text-[7px] font-black px-1.5 rounded">PRO</span>
                             </div>
                             <span id="u-name" class="text-white font-bold text-sm block leading-tight">...</span>
                         </div>
@@ -312,7 +366,7 @@
                 <!-- Tienda Comercial, Ranking y Compartir -->
                 <div class="grid grid-cols-3 gap-2 pt-1">
                     <button onclick="window.showShop()" class="btn-neon gold py-2.5 text-[9px] flex flex-col items-center gap-1">
-                        <i class="fas fa-store text-sm"></i> <span data-i18n="shop">TIENDA</span>
+                        <i class="fas fa-gift text-sm"></i> <span data-i18n="shop">MEJORAS</span>
                     </button>
                     <button onclick="window.showLeaderboard()" class="btn-neon py-2.5 text-[9px] flex flex-col items-center gap-1">
                         <i class="fas fa-trophy text-sm text-gold"></i> <span data-i18n="ranking">RANKING</span>
@@ -322,7 +376,16 @@
                     </button>
                 </div>
 
-                <div id="ar-status" class="text-center text-[8px] text-gray-400 font-mono pt-1" data-i18n="check_hw">VERIFICANDO HARDWARE AR...</div>
+                <!-- Espacio de Banner AdSense Integrado (Monetización Pasiva en Menú) -->
+                <div onclick="window.triggerH5Ad('reward', () => { window.claimFreeAdCoins(); })" class="bg-gradient-to-r from-cyber/10 via-black to-gold/10 border border-gold/40 rounded-lg p-2 flex items-center justify-between cursor-pointer hover:border-gold transition">
+                    <div class="flex items-center gap-2">
+                        <span class="bg-gold text-black text-[8px] font-black px-1.5 py-0.5 rounded">AD</span>
+                        <span class="text-[9px] text-gray-200 font-bold">Ver anuncio corto = <strong class="text-gold">+100 Monedas Gratis</strong></span>
+                    </div>
+                    <i class="fas fa-play-circle text-gold text-sm animate-pulse"></i>
+                </div>
+
+                <div id="ar-status" class="text-center text-[8px] text-gray-400 font-mono" data-i18n="check_hw">VERIFICANDO HARDWARE AR...</div>
             </div>
         </div>
 
@@ -595,24 +658,25 @@
             es: {
                 login: "CONECTAR CON GOOGLE", guest_login: "JUGAR AHORA (INVITADO)", connecting: "CONECTANDO...", cancel: "CANCELAR",
                 agent: "AGENTE", color: "LÁSER", mark: "INSIGNIA", quick_match: "PARTIDA ONLINE", create_room: "CREAR SALA",
-                join_room: "CONECTAR CÓDIGO", vs_cpu: "VS IA BOT", pass_play: "1 CELULAR (2J)", shop: "TIENDA", invite: "INVITAR",
+                join_room: "CONECTAR CÓDIGO", vs_cpu: "VS IA BOT", pass_play: "1 CELULAR (2J)", shop: "MEJORAS", invite: "INVITAR",
                 ranking: "RANKING", check_hw: "VERIFICANDO HARDWARE AR...", searching: "BUSCANDO RIVAL", scanning: "ESCANEANDO SERVIDORES...",
                 private_room: "ENLACE DE SALA", share_code: "CÓDIGO DE CONEXIÓN:", waiting_player: "ESPERANDO CONEXIÓN DEL RIVAL...",
                 score: "TÚ", lines: "ENERGÍA:", skip: "PASAR", rival: "RIVAL", loading: "SINCRONIZANDO...", surrender: "RENDIRSE",
                 recenter: "CENTRAR", start_ar: "VER EN REALIDAD AUMENTADA (AR)", fix: "FIJAR AQUÍ", move: "REUBICAR",
                 victory: "VICTORIA", defeat: "DERROTA", draw: "EMPATE", back_menu: "VOLVER AL CENTRO DE MANDO",
                 wait_turn: "Turno del Rival", play_turn: "Conecta nodos cercanos", roll_dice: "Toca el dado para lanzar",
-                energy: "ENERGÍA", pass: "PASO", turn_skipped: "Turno cedido", error: " INVÁLIDO", login_req: "Inicia sesión primero",
+                energy: "ENERGÍA", pass: "PASO", turn_skipped: "Turno cedido", error: "INVÁLIDO", login_req: "Inicia sesión primero",
                 room_full: "La sala ya está llena", ar_scan: "MODO ESCANEO AR", ar_tap_fix: "Toca la superficie para colocar el tablero",
                 ar_floor: "SUPERFICIE DETECTADA", ar_air: "MODO HOLOGRAMA LIBRE", ar_sync: "LISTO", ar_sync_msg: "Tablero fijado en tu espacio.",
                 pts: "PTS", win_msg: "¡DOMINIO TÁCTICO TOTAL!", lose_msg: "BUEN INTENTO, AGENTE", draw_msg: "EMPATE TÁCTICO",
-                blocked: "Una esfera bloquea el paso directo", range: "Selecciona otro nodo distinto", occupied: "Esa línea ya está creada",
+                blocked: "Atraviesa una pared o esfera existente", range: "Selecciona otro nodo distinto", occupied: "Esa línea ya está creada",
+                encapsulated: "¡Zona Encapsulada! No se permiten más triángulos adentro",
                 conquest: "¡Triángulo 3D Conquistado! +1 PTO", link: "Línea 3D establecida"
             },
             en: {
                 login: "SIGN IN WITH GOOGLE", guest_login: "PLAY NOW (GUEST)", connecting: "CONNECTING...", cancel: "CANCEL",
                 agent: "AGENT", color: "LASER", mark: "BADGE", quick_match: "ONLINE MATCH", create_room: "CREATE ROOM",
-                join_room: "JOIN CODE", vs_cpu: "VS AI BOT", pass_play: "PASS & PLAY (2P)", shop: "SHOP", invite: "SHARE",
+                join_room: "JOIN CODE", vs_cpu: "VS AI BOT", pass_play: "PASS & PLAY (2P)", shop: "UPGRADES", invite: "SHARE",
                 ranking: "RANKING", check_hw: "CHECKING AR HARDWARE...", searching: "SEARCHING RIVAL", scanning: "SCANNING NETWORK...",
                 private_room: "ROOM LINK", share_code: "CONNECTION CODE:", waiting_player: "WAITING FOR OPPONENT...",
                 score: "YOU", lines: "ENERGY:", skip: "SKIP", rival: "RIVAL", loading: "SYNCING...", surrender: "FORFEIT",
@@ -623,7 +687,8 @@
                 room_full: "Room is full", ar_scan: "AR SCAN MODE", ar_tap_fix: "Tap surface to place board",
                 ar_floor: "SURFACE DETECTED", ar_air: "FREE HOLOGRAM MODE", ar_sync: "LOCKED", ar_sync_msg: "Board locked in your space.",
                 pts: "PTS", win_msg: "TOTAL TACTICAL DOMINATION!", lose_msg: "GOOD EFFORT, AGENT", draw_msg: "TACTICAL BALANCE",
-                blocked: "A node blocks the direct path", range: "Select a different node", occupied: "Link already exists",
+                blocked: "Crosses an existing wall or node", range: "Select a different node", occupied: "Link already exists",
+                encapsulated: "Encapsulated Zone! Closed externally",
                 conquest: "3D Nexus Captured! +1 PT", link: "3D Link Established"
             },
             zh: {
@@ -640,7 +705,8 @@
                 room_full: "房间已满", ar_scan: "AR扫描", ar_tap_fix: "点击平面放置棋盘",
                 ar_floor: "检测到平面", ar_air: "空中全息模式", ar_sync: "完成", ar_sync_msg: "棋盘已固定",
                 pts: "分", win_msg: "完全统治!", lose_msg: "再接再厉", draw_msg: "势均力敌",
-                blocked: "不能交叉现有的线", range: "距离太远", occupied: "连线已存在",
+                blocked: "不能穿过现有的墙", range: "距离太远", occupied: "连线已存在",
+                encapsulated: "该区域已被外部封闭!",
                 conquest: "占领三角区! +1分", link: "链接已建立"
             },
             fr: {
@@ -658,7 +724,107 @@
                 ar_floor: "SOL DÉTECTÉ", ar_air: "MODE HOLOGRAMME", ar_sync: "OK", ar_sync_msg: "Plateau fixé.",
                 pts: "PTS", win_msg: "DOMINATION TOTALE", lose_msg: "BIEN ESSAYÉ", draw_msg: "ÉQUILIBRE",
                 blocked: "Croisement interdit", range: "Trop loin", occupied: "Lien occupé",
+                encapsulated: "Zone encapsulée à l'extérieur!",
                 conquest: "Triangle Capturé! +1", link: "Lien Établi"
+            }
+        };
+
+        // ==========================================
+        // 2.5 GESTOR PUBLICITARIO GOOGLE H5 GAMES ADS
+        // ==========================================
+        let adFinishCallback = null;
+        let adCountdownInterval = null;
+
+        window.triggerH5Ad = (adType = 'next', onComplete = () => {}) => {
+            // 1. Intentar mostrar anuncio real con la API de Google H5 Games Ads (adBreak)
+            let adHandledByGoogle = false;
+            if (typeof window.adBreak === 'function') {
+                try {
+                    if (adType === 'reward') {
+                        window.adBreak({
+                            type: 'reward',
+                            name: 'bonus_coins',
+                            beforeAd: () => { adHandledByGoogle = true; },
+                            afterAd: () => {},
+                            beforeReward: (showAdFn) => { showAdFn(); },
+                            adDismissed: () => { window.systemToast("ANUNCIO", "Anuncio cancelado"); },
+                            adViewed: () => { onComplete(); },
+                            adBreakDone: (placementInfo) => {
+                                if (placementInfo.breakStatus !== 'viewed' && !adHandledByGoogle) {
+                                    window.showSimulatedAdModal(adType, onComplete);
+                                }
+                            }
+                        });
+                        return;
+                    } else {
+                        window.adBreak({
+                            type: adType, // 'start', 'next', 'browse'
+                            name: 'end_of_match_interstitial',
+                            beforeAd: () => { adHandledByGoogle = true; },
+                            afterAd: () => { onComplete(); },
+                            adBreakDone: (placementInfo) => {
+                                if (!adHandledByGoogle) {
+                                    window.showSimulatedAdModal(adType, onComplete);
+                                } else {
+                                    onComplete();
+                                }
+                            }
+                        });
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Fallback a Simulador H5 Ads:", e);
+                }
+            }
+            // 2. Mientras Google aprueba tu dominio web o pruebas localmente, mostramos el contenedor de anuncio H5
+            window.showSimulatedAdModal(adType, onComplete);
+        };
+
+        window.showSimulatedAdModal = (adType, onComplete) => {
+            adFinishCallback = onComplete;
+            const overlay = document.getElementById('h5-ad-overlay');
+            const timerBadge = document.getElementById('ad-timer-badge');
+            const progressBar = document.getElementById('ad-progress-bar');
+            const closeBtn = document.getElementById('btn-close-ad');
+            const titleEl = document.getElementById('ad-modal-title');
+            const descEl = document.getElementById('ad-modal-desc');
+
+            titleEl.innerText = adType === 'reward' ? "VIDEO BONIFICADO (H5 ADS)" : "PAUSA PUBLICITARIA (H5 ADS)";
+            descEl.innerText = adType === 'reward' 
+                ? "Mira este anuncio patrocinado durante 4 segundos para recibir tu recompensa gratuita." 
+                : "Gracias a estos anuncios, 3 LINE-AR es 100% gratuito para todos los jugadores.";
+
+            overlay.style.display = 'flex';
+            closeBtn.classList.add('btn-disabled');
+            closeBtn.innerText = "CARGANDO ANUNCIO...";
+            progressBar.style.width = '0%';
+
+            let timeLeft = 4;
+            timerBadge.innerText = `${timeLeft}s`;
+
+            if (adCountdownInterval) clearInterval(adCountdownInterval);
+            adCountdownInterval = setInterval(() => {
+                timeLeft--;
+                const pct = ((4 - timeLeft) / 4) * 100;
+                progressBar.style.width = `${pct}%`;
+                if (timeLeft > 0) {
+                    timerBadge.innerText = `${timeLeft}s`;
+                } else {
+                    clearInterval(adCountdownInterval);
+                    timerBadge.innerText = "LISTO";
+                    closeBtn.classList.remove('btn-disabled');
+                    closeBtn.innerHTML = `<i class="fas fa-check-circle mr-1"></i> CONTINUAR Y RECIBIR BONO`;
+                }
+            }, 1000);
+        };
+
+        window.finishSimulatedAd = () => {
+            document.getElementById('h5-ad-overlay').style.display = 'none';
+            if (adCountdownInterval) clearInterval(adCountdownInterval);
+            if (typeof adFinishCallback === 'function') {
+                const cb = adFinishCallback;
+                adFinishCallback = null;
+                cb();
             }
         };
 
@@ -1005,6 +1171,137 @@
             return closest.distanceTo(pNode) < 0.065;
         }
 
+        // ====================================================================
+        // GEOMETRÍA AVANZADA: REGLA DE ENCAPSULAMIENTO 3D Y PAREDES CERRADAS
+        // ====================================================================
+
+        // 1.Algoritmo Möller–Trumbore para detectar si un rayo o segmento perfora una pared triangular existente
+        function rayIntersectsTriangle3D(orig, dir, v0, v1, v2) {
+            const EPSILON = 0.00001;
+            const edge1 = new THREE.Vector3().subVectors(v1, v0);
+            const edge2 = new THREE.Vector3().subVectors(v2, v0);
+            const h = new THREE.Vector3().crossVectors(dir, edge2);
+            const a = edge1.dot(h);
+            if (a > -EPSILON && a < EPSILON) return null;
+            const f = 1.0 / a;
+            const s = new THREE.Vector3().subVectors(orig, v0);
+            const u = f * s.dot(h);
+            if (u < 0.001 || u > 0.999) return null;
+            const q = new THREE.Vector3().crossVectors(s, edge1);
+            const v = f * dir.dot(q);
+            if (v < 0.001 || u + v > 0.999) return null;
+            const t = f * edge2.dot(q);
+            return t > EPSILON ? t : null;
+        }
+
+        // Verifica si una nueva línea (p1 -> p2) atraviesa el interior de cualquier triángulo ya conquistado
+        function doesSegmentPierceAnyTriangle(p1Idx, p2Idx, trisList) {
+            if (!trisList || trisList.length === 0) return false;
+            const pA = pts[p1Idx].position;
+            const pB = pts[p2Idx].position;
+            const segVec = new THREE.Vector3().subVectors(pB, pA);
+            const segLen = segVec.length();
+            if (segLen < 0.001) return false;
+            const dir = segVec.clone().normalize();
+
+            for (const t of trisList) {
+                // Si el triángulo comparte alguno de los dos puntos extremos, solo se tocan en el vértice
+                if (t.p1 === p1Idx || t.p2 === p1Idx || t.p3 === p1Idx ||
+                    t.p1 === p2Idx || t.p2 === p2Idx || t.p3 === p2Idx) {
+                    continue;
+                }
+                const v0 = pts[t.p1].position;
+                const v1 = pts[t.p2].position;
+                const v2 = pts[t.p3].position;
+                const dist = rayIntersectsTriangle3D(pA, dir, v0, v1, v2);
+                if (dist !== null && dist > 0.02 && dist < segLen - 0.02) {
+                    return true; // ¡Perfora una pared triangular existente!
+                }
+            }
+            return false;
+        }
+
+        // Verifica si una coordenada 3D se proyecta dentro del área de un triángulo visto desde un plano (ej. superior/inferior)
+        function isPointInTriangle2DProj(px, pz, ax, az, bx, bz, cx, cz) {
+            const v0x = cx - ax, v0z = cz - az;
+            const v1x = bx - ax, v1z = bz - az;
+            const v2x = px - ax, v2z = pz - az;
+            const dot00 = v0x * v0x + v0z * v0z;
+            const dot01 = v0x * v1x + v0z * v1z;
+            const dot02 = v0x * v2x + v0z * v2z;
+            const dot11 = v1x * v1x + v1z * v1z;
+            const dot12 = v1x * v2x + v1z * v2z;
+            const denom = (dot00 * dot11 - dot01 * dot01);
+            if (Math.abs(denom) < 0.00001) return false;
+            const invDenom = 1 / denom;
+            const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+            const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+            return (u > 0.03) && (v > 0.03) && (u + v < 0.97);
+        }
+
+        // 2. Detector de Encapsulamiento Espacial 3D:
+        // Determina si un punto (o el centro de un triángulo candidato) ya quedó encerrado/encapsulado
+        // por paredes triangulares existentes (sin importar si son propias, del rival o mixtas).
+        function isPointEncapsulated3D(targetPos, trisList, ignoreNodes = []) {
+            if (!trisList || trisList.length === 0) return false;
+
+            // A) Verificar si el punto está cubierto externamente por un techo/piso triangular o rodeado en sus ejes
+            const dirs = [
+                new THREE.Vector3(0, 1, 0),  // Superior (+Y)
+                new THREE.Vector3(0, -1, 0), // Inferior (-Y)
+                new THREE.Vector3(1, 0, 0),  // Lateral Este (+X)
+                new THREE.Vector3(-1, 0, 0), // Lateral Oeste (-X)
+                new THREE.Vector3(0, 0, 1),  // Frontal (+Z)
+                new THREE.Vector3(0, 0, -1)  // Posterior (-Z)
+            ];
+
+            let blockedDirections = 0;
+            for (const dir of dirs) {
+                for (const t of trisList) {
+                    const v0 = pts[t.p1].position;
+                    const v1 = pts[t.p2].position;
+                    const v2 = pts[t.p3].position;
+                    const hitDist = rayIntersectsTriangle3D(targetPos, dir, v0, v1, v2);
+                    if (hitDist !== null && hitDist > 0.015) {
+                        blockedDirections++;
+                        break;
+                    }
+                }
+            }
+
+            // Si está encerrado por arriba, abajo y laterales (al menos 4 caras de la bóveda 3D cerradas alrededor de él)
+            if (blockedDirections >= 4) return true;
+
+            // B) Verificar si está directamente bajo/dentro de la sombra volumétrica de un triángulo exterior más grande que ya cerró esa zona
+            for (const t of trisList) {
+                if (ignoreNodes.includes(t.p1) && ignoreNodes.includes(t.p2) && ignoreNodes.includes(t.p3)) continue;
+                const v0 = pts[t.p1].position;
+                const v1 = pts[t.p2].position;
+                const v2 = pts[t.p3].position;
+
+                // Proyección Horizontal (Techo/Suelo X-Z)
+                if (isPointInTriangle2DProj(targetPos.x, targetPos.z, v0.x, v0.z, v1.x, v1.z, v2.x, v2.z)) {
+                    // Si hay al menos otra pared lateral conectada a ese triángulo cerrando el espacio, queda encapsulado
+                    const connectedWalls = trisList.filter(other =>
+                        other !== t && (
+                            [other.p1, other.p2, other.p3].includes(t.p1) +
+                            [other.p1, other.p2, other.p3].includes(t.p2) +
+                            [other.p1, other.p2, other.p3].includes(t.p3) >= 2
+                        )
+                    );
+                    if (connectedWalls.length >= 2) return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Verifica si un nodo específico ha quedado atrapado dentro de una cápsula 3D cerrada
+        function isNodeTrappedInCapsule(nodeIdx) {
+            if (!S.data || !S.data.tris || S.data.tris.length < 3 || !pts[nodeIdx]) return false;
+            return isPointEncapsulated3D(pts[nodeIdx].position, S.data.tris, [nodeIdx]);
+        }
+
         // Limpiador de VRAM para evitar fugas de memoria en móviles
         function disposeHierarchy(node) {
             if (!node) return;
@@ -1197,7 +1494,7 @@
             } 
         };
 
-        // Libertad 3D total: Permite unir cualquier par de puntos en 3D (horizontal, vertical o diagonal) que no esté repetido
+        // Libertad 3D + Regla de Encapsulamiento y No Perforación de Paredes
         function canConnectNodes(p1, p2) {
             if (p1 === p2 || !pts[p1] || !pts[p2]) return { ok: false, reason: 'range' };
             const d = S.data;
@@ -1207,10 +1504,21 @@
             if (d.lines.some(l => (l.s === p1 && l.e === p2) || (l.s === p2 && l.e === p1))) {
                 return { ok: false, reason: 'occupied' };
             }
-            
-            // 2. Evitar únicamente que el tubo láser atraviese el centro exacto de otra esfera intermedia
+
+            // 2. Regla de Encapsulamiento: Si alguno de los dos puntos o el punto medio del enlace ya quedó encerrado dentro de una bóveda 3D
             const posA = pts[p1].position;
             const posB = pts[p2].position;
+            const midPoint = new THREE.Vector3().addVectors(posA, posB).multiplyScalar(0.5);
+            if (isNodeTrappedInCapsule(p1) || isNodeTrappedInCapsule(p2) || isPointEncapsulated3D(midPoint, d.tris, [p1, p2])) {
+                return { ok: false, reason: 'encapsulated' };
+            }
+
+            // 3. Evitar que la nueva línea atraviese el escudo de energía de un triángulo ya cerrado
+            if (doesSegmentPierceAnyTriangle(p1, p2, d.tris)) {
+                return { ok: false, reason: 'blocked' };
+            }
+            
+            // 4. Evitar que el tubo láser atraviese el centro exacto de otra esfera intermedia
             for (let i = 0; i < pts.length; i++) {
                 if (i !== p1 && i !== p2) {
                     if (isNodeBlockingSegment3D(posA, posB, pts[i].position)) {
@@ -1311,9 +1619,13 @@
             window.update({ lines: nl, tris: [...d.tris, ...nt], sc: sc, movs: m, turn: trn, dice: di, skips: 0 });
         };
 
-        // Detección 3D Pura: Reconoce cualquier triángulo cerrado en 3 dimensiones (horizontal, vertical o inclinado)
+        // Detección 3D Pura + Regla de No Triángulos Internos en Áreas Encapsuladas:
+        // Si exteriormente ya se cerró un área, no se permiten crear nuevos triángulos en su interior,
+        // ni tampoco crear un triángulo gigante que encierre de golpe un triángulo que ya existía adentro.
         window.checkTri = (p1, p2, o, ls) => { 
             const f = []; 
+            const existingTris = S.data.tris || [];
+
             for (let p3 = 0; p3 < pts.length; p3++) {
                 if (p3 !== p1 && p3 !== p2) {
                     const hasL1 = ls.some(l => (l.s === p1 && l.e === p3) || (l.s === p3 && l.e === p1));
@@ -1329,11 +1641,44 @@
 
                         if (area3D > 0.005) { 
                             const v = [p1, p2, p3].sort((a, b) => a - b); 
-                            const alreadyExists = S.data.tris.some(t => {
+                            const alreadyExists = existingTris.some(t => {
                                 const tv = [t.p1, t.p2, t.p3].sort((a, b) => a - b);
                                 return tv[0] === v[0] && tv[1] === v[1] && tv[2] === v[2];
                             });
+
                             if (!alreadyExists) { 
+                                // Calcular el baricentro (centro 3D) del nuevo triángulo candidato
+                                const candidateCenter = new THREE.Vector3().addVectors(v1, v2).add(v3).divideScalar(3);
+
+                                // REGLA DE ENCAPSULAMIENTO EXTERIOR:
+                                // 1. Si el centro de este nuevo triángulo está encapsulado por triángulos exteriores ya cerrados
+                                if (isPointEncapsulated3D(candidateCenter, existingTris, v)) {
+                                    window.gameToast("BLOQUEO 3D", t('encapsulated'));
+                                    continue;
+                                }
+
+                                // 2. Verificar si ya existe un triángulo exterior que cubra por completo a este triángulo interno en el mismo nivel/proyección
+                                let coveredExternally = false;
+                                for (const ext of existingTris) {
+                                    const ev0 = pts[ext.p1].position;
+                                    const ev1 = pts[ext.p2].position;
+                                    const ev2 = pts[ext.p3].position;
+                                    if (isPointInTriangle2DProj(candidateCenter.x, candidateCenter.z, ev0.x, ev0.z, ev1.x, ev1.z, ev2.x, ev2.z)) {
+                                        // Si el triángulo candidato está en el interior del volumen bajo/entre las paredes de ese triángulo
+                                        const maxY = Math.max(ev0.y, ev1.y, ev2.y) + 0.08;
+                                        const minY = Math.min(ev0.y, ev1.y, ev2.y) - 0.35;
+                                        if (candidateCenter.y <= maxY && candidateCenter.y >= minY) {
+                                            coveredExternally = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (coveredExternally) {
+                                    window.gameToast("ÁREA CERRADA", t('encapsulated'));
+                                    continue;
+                                }
+
                                 f.push({ p1: v[0], p2: v[1], p3: v[2], own: o }); 
                             } 
                         }
@@ -2153,12 +2498,13 @@
             if (!S.data || !pts.length) return;
             const d = S.data;
             pts.forEach((m, i) => {
+                const trapped = isNodeTrappedInCapsule(i);
                 const own = d.lines.filter(l => l.s === i || l.e === i).map(l => l.own);
-                const baseCol = i === selPt ? '#ffffff' : (own.includes('host') && own.includes('guest') ? '#b829ff' : (own.includes('host') ? d.p1.c : (own.includes('guest') ? (d.p2?.c || '#ff0055') : '#1c2d42')));
-                const emiCol = i === selPt ? '#39ff14' : (own.length > 0 ? baseCol : '#00f3ff');
+                const baseCol = i === selPt ? '#ffffff' : (trapped ? '#222222' : (own.includes('host') && own.includes('guest') ? '#b829ff' : (own.includes('host') ? d.p1.c : (own.includes('guest') ? (d.p2?.c || '#ff0055') : '#1c2d42'))));
+                const emiCol = i === selPt ? '#39ff14' : (trapped ? '#111111' : (own.length > 0 ? baseCol : '#00f3ff'));
                 m.material.color.set(baseCol);
                 m.material.emissive.set(emiCol);
-                m.material.emissiveIntensity = i === selPt ? 2.0 : (own.length > 0 ? 1.3 : 0.6);
+                m.material.emissiveIntensity = i === selPt ? 2.0 : (trapped ? 0.15 : (own.length > 0 ? 1.3 : 0.6));
             });
 
             updateValidNodeRings();
@@ -2284,30 +2630,35 @@
 
             document.getElementById('final-p1').innerText = myS; 
             document.getElementById('final-p2').innerText = rivS;
+
+            // Mostrar pausa publicitaria intersticial de Google H5 Games Ads al concluir la partida (si no tiene modo sin anuncios)
+            if (!S.vip) {
+                setTimeout(() => {
+                    window.triggerH5Ad('next', () => {});
+                }, 900);
+            }
         };
 
-        // Monetización por Video Recompensado (Rewarded Ad)
+        // Monetización por Video Recompensado (Google H5 Games Ads - Rewarded Ad)
         window.watchAdForDoubleCoins = () => {
             const btn = document.getElementById('btn-double-reward');
-            btn.classList.add('btn-disabled');
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> CARGANDO TRANSMISIÓN PATROCINADA...`;
-            setTimeout(() => {
+            window.triggerH5Ad('reward', () => {
                 const bonus = S.lastRewardEarned || 50;
                 S.coins += bonus;
                 saveLocalEconomy();
                 playSfx('win');
                 btn.classList.add('hidden');
                 document.getElementById('coins-earned').innerText = `+${bonus * 2} MONEDAS (¡DUPLICADO!)`;
-                window.systemToast("RECOMPENSA", `+${bonus} Monedas acreditadas`);
-            }, 2200);
+                window.systemToast("RECOMPENSA H5 ADS", `+${bonus} Monedas acreditadas`);
+            });
         };
 
-        // Tienda Comercial Integrada (Skins + Monedas + Pase VIP)
+        // Tienda 100% Gratuita (Todo se desbloquea con Monedas del Juego o Viendo Propagandas)
         window.showShop = () => {
             const hasPlasma = S.ownedSkins.includes('thick');
             window.showModal(`
                 <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-3">
-                    <h3 class="text-base font-black text-gold"><i class="fas fa-store mr-1.5"></i>ARSENAL & TIENDA</h3>
+                    <h3 class="text-base font-black text-gold"><i class="fas fa-gift mr-1.5"></i>ARSENAL GRATUITO</h3>
                     <span class="bg-gold/20 border border-gold text-gold text-xs font-mono font-bold px-2.5 py-0.5 rounded-full">
                         <i class="fas fa-coins mr-1"></i>${S.coins}
                     </span>
@@ -2325,29 +2676,29 @@
                         </button>
                     </div>
 
-                    <!-- Item 2: Video Recompensado Gratis -->
+                    <!-- Item 2: Video Recompensado Gratis (Monetización Principal) -->
                     <div class="bg-white/5 border border-neon/40 rounded-xl p-3 flex justify-between items-center">
                         <div>
-                            <div class="text-xs font-bold text-neon">SUMINISTRO GRATUITO</div>
-                            <div class="text-[9px] text-gray-400">Mira un clip patrocinado y recibe +100 Monedas</div>
+                            <div class="text-xs font-bold text-neon">VER PROPAGANDA (+100 MONEDAS)</div>
+                            <div class="text-[9px] text-gray-400">Mira un anuncio de Google H5 Ads y gana monedas</div>
                         </div>
-                        <button onclick="window.claimFreeAdCoins()" class="btn-neon !border-neon !text-neon py-1.5 px-3 text-[10px]">
-                            <i class="fas fa-play mr-1"></i> +100
+                        <button onclick="window.triggerH5Ad('reward', () => window.claimFreeAdCoins())" class="btn-neon !border-neon !text-neon py-1.5 px-3 text-[10px]">
+                            <i class="fas fa-play-circle mr-1"></i> VER AD
                         </button>
                     </div>
 
-                    <!-- Item 3: Pase VIP Comercial -->
+                    <!-- Item 3: Modo Multiplicador x2 Desbloqueable con Propagandas -->
                     <div class="bg-gradient-to-r from-amber-500/20 to-purple-600/20 border border-gold rounded-xl p-3 flex justify-between items-center">
                         <div>
-                            <div class="text-xs font-black text-gold"><i class="fas fa-crown mr-1"></i>PASE AGENTE VIP</div>
-                            <div class="text-[9px] text-gray-300">Monedas x2 en cada partida + Insignia VIP + Sin Anuncios + 1,000 Monedas</div>
+                            <div class="text-xs font-black text-gold"><i class="fas fa-bolt mr-1"></i>MULTIPLICADOR PRO (GRATIS)</div>
+                            <div class="text-[9px] text-gray-300">Mira un anuncio patrocinado o usa 600 monedas para activar Monedas x2</div>
                         </div>
-                        <button onclick="window.activateVipDemo()" class="btn-neon gold py-1.5 px-3 text-[10px]">
-                            ${S.vip ? 'ACTIVO' : '$2.99 USD'}
+                        <button onclick="window.activateVipFreeWithAd()" class="btn-neon gold py-1.5 px-3 text-[10px]">
+                            ${S.vip ? 'ACTIVO' : '<i class="fas fa-tv mr-1"></i> ACTIVAR'}
                         </button>
                     </div>
                 </div>
-                <p class="text-[8px] text-gray-500 font-mono">Compras sincronizadas con tu perfil de Agente</p>
+                <p class="text-[8px] text-gray-400 font-mono">100% Gratis — Financiado por anuncios de Google H5 Games</p>
             `);
         };
 
@@ -2360,7 +2711,7 @@
             }
             if (S.coins < cost) {
                 playSfx('error');
-                return window.systemToast("FONDOS INSUFICIENTES", "Gana partidas o reclama el suministro gratuito");
+                return window.systemToast("FONDOS INSUFICIENTES", "Mira un anuncio gratis para ganar +100 monedas");
             }
             S.coins -= cost;
             S.ownedSkins.push(skinId);
@@ -2374,40 +2725,44 @@
             S.coins += 100;
             saveLocalEconomy();
             playSfx('win');
-            window.showShop();
-            window.systemToast("BONO ACREDITADO", "+100 Monedas añadidas a tu cuenta");
+            if (document.getElementById('custom-modal').style.display === 'flex') {
+                window.showShop();
+            }
+            window.systemToast("BONO PUBLICITARIO", "+100 Monedas añadidas gracias al anuncio");
         };
 
-        window.activateVipDemo = () => {
+        window.activateVipFreeWithAd = () => {
             if (S.vip) return;
-            S.vip = true;
-            S.coins += 1000;
-            saveLocalEconomy();
-            playSfx('win');
-            window.showShop();
-            window.systemToast("¡BIENVENIDO A VIP!", "Pase VIP y +1,000 monedas activados");
+            window.triggerH5Ad('reward', () => {
+                S.vip = true;
+                S.coins += 300;
+                saveLocalEconomy();
+                playSfx('win');
+                window.showShop();
+                window.systemToast("¡MULTIPLICADOR ACTIVO!", "Monedas x2 y +300 monedas gratis activadas");
+            });
         };
 
-        // Tutorial Interactivo de Reglas
+        // Tutorial Interactivo de Reglas (Actualizado con la Regla de Encapsulamiento 3D)
         window.showTutorial = () => {
             window.showModal(`
                 <h3 class="text-base font-black text-cyber mb-3"><i class="fas fa-graduation-cap mr-2"></i>MANUAL TÁCTICO</h3>
-                <div class="text-left text-xs space-y-3 text-gray-300 leading-relaxed">
+                <div class="text-left text-xs space-y-2.5 text-gray-300 leading-relaxed">
                     <div class="bg-white/5 p-2.5 rounded-lg border-l-2 border-cyber">
                         <strong class="text-cyber block">1. LANZA EL DADO D20</strong>
                         En tu turno, toca el dado central para obtener de 1 a 6 puntos de energía (líneas disponibles).
                     </div>
                     <div class="bg-white/5 p-2.5 rounded-lg border-l-2 border-neon">
-                        <strong class="text-neon block">2. CONECTA NODOS CERCANOS</strong>
-                        Toca una esfera y verás iluminarse con un <strong>anillo verde</strong> las esferas a las que puedes conectarte sin cruzar otras líneas.
+                        <strong class="text-neon block">2. LIBERTAD TRIDIMENSIONAL</strong>
+                        Conecta esferas en horizontal, vertical o diagonal para formar triángulos 3D (+1 Punto).
                     </div>
-                    <div class="bg-white/5 p-2.5 rounded-lg border-l-2 border-gold">
-                        <strong class="text-gold block">3. CONQUISTA TRIÁNGULOS (+1 PTO)</strong>
-                        Cada vez que cierres un triángulo limpio (sin esferas sueltas adentro), se pintará de tu color y ganarás 1 punto y monedas.
+                    <div class="bg-white/5 p-2.5 rounded-lg border-l-2 border-hot">
+                        <strong class="text-hot block">3. REGLA DE ENCAPSULAMIENTO 3D</strong>
+                        Si cierras un triángulo o bóveda por fuera (usando tus paredes o las del rival), <strong>queda prohibido hacer más triángulos en su interior</strong> o atravesar paredes existentes.
                     </div>
                     <div class="bg-white/5 p-2.5 rounded-lg border-l-2 border-purple">
                         <strong class="text-purple block">4. REALIDAD AUMENTADA MULTIJUGADOR</strong>
-                        Cada jugador puede activar el modo AR y colocar el tablero en su propia mesa mientras las jugadas se sincronizan en vivo.
+                        Activa el modo AR para proyectar el holograma sobre tu mesa y jugar contra amigos o contra la IA.
                     </div>
                 </div>
             `);
