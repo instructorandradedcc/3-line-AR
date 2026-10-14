@@ -606,8 +606,8 @@
                 room_full: "La sala ya está llena", ar_scan: "MODO ESCANEO AR", ar_tap_fix: "Toca la superficie para colocar el tablero",
                 ar_floor: "SUPERFICIE DETECTADA", ar_air: "MODO HOLOGRAMA LIBRE", ar_sync: "LISTO", ar_sync_msg: "Tablero fijado en tu espacio.",
                 pts: "PTS", win_msg: "¡DOMINIO TÁCTICO TOTAL!", lose_msg: "BUEN INTENTO, AGENTE", draw_msg: "EMPATE TÁCTICO",
-                blocked: "No puedes cruzar otras líneas", range: "Nodo demasiado lejos (usa los verdes)", occupied: "Esa línea ya existe",
-                conquest: "¡Triángulo Conquistado! +1 PTO", link: "Enlace establecido"
+                blocked: "Una esfera bloquea el paso directo", range: "Selecciona otro nodo distinto", occupied: "Esa línea ya está creada",
+                conquest: "¡Triángulo 3D Conquistado! +1 PTO", link: "Línea 3D establecida"
             },
             en: {
                 login: "SIGN IN WITH GOOGLE", guest_login: "PLAY NOW (GUEST)", connecting: "CONNECTING...", cancel: "CANCEL",
@@ -623,8 +623,8 @@
                 room_full: "Room is full", ar_scan: "AR SCAN MODE", ar_tap_fix: "Tap surface to place board",
                 ar_floor: "SURFACE DETECTED", ar_air: "FREE HOLOGRAM MODE", ar_sync: "LOCKED", ar_sync_msg: "Board locked in your space.",
                 pts: "PTS", win_msg: "TOTAL TACTICAL DOMINATION!", lose_msg: "GOOD EFFORT, AGENT", draw_msg: "TACTICAL BALANCE",
-                blocked: "Cannot cross existing lines", range: "Node too far (choose green rings)", occupied: "Link already exists",
-                conquest: "Nexus Captured! +1 PT", link: "Link Established"
+                blocked: "A node blocks the direct path", range: "Select a different node", occupied: "Link already exists",
+                conquest: "3D Nexus Captured! +1 PT", link: "3D Link Established"
             },
             zh: {
                 login: "谷歌登录", guest_login: "游客立即开始", connecting: "连接中...", cancel: "取消",
@@ -778,6 +778,7 @@
         let scene, cam, ren, group, boardBaseGroup, fxGroup, ray, reticle, arHit, controls, arRefSpace, arBtn, ghostGroup;
         let isMatchmaking = false, matchmakingFallbackTimer = null, heartbeatInterval = null, cpuThinking = false;
         let activeParticles = [];
+        let previewLine = null; // Línea guía en tiempo real para saber exactamente qué puntos vas a unir
 
         function saveLocalEconomy() {
             localStorage.setItem('3lar_pts', S.points);
@@ -964,24 +965,25 @@
         };
 
         // ==========================================
-        // 6. GEOMETRÍA TÁCTICA Y GENERACIÓN DE TABLERO
+        // 6. GEOMETRÍA TÁCTICA 3D MULTINIVEL (HORIZONTAL Y VERTICAL)
         // ==========================================
-        const MAX_LINK_DIST = 1.32; // Distancia máxima fija en coordenadas locales del tablero
-
         function genPoints() {
             const p = []; 
             for (let i = 0; i < 16; i++) { 
                 let v = false, pt, att = 0; 
-                while (!v && att < 120) { 
-                    // Puntos distribuidos orgánicamente en 3D con ligera elevación táctica en Y
+                // Distribuimos los 16 nodos en 3 niveles de altura (Bajo, Medio, Alto) para permitir triángulos verticales, horizontales y diagonales
+                const layer = i % 3; 
+                const baseY = layer === 0 ? 0.04 : (layer === 1 ? 0.48 : 0.92);
+                while (!v && att < 150) { 
                     pt = { 
-                        x: (Math.random() - 0.5) * 1.85, 
-                        y: (Math.random() * 0.22), 
-                        z: (Math.random() - 0.5) * 1.85 
+                        x: (Math.random() - 0.5) * 1.75, 
+                        y: baseY + (Math.random() - 0.5) * 0.14, 
+                        z: (Math.random() - 0.5) * 1.75 
                     }; 
                     let ok = true; 
                     for (let ex of p) {
-                        if (Math.hypot(ex.x - pt.x, ex.z - pt.z) < 0.36) { ok = false; break; }
+                        // Distancia 3D real entre esferas para que nunca queden pegadas ni se tapen entre sí
+                        if (Math.hypot(ex.x - pt.x, ex.y - pt.y, ex.z - pt.z) < 0.42) { ok = false; break; }
                     }
                     if (ok) v = true; 
                     att++; 
@@ -991,13 +993,17 @@
             return p;
         }
 
-        window.isPointInTriangle = (p, a, b, c) => {
-            const area = 0.5 * (-b.z * c.x + a.z * (-b.x + c.x) + a.x * (b.z - c.z) + b.x * c.z);
-            const sign = area < 0 ? -1 : 1;
-            const s = (a.z * c.x - a.x * c.z + (c.z - a.z) * p.x + (a.x - c.x) * p.z) * sign;
-            const t = (a.x * b.z - a.z * b.x + (a.z - b.z) * p.x + (b.x - a.x) * p.z) * sign;
-            return s > 0.001 && t > 0.001 && (s + t) < 2 * area * sign - 0.001;
-        };
+        // Verifica si un tercer nodo libre es atravesado exactamente por el tubo láser en el espacio 3D
+        function isNodeBlockingSegment3D(pA, pB, pNode) {
+            const ab = new THREE.Vector3().subVectors(pB, pA);
+            const ap = new THREE.Vector3().subVectors(pNode, pA);
+            const abLenSq = ab.lengthSq();
+            if (abLenSq === 0) return false;
+            const proj = ap.dot(ab) / abLenSq;
+            if (proj <= 0.05 || proj >= 0.95) return false;
+            const closest = new THREE.Vector3().copy(pA).addScaledVector(ab, proj);
+            return closest.distanceTo(pNode) < 0.065;
+        }
 
         // Limpiador de VRAM para evitar fugas de memoria en móviles
         function disposeHierarchy(node) {
@@ -1047,38 +1053,54 @@
             fxGroup = new THREE.Group();
             group.add(fxGroup);
 
+            // Crear línea guía láser para previsualizar la jugada
+            const prevGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+            const prevMat = new THREE.LineDashedMaterial({ color: 0x39ff14, dashSize: 0.06, gapSize: 0.04, transparent: true, opacity: 0.9 });
+            previewLine = new THREE.Line(prevGeo, prevMat);
+            previewLine.visible = false;
+            previewLine.raycast = () => {}; // Ignorar en el detector de clics
+            group.add(previewLine);
+
             pts = [];
-            const geo = new THREE.SphereGeometry(0.055, 28, 28); 
+            const geo = new THREE.SphereGeometry(0.062, 28, 28); 
             const ghostMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.45 }); 
 
             S.data.points.forEach((p, i) => {
                 const mat = new THREE.MeshStandardMaterial({ 
                     color: 0x152030, 
                     emissive: 0x00f3ff, 
-                    emissiveIntensity: 0.8,
+                    emissiveIntensity: 0.85,
                     roughness: 0.2,
                     metalness: 0.8
                 }); 
                 const m = new THREE.Mesh(geo, mat); 
                 m.position.set(p.x, p.y, p.z); 
                 m.userData.id = i;
+                m.userData.isNodeSphere = true;
                 
-                // Hitbox invisible más amplia para que sea muy cómodo tocar en pantallas de celular
-                const hitSphere = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), new THREE.MeshBasicMaterial({ visible: false }));
+                // Hitbox ajustado (0.085 en lugar de 0.14) para evitar que una esfera cercana robe el clic de otra esfera
+                const hitSphere = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.085, 12, 12),
+                    new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
+                );
+                hitSphere.userData.id = i;
+                hitSphere.userData.isHitTarget = true;
                 m.add(hitSphere); 
 
-                // Anillo indicador de nodo conectable (UX Táctica)
+                // Anillo indicador de nodo conectable (ignorado por el raycaster para no desviar el toque)
                 const validRing = new THREE.Mesh(
-                    new THREE.RingGeometry(0.075, 0.095, 24).rotateX(-Math.PI / 2),
+                    new THREE.RingGeometry(0.08, 0.10, 24),
                     new THREE.MeshBasicMaterial({ color: 0x39ff14, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
                 );
                 validRing.visible = false;
+                validRing.raycast = () => {}; // CRÍTICO: No interceptar clics
                 m.add(validRing);
                 m.userData.validRing = validRing;
 
-                // Pedestal láser vertical hacia la grilla base
+                // Pedestal láser vertical sutil hacia la grilla base (ignorado por el raycaster)
                 const stemGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, -p.y - 0.04, 0)]);
-                const stem = new THREE.Line(stemGeo, new THREE.LineBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.25 }));
+                const stem = new THREE.Line(stemGeo, new THREE.LineBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.18 }));
+                stem.raycast = () => {}; // CRÍTICO: No interceptar clics con el pedestal
                 m.add(stem);
 
                 group.add(m); 
@@ -1163,6 +1185,7 @@
             const d = S.data; 
             if (!d || !isMyTurnNow()) return;
             selPt = null;
+            if (previewLine) previewLine.visible = false;
             updateValidNodeRings();
             const newSkips = (d.skips || 0) + 1; 
             if (newSkips >= 2) {
@@ -1174,14 +1197,27 @@
             } 
         };
 
+        // Libertad 3D total: Permite unir cualquier par de puntos en 3D (horizontal, vertical o diagonal) que no esté repetido
         function canConnectNodes(p1, p2) {
-            if (p1 === p2 || !pts[p1] || !pts[p2]) return { ok: false, reason: 'same' };
+            if (p1 === p2 || !pts[p1] || !pts[p2]) return { ok: false, reason: 'range' };
             const d = S.data;
-            // Corrección clave: Distancia medida en espacio local puro sin distorsión por currentScale
-            const dist = pts[p1].position.distanceTo(pts[p2].position);
-            if (dist > MAX_LINK_DIST) return { ok: false, reason: 'range' };
-            if (d.lines.some(l => (l.s === p1 && l.e === p2) || (l.s === p2 && l.e === p1))) return { ok: false, reason: 'occupied' };
-            if (window.checkCollision(p1, p2)) return { ok: false, reason: 'blocked' };
+            if (!d || !d.lines) return { ok: false, reason: 'range' };
+            
+            // 1. Verificar que esa misma línea no haya sido trazada ya
+            if (d.lines.some(l => (l.s === p1 && l.e === p2) || (l.s === p2 && l.e === p1))) {
+                return { ok: false, reason: 'occupied' };
+            }
+            
+            // 2. Evitar únicamente que el tubo láser atraviese el centro exacto de otra esfera intermedia
+            const posA = pts[p1].position;
+            const posB = pts[p2].position;
+            for (let i = 0; i < pts.length; i++) {
+                if (i !== p1 && i !== p2) {
+                    if (isNodeBlockingSegment3D(posA, posB, pts[i].position)) {
+                        return { ok: false, reason: 'blocked' };
+                    }
+                }
+            }
             return { ok: true };
         }
 
@@ -1191,10 +1227,16 @@
                 if (selPt !== null && idx !== selPt) {
                     const check = canConnectNodes(selPt, idx);
                     m.userData.validRing.visible = check.ok;
+                    if (check.ok && cam) {
+                        m.userData.validRing.lookAt(cam.position);
+                    }
                 } else {
                     m.userData.validRing.visible = false;
                 }
             });
+            if (selPt === null && previewLine) {
+                previewLine.visible = false;
+            }
         }
 
         window.clickPt = (id) => {
@@ -1212,12 +1254,14 @@
                 selPt = id; 
                 window.highlight(id, true); 
                 updateValidNodeRings();
+                window.gameToast(`NODO #${id + 1}`, "Toca otro punto para unir la línea");
             } else { 
                 if (selPt === id) { 
                     playSfx('click');
                     window.highlight(id, false); 
                     selPt = null; 
                     updateValidNodeRings();
+                    window.gameToast("CANCELADO", "Selección liberada");
                 } else { 
                     const prev = selPt;
                     window.highlight(prev, false); 
@@ -1233,6 +1277,7 @@
             const check = canConnectNodes(p1, p2);
             if (!check.ok) {
                 playSfx('error');
+                // Si el nodo estaba ocupado, dejamos seleccionado el nuevo nodo para no interrumpir al jugador
                 return window.gameToast(t('error'), t(check.reason));
             }
             
@@ -1244,8 +1289,7 @@
             if (nt.length > 0) { 
                 sc[activeRole] += nt.length; 
                 playSfx('win'); 
-                window.gameToast("⚡ NEXUS", t('conquest'));
-                // Disparar partículas en cada triángulo nuevo
+                window.gameToast("⚡ NEXUS 3D", `${t('conquest')} (x${nt.length})`);
                 nt.forEach(tri => {
                     const c = new THREE.Vector3().addVectors(pts[tri.p1].position, pts[tri.p2].position).add(pts[tri.p3].position).divideScalar(3);
                     const col = activeRole === 'host' ? d.p1.c : d.p2.c;
@@ -1253,7 +1297,7 @@
                 });
             } else { 
                 playSfx('link');
-                window.gameToast("LÍNEA", t('link')); 
+                window.gameToast("LÍNEA 3D", `Nodos #${p1 + 1} y #${p2 + 1} unidos`); 
             }
             
             let m = d.movs - 1; 
@@ -1262,32 +1306,12 @@
             if (m === 0) { 
                 trn = trn === 'host' ? 'guest' : 'host'; 
                 di = null; 
+                selPt = null;
             }
             window.update({ lines: nl, tris: [...d.tris, ...nt], sc: sc, movs: m, turn: trn, dice: di, skips: 0 });
         };
-        
-        window.checkCollision = (p1, p2) => { 
-            const A = pts[p1].position; 
-            const B = pts[p2].position; 
-            const lines = S.data.lines;
-            for (let l of lines) { 
-                if (l.s === p1 || l.s === p2 || l.e === p1 || l.e === p2) continue; 
-                const C = pts[l.s].position; 
-                const D = pts[l.e].position; 
-                if (window.intersectLine(A, B, C, D)) return true; 
-            } 
-            return false;
-        };
 
-        window.intersectLine = (a, b, c, d) => {
-            const x1 = a.x, y1 = a.z, x2 = b.x, y2 = b.z, x3 = c.x, y3 = c.z, x4 = d.x, y4 = d.z;
-            const denom = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-            if (Math.abs(denom) < 0.00001) return false;
-            const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denom; 
-            const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denom;
-            return (ua > 0.01 && ua < 0.99 && ub > 0.01 && ub < 0.99); 
-        };
-
+        // Detección 3D Pura: Reconoce cualquier triángulo cerrado en 3 dimensiones (horizontal, vertical o inclinado)
         window.checkTri = (p1, p2, o, ls) => { 
             const f = []; 
             for (let p3 = 0; p3 < pts.length; p3++) {
@@ -1295,14 +1319,15 @@
                     const hasL1 = ls.some(l => (l.s === p1 && l.e === p3) || (l.s === p3 && l.e === p1));
                     const hasL2 = ls.some(l => (l.s === p2 && l.e === p3) || (l.s === p3 && l.e === p2));
                     if (hasL1 && hasL2) {
-                        const v1 = pts[p1].position; const v2 = pts[p2].position; const v3 = pts[p3].position;
-                        let valid = true; 
-                        for (let i = 0; i < pts.length; i++) {
-                            if (i !== p1 && i !== p2 && i !== p3 && window.isPointInTriangle(pts[i].position, v1, v2, v3)) { 
-                                valid = false; break; 
-                            }
-                        }
-                        if (valid) { 
+                        const v1 = pts[p1].position; 
+                        const v2 = pts[p2].position; 
+                        const v3 = pts[p3].position;
+                        // Verificar que los 3 puntos formen un triángulo real con área > 0 en el espacio 3D
+                        const edge1 = new THREE.Vector3().subVectors(v2, v1);
+                        const edge2 = new THREE.Vector3().subVectors(v3, v1);
+                        const area3D = edge1.cross(edge2).length() * 0.5;
+
+                        if (area3D > 0.005) { 
                             const v = [p1, p2, p3].sort((a, b) => a - b); 
                             const alreadyExists = S.data.tris.some(t => {
                                 const tv = [t.p1, t.p2, t.p3].sort((a, b) => a - b);
@@ -1713,29 +1738,27 @@
             }
         };
 
-        // IA Táctica Mejorada: Prioriza cerrar triángulos, luego preparar paredes sin regalar triángulos al jugador
+        // IA Táctica 3D: Prioriza cerrar triángulos 3D y conectar nodos estratégicos cercanos o compartidos
         window.cpuMove = () => { 
             if (!S.data || S.data.stat !== 'play') return;
             let bestMove = null; 
-            const validCandidates = [];
+            let bestScore = -999;
 
             for (let i = 0; i < pts.length; i++) { 
                 for (let j = i + 1; j < pts.length; j++) { 
                     if (canConnectNodes(i, j).ok) {
                         const testLines = [...S.data.lines, { s: i, e: j, own: 'guest' }]; 
                         const trisWon = window.checkTri(i, j, 'guest', testLines).length;
-                        if (trisWon > 0) { 
-                            bestMove = { s: i, e: j }; 
-                            break; 
+                        const dist = pts[i].position.distanceTo(pts[j].position);
+                        // Comprobar si este par de nodos ya tiene alguna conexión para armar figuras coherentes
+                        const touchesExisting = S.data.lines.some(l => l.s === i || l.e === i || l.s === j || l.e === j) ? 1.5 : 0;
+                        const score = (trisWon * 100) + touchesExisting - (dist * 1.2) + (Math.random() * 0.4);
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMove = { s: i, e: j };
                         }
-                        validCandidates.push({ s: i, e: j });
                     } 
                 } 
-                if (bestMove) break; 
-            }
-
-            if (!bestMove && validCandidates.length > 0) { 
-                bestMove = validCandidates[Math.floor(Math.random() * validCandidates.length)]; 
             }
 
             if (bestMove) { 
@@ -1955,31 +1978,72 @@
             ray = new THREE.Raycaster(); 
             ren.setAnimationLoop(window.loop);
             
-            // Detector táctil y de clic sin conflictos con OrbitControls
+            // Función auxiliar de precisión para encontrar la esfera exacta que el usuario quiso tocar
+            function pickNodeFromPointer(clientX, clientY) {
+                const m = new THREE.Vector2((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
+                ray.setFromCamera(m, cam);
+                
+                // 1. Intersectar únicamente las esferas (ignorando líneas, anillos y pedestales)
+                const hits = ray.intersectObjects(pts, true);
+                if (hits.length > 0) {
+                    for (let h of hits) {
+                        let obj = h.object;
+                        while (obj && obj.userData.id === undefined) obj = obj.parent;
+                        if (obj && obj.userData.id !== undefined) {
+                            return obj.userData.id;
+                        }
+                    }
+                }
+
+                // 2. Asistencia magnética en pantalla: si el dedo tocó muy cerca de una esfera en el celular, elige la más cercana al toque en 2D
+                let closestId = null;
+                let minScreenDist = 0.11; // Radio magnético cómodo en coordenadas de pantalla
+                const tempVec = new THREE.Vector3();
+                pts.forEach((ptMesh, idx) => {
+                    ptMesh.getWorldPosition(tempVec);
+                    tempVec.project(cam);
+                    if (tempVec.z <= 1.0) {
+                        const d2d = Math.hypot(tempVec.x - m.x, tempVec.y - m.y);
+                        if (d2d < minScreenDist) {
+                            minScreenDist = d2d;
+                            closestId = idx;
+                        }
+                    }
+                });
+                return closestId;
+            }
+
             let pointerDownPos = { x: 0, y: 0 };
             window.addEventListener('pointerdown', (e) => {
                 pointerDownPos = { x: e.clientX, y: e.clientY };
             });
 
+            // Mostrar línea láser guía cuando tienes un nodo seleccionado y mueves el cursor/dedo hacia otro
+            window.addEventListener('pointermove', (e) => {
+                if (selPt === null || !previewLine || !pts[selPt]) return;
+                const hoveredId = pickNodeFromPointer(e.clientX, e.clientY);
+                if (hoveredId !== null && hoveredId !== selPt && pts[hoveredId]) {
+                    previewLine.geometry.setFromPoints([pts[selPt].position, pts[hoveredId].position]);
+                    previewLine.computeLineDistances();
+                    previewLine.visible = true;
+                } else {
+                    previewLine.visible = false;
+                }
+            });
+
             window.addEventListener('pointerup', (e) => {
                 if (e.target.closest('.interactive') || e.target.closest('#ar-zone') || e.target.closest('#size-slider-container') || e.target.closest('.top-bar-pill')) return;
-                // Si el usuario arrastró la cámara para rotar el tablero, no activamos clic
-                if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 12) return;
+                // Si el usuario arrastró la cámara para rotar el tablero 3D, no disparamos selección de punto
+                if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 16) return;
 
                 if (ren.xr.isPresenting && !placed) { 
                     window.doPlace(); 
                     return; 
                 }
 
-                const m = new THREE.Vector2((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
-                ray.setFromCamera(m, cam);
-                const h = ray.intersectObjects(pts, true);
-                if (h.length > 0) {
-                    let obj = h[0].object;
-                    while (obj && obj.userData.id === undefined) obj = obj.parent;
-                    if (obj && obj.userData.id !== undefined) {
-                        window.clickPt(obj.userData.id);
-                    }
+                const pickedId = pickNodeFromPointer(e.clientX, e.clientY);
+                if (pickedId !== null) {
+                    window.clickPt(pickedId);
                 }
             });
             
@@ -1994,10 +2058,15 @@
         window.loop = (time, frame) => {
             if (controls && controls.enabled) controls.update(); 
 
-            // Animación sutil de pulso en el nodo seleccionado y partículas 3D
+            // Animación de pulso en el nodo seleccionado y orientación hacia la cámara de los anillos verdes
             if (selPt !== null && pts[selPt]) {
-                const s = 1.4 + Math.sin(time * 0.008) * 0.18;
+                const s = 1.45 + Math.sin(time * 0.008) * 0.2;
                 pts[selPt].scale.set(s, s, s);
+                pts.forEach(m => {
+                    if (m.userData.validRing && m.userData.validRing.visible && cam) {
+                        m.userData.validRing.lookAt(cam.position);
+                    }
+                });
             }
             for (let i = activeParticles.length - 1; i >= 0; i--) {
                 const p = activeParticles[i];
@@ -2114,20 +2183,27 @@
 
             d.tris.forEach(t => {
                 const p1 = pts[t.p1].position; const p2 = pts[t.p2].position; const p3 = pts[t.p3].position;
-                const g = new THREE.BufferGeometry().setFromPoints([p1, p2, p3]);
+                const g = new THREE.BufferGeometry();
+                const vertices = new Float32Array([
+                    p1.x, p1.y, p1.z,
+                    p2.x, p2.y, p2.z,
+                    p3.x, p3.y, p3.z
+                ]);
+                g.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
                 g.computeVertexNormals();
                 const col = t.own === 'host' ? d.p1.c : (d.p2?.c || '#ff0055');
                 const icon = t.own === 'host' ? d.p1.i : (d.p2?.i || 'atom');
                 
-                const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: col, opacity: 0.36, transparent: true, side: THREE.DoubleSide }));
+                const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: col, opacity: 0.42, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
                 mesh.userData.type = 'tri'; 
+                mesh.raycast = () => {}; // CRÍTICO: Los triángulos conquistados no deben bloquear el toque a las esferas detrás de ellos
                 group.add(mesh);
                 
                 const center = new THREE.Vector3().addVectors(p1, p2).add(p3).divideScalar(3);
                 const sprite = createIconSprite(icon, col);
                 sprite.position.copy(center);
-                sprite.position.y += 0.03;
                 sprite.userData.type = 'icon';
+                sprite.raycast = () => {}; // CRÍTICO: Las insignias 3D tampoco deben bloquear el toque a las esferas
                 group.add(sprite);
             });
         };
