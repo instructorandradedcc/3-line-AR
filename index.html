@@ -529,6 +529,13 @@
                     </div>
                 </div>
 
+                <!-- Instrucciones flotantes de escaneo de superficie AR -->
+                <div id="ar-instructions">
+                    <div class="instr-card" id="ar-instr-txt">
+                        <span class="text-neon">ESCANEA LA SUPERFICIE</span><br>Apunta a la mesa o piso y pulsa FIJAR AQUÍ
+                    </div>
+                </div>
+
                 <!-- Botón Flotante para entrar a Realidad Aumentada desde cualquier partida -->
                 <div class="interactive flex flex-col gap-2 w-full">
                     <div id="btn-start-ar-float" class="flex justify-center mb-1">
@@ -538,25 +545,26 @@
                     </div>
 
                     <!-- Controles cuando está dentro de Realidad Aumentada -->
-                    <div id="ar-controls" class="hidden flex-col gap-2 w-full">
+                    <div id="ar-controls" class="hidden flex-col gap-2 w-full z-50">
                         <!-- Barra de Calibración de Mesa Compartida (Para 2 celulares en la misma habitación) -->
                         <div class="glass-panel px-3 py-2 flex items-center justify-between gap-2 border border-neon/50">
-                            <span class="text-[9px] text-neon font-bold uppercase leading-tight"><i class="fas fa-compass mr-1"></i>MESA AR<br>COMPARTIDA:</span>
+                            <span class="text-[9px] text-neon font-bold uppercase leading-tight"><i class="fas fa-compass mr-1"></i>ORIENTACIÓN<br>Y ESCALA AR:</span>
                             <div class="flex items-center gap-1.5">
                                 <button onclick="window.rotateARBoard(-15)" class="btn-neon px-2.5 py-1.5 text-[10px]" title="Girar Izquierda"><i class="fas fa-undo"></i></button>
                                 <button onclick="window.rotateARBoard(15)" class="btn-neon px-2.5 py-1.5 text-[10px]" title="Girar Derecha"><i class="fas fa-redo"></i></button>
+                                <button onclick="window.toggleScaleSlider()" class="btn-neon gold px-2.5 py-1.5 text-[9px]"><i class="fas fa-search-plus"></i> TAMAÑO</button>
                                 <button onclick="window.syncSharedARWithRival()" class="btn-neon !border-neon !text-neon px-2.5 py-1.5 text-[9px]"><i class="fas fa-sync"></i> IGUALAR</button>
                             </div>
                         </div>
                         <div class="flex justify-center gap-2 w-full">
-                            <button onclick="window.lockLocalARBoard()" id="btn-ar-accept" class="ar-sync-btn flex-1">
-                                <i class="fas fa-map-marker-alt mr-1"></i> <span id="btn-ar-accept-txt" data-i18n="fix">FIJAR EN MESA</span>
+                            <button onclick="window.placeOrLockAR()" id="btn-ar-accept" class="ar-sync-btn flex-1 !py-3.5 !text-xs animate-pulse">
+                                <i class="fas fa-map-pin mr-1"></i> <span id="btn-ar-accept-txt">📌 FIJAR JUEGO AQUÍ</span>
                             </button>
-                            <button onclick="window.recalibrateAR()" id="btn-ar-recal" class="ar-sync-btn flex-1 !border-warn !text-warn">
-                                <i class="fas fa-crosshairs mr-1"></i> <span data-i18n="move">MOVER TERRENO</span>
+                            <button onclick="window.recalibrateAR()" id="btn-ar-recal" class="ar-sync-btn flex-1 !border-warn !text-warn !py-3.5 !text-xs hidden">
+                                <i class="fas fa-arrows-alt mr-1"></i> <span data-i18n="move">MOVER LUGAR</span>
                             </button>
-                            <button onclick="window.exitAROnly()" class="ar-sync-btn !border-hot !text-hot px-3">
-                                <i class="fas fa-times"></i> 3D
+                            <button onclick="window.exitAROnly()" class="ar-sync-btn !border-hot !text-hot px-4 !py-3.5 !text-xs">
+                                <i class="fas fa-times mr-1"></i> 3D
                             </button>
                         </div>
                     </div>
@@ -1228,9 +1236,16 @@
                         }
                         window.ui();
                     } else if (msg.type === 'STATE_PATCH') {
+                        if (!S.data) S.data = {};
                         Object.assign(S.data, msg.patch);
+                        if (msg.patch.lines) S.data.lines = [...msg.patch.lines];
+                        if (msg.patch.tris) S.data.tris = [...msg.patch.tris];
+                        if (msg.patch.sc) S.data.sc = { ...msg.patch.sc };
                         if (S.data.stat === 'end') window.endGame(S.data);
-                        else window.ui();
+                        else {
+                            window.draw();
+                            window.ui();
+                        }
                     }
                 });
                 conn.on('close', () => {
@@ -1337,12 +1352,19 @@
                                 window.start();
                                 playSfx('win');
                             }
+                            window.draw();
                             window.ui();
                         } else if (msg.type === 'STATE_PATCH') {
                             if (!S.data) return;
                             Object.assign(S.data, msg.patch);
+                            if (msg.patch.lines) S.data.lines = [...msg.patch.lines];
+                            if (msg.patch.tris) S.data.tris = [...msg.patch.tris];
+                            if (msg.patch.sc) S.data.sc = { ...msg.patch.sc };
                             if (S.data.stat === 'end') window.endGame(S.data);
-                            else window.ui();
+                            else {
+                                window.draw();
+                                window.ui();
+                            }
                         }
                     });
 
@@ -1675,66 +1697,50 @@
             return (u > 0.03) && (v > 0.03) && (u + v < 0.97);
         }
 
-        // 2. Detector de Encapsulamiento Espacial 3D:
-        // Determina si un punto (o el centro de un triángulo candidato) ya quedó encerrado/encapsulado
-        // por paredes triangulares existentes (sin importar si son propias, del rival o mixtas).
+        // 2. Detector de Encapsulamiento Espacial 3D Estricto:
+        // Determina únicamente si un punto (o el baricentro de un nuevo triángulo) está encerrado por completo
+        // dentro de una bóveda 3D ya cerrada por todos sus lados (arriba, abajo y laterales), sin descartar
+        // triángulos múltiples legítimos que se forman al mismo tiempo.
         function isPointEncapsulated3D(targetPos, trisList, ignoreNodes = []) {
-            if (!trisList || trisList.length === 0) return false;
+            if (!trisList || trisList.length < 4) return false;
 
-            // A) Verificar si el punto está cubierto externamente por un techo/piso triangular o rodeado en sus ejes
             const dirs = [
-                new THREE.Vector3(0, 1, 0),  // Superior (+Y)
-                new THREE.Vector3(0, -1, 0), // Inferior (-Y)
-                new THREE.Vector3(1, 0, 0),  // Lateral Este (+X)
-                new THREE.Vector3(-1, 0, 0), // Lateral Oeste (-X)
-                new THREE.Vector3(0, 0, 1),  // Frontal (+Z)
-                new THREE.Vector3(0, 0, -1)  // Posterior (-Z)
+                new THREE.Vector3(0, 1, 0),   // Superior (+Y)
+                new THREE.Vector3(0, -1, 0),  // Inferior (-Y)
+                new THREE.Vector3(1, 0, 0),   // Lateral Este (+X)
+                new THREE.Vector3(-1, 0, 0),  // Lateral Oeste (-X)
+                new THREE.Vector3(0, 0, 1),   // Frontal (+Z)
+                new THREE.Vector3(0, 0, -1)   // Posterior (-Z)
             ];
 
             let blockedDirections = 0;
             for (const dir of dirs) {
                 for (const t of trisList) {
+                    // No contar un triángulo si comparte exactamente los mismos vértices que estamos evaluando
+                    if (ignoreNodes.length === 3 &&
+                        ignoreNodes.includes(t.p1) &&
+                        ignoreNodes.includes(t.p2) &&
+                        ignoreNodes.includes(t.p3)) {
+                        continue;
+                    }
                     const v0 = pts[t.p1].position;
                     const v1 = pts[t.p2].position;
                     const v2 = pts[t.p3].position;
                     const hitDist = rayIntersectsTriangle3D(targetPos, dir, v0, v1, v2);
-                    if (hitDist !== null && hitDist > 0.015) {
+                    if (hitDist !== null && hitDist > 0.02) {
                         blockedDirections++;
                         break;
                     }
                 }
             }
 
-            // Si está encerrado por arriba, abajo y laterales (al menos 4 caras de la bóveda 3D cerradas alrededor de él)
-            if (blockedDirections >= 4) return true;
-
-            // B) Verificar si está directamente bajo/dentro de la sombra volumétrica de un triángulo exterior más grande que ya cerró esa zona
-            for (const t of trisList) {
-                if (ignoreNodes.includes(t.p1) && ignoreNodes.includes(t.p2) && ignoreNodes.includes(t.p3)) continue;
-                const v0 = pts[t.p1].position;
-                const v1 = pts[t.p2].position;
-                const v2 = pts[t.p3].position;
-
-                // Proyección Horizontal (Techo/Suelo X-Z)
-                if (isPointInTriangle2DProj(targetPos.x, targetPos.z, v0.x, v0.z, v1.x, v1.z, v2.x, v2.z)) {
-                    // Si hay al menos otra pared lateral conectada a ese triángulo cerrando el espacio, queda encapsulado
-                    const connectedWalls = trisList.filter(other =>
-                        other !== t && (
-                            [other.p1, other.p2, other.p3].includes(t.p1) +
-                            [other.p1, other.p2, other.p3].includes(t.p2) +
-                            [other.p1, other.p2, other.p3].includes(t.p3) >= 2
-                        )
-                    );
-                    if (connectedWalls.length >= 2) return true;
-                }
-            }
-
-            return false;
+            // Solo se considera encapsulado cuando está encerrado en al menos 5 de las 6 direcciones espaciales (bóveda cerrada)
+            return blockedDirections >= 5;
         }
 
         // Verifica si un nodo específico ha quedado atrapado dentro de una cápsula 3D cerrada
         function isNodeTrappedInCapsule(nodeIdx) {
-            if (!S.data || !S.data.tris || S.data.tris.length < 3 || !pts[nodeIdx]) return false;
+            if (!S.data || !S.data.tris || S.data.tris.length < 4 || !pts[nodeIdx]) return false;
             return isPointEncapsulated3D(pts[nodeIdx].position, S.data.tris, [nodeIdx]);
         }
 
@@ -2045,7 +2051,9 @@
                     const prev = selPt;
                     window.highlight(prev, false); 
                     selPt = null; 
+                    if (previewLine) previewLine.visible = false;
                     updateValidNodeRings();
+                    // IMPORTANTE: No enviamos un update intermedio aquí para no pisar el paquete de líneas y triángulos en Firestore/P2P
                     window.tryLine(prev, id); 
                 } 
             }
@@ -2064,17 +2072,21 @@
             }
             
             const activeRole = getActiveRole();
-            const nl = [...d.lines, { s: p1, e: p2, own: activeRole, ts: Date.now() }]; 
+            const nowTs = Date.now();
+            const nl = [...(d.lines || []), { s: p1, e: p2, own: activeRole, ts: nowTs }]; 
             const nt = window.checkTri(p1, p2, activeRole, nl); 
-            const sc = { ...d.sc }; 
+            const sc = { ...(d.sc || { host: 0, guest: 0 }) }; 
             
             if (nt.length > 0) { 
-                sc[activeRole] += nt.length; 
+                sc[activeRole] = (sc[activeRole] || 0) + nt.length; 
                 playSfx('win'); 
-                window.gameToast("⚡ NEXUS 3D", `${t('conquest')} (x${nt.length})`);
+                const msgTri = nt.length === 1 
+                    ? `¡1 Triángulo Formado! (+1 PTO)` 
+                    : `¡COMBO X${nt.length}! ¡${nt.length} Triángulos Formados! (+${nt.length} PTS)`;
+                window.gameToast("⚡ CONQUISTA 3D", msgTri);
                 nt.forEach(tri => {
                     const c = new THREE.Vector3().addVectors(pts[tri.p1].position, pts[tri.p2].position).add(pts[tri.p3].position).divideScalar(3);
-                    const col = activeRole === 'host' ? d.p1.c : d.p2.c;
+                    const col = activeRole === 'host' ? d.p1.c : (d.p2?.c || '#ff0055');
                     spawnTriangleExplosion(c, col);
                 });
             } else { 
@@ -2085,91 +2097,71 @@
             let m = d.movs - 1; 
             let trn = d.turn; 
             let di = d.dice; 
-            if (m === 0) { 
+            if (m <= 0) { 
+                m = 0;
                 trn = trn === 'host' ? 'guest' : 'host'; 
                 di = null; 
                 selPt = null;
             }
             window.update({ 
                 lines: nl, 
-                tris: [...d.tris, ...nt], 
+                tris: [...(d.tris || []), ...nt], 
                 sc: sc, 
                 movs: m, 
                 turn: trn, 
                 dice: di, 
                 skips: 0,
                 activeSel: null,
-                lastAction: { type: nt.length > 0 ? 'tri' : 'line', p1, p2, by: activeRole, trisCount: nt.length, ts: Date.now() }
+                lastAction: { type: nt.length > 0 ? 'tri' : 'line', p1, p2, by: activeRole, trisCount: nt.length, ts: nowTs }
             });
         };
 
-        // Detección 3D Pura + Regla de No Triángulos Internos en Áreas Encapsuladas:
-        // Si exteriormente ya se cerró un área, no se permiten crear nuevos triángulos en su interior,
-        // ni tampoco crear un triángulo gigante que encierre de golpe un triángulo que ya existía adentro.
+        // Detección 3D Multitriángulo:
+        // Encuentra TODOS los triángulos (1, 2, 3 o más) que se cierran al trazar la línea entre p1 y p2.
         window.checkTri = (p1, p2, o, ls) => { 
-            const f = []; 
+            const formedTris = []; 
             const existingTris = S.data.tris || [];
+            const nowTs = Date.now();
 
             for (let p3 = 0; p3 < pts.length; p3++) {
-                if (p3 !== p1 && p3 !== p2) {
-                    const hasL1 = ls.some(l => (l.s === p1 && l.e === p3) || (l.s === p3 && l.e === p1));
-                    const hasL2 = ls.some(l => (l.s === p2 && l.e === p3) || (l.s === p3 && l.e === p2));
-                    if (hasL1 && hasL2) {
-                        const v1 = pts[p1].position; 
-                        const v2 = pts[p2].position; 
-                        const v3 = pts[p3].position;
-                        // Verificar que los 3 puntos formen un triángulo real con área > 0 en el espacio 3D
-                        const edge1 = new THREE.Vector3().subVectors(v2, v1);
-                        const edge2 = new THREE.Vector3().subVectors(v3, v1);
-                        const area3D = edge1.cross(edge2).length() * 0.5;
+                if (p3 === p1 || p3 === p2) continue;
 
-                        if (area3D > 0.005) { 
-                            const v = [p1, p2, p3].sort((a, b) => a - b); 
-                            const alreadyExists = existingTris.some(t => {
-                                const tv = [t.p1, t.p2, t.p3].sort((a, b) => a - b);
-                                return tv[0] === v[0] && tv[1] === v[1] && tv[2] === v[2];
-                            });
+                const hasL1 = ls.some(l => (l.s === p1 && l.e === p3) || (l.s === p3 && l.e === p1));
+                const hasL2 = ls.some(l => (l.s === p2 && l.e === p3) || (l.s === p3 && l.e === p2));
 
-                            if (!alreadyExists) { 
-                                // Calcular el baricentro (centro 3D) del nuevo triángulo candidato
-                                const candidateCenter = new THREE.Vector3().addVectors(v1, v2).add(v3).divideScalar(3);
+                if (hasL1 && hasL2) {
+                    const v1 = pts[p1].position; 
+                    const v2 = pts[p2].position; 
+                    const v3 = pts[p3].position;
 
-                                // REGLA DE ENCAPSULAMIENTO EXTERIOR:
-                                // 1. Si el centro de este nuevo triángulo está encapsulado por triángulos exteriores ya cerrados
-                                if (isPointEncapsulated3D(candidateCenter, existingTris, v)) {
-                                    window.gameToast("BLOQUEO 3D", t('encapsulated'));
-                                    continue;
-                                }
+                    // Verificar que los 3 puntos formen un triángulo real con área > 0 en el espacio 3D
+                    const edge1 = new THREE.Vector3().subVectors(v2, v1);
+                    const edge2 = new THREE.Vector3().subVectors(v3, v1);
+                    const area3D = new THREE.Vector3().crossVectors(edge1, edge2).length() * 0.5;
 
-                                // 2. Verificar si ya existe un triángulo exterior que cubra por completo a este triángulo interno en el mismo nivel/proyección
-                                let coveredExternally = false;
-                                for (const ext of existingTris) {
-                                    const ev0 = pts[ext.p1].position;
-                                    const ev1 = pts[ext.p2].position;
-                                    const ev2 = pts[ext.p3].position;
-                                    if (isPointInTriangle2DProj(candidateCenter.x, candidateCenter.z, ev0.x, ev0.z, ev1.x, ev1.z, ev2.x, ev2.z)) {
-                                        // Si el triángulo candidato está en el interior del volumen bajo/entre las paredes de ese triángulo
-                                        const maxY = Math.max(ev0.y, ev1.y, ev2.y) + 0.08;
-                                        const minY = Math.min(ev0.y, ev1.y, ev2.y) - 0.35;
-                                        if (candidateCenter.y <= maxY && candidateCenter.y >= minY) {
-                                            coveredExternally = true;
-                                            break;
-                                        }
-                                    }
-                                }
+                    if (area3D > 0.002) { 
+                        const v = [p1, p2, p3].sort((a, b) => a - b); 
+                        const alreadyExists = existingTris.some(t => {
+                            const tv = [t.p1, t.p2, t.p3].sort((a, b) => a - b);
+                            return tv[0] === v[0] && tv[1] === v[1] && tv[2] === v[2];
+                        });
 
-                                if (coveredExternally) {
-                                    window.gameToast("ÁREA CERRADA", t('encapsulated'));
-                                    continue;
-                                }
+                        if (!alreadyExists) { 
+                            // Calcular el baricentro (centro 3D) del nuevo triángulo candidato
+                            const candidateCenter = new THREE.Vector3().addVectors(v1, v2).add(v3).divideScalar(3);
 
-                                f.push({ p1: v[0], p2: v[1], p3: v[2], own: o }); 
-                            } 
-                        }
+                            // Evaluar encapsulamiento ÚNICAMENTE contra triángulos antiguos ya existentes (nunca contra los que se forman en este mismo turno)
+                            if (isPointEncapsulated3D(candidateCenter, existingTris, v)) {
+                                window.gameToast("BLOQUEO 3D", t('encapsulated'));
+                                continue;
+                            }
+
+                            formedTris.push({ p1: v[0], p2: v[1], p3: v[2], own: o, ts: nowTs }); 
+                        } 
                     }
                 }
             } 
-            return f;
+            return formedTris;
         };
 
         // ==========================================
@@ -2192,6 +2184,8 @@
                             window.start(); 
                             playSfx('win');
                         }
+                        // Forzar siempre redibujado 3D cuando llegan datos desde Firestore
+                        window.draw();
                         window.ui(); 
                     } else if (d.stat === 'end') {
                         window.endGame(d);
@@ -2325,14 +2319,16 @@
                     if (d.lastAction.type === 'tri' && pts.length > 0) {
                         playSfx('win');
                         const col = d.lastAction.by === 'host' ? d.p1.c : (d.p2?.c || '#ff0055');
-                        const recentTris = d.tris.slice(-d.lastAction.trisCount);
+                        const count = d.lastAction.trisCount || 1;
+                        const recentTris = (d.tris || []).slice(-count);
                         recentTris.forEach(tri => {
                             if (pts[tri.p1] && pts[tri.p2] && pts[tri.p3]) {
                                 const c = new THREE.Vector3().addVectors(pts[tri.p1].position, pts[tri.p2].position).add(pts[tri.p3].position).divideScalar(3);
                                 spawnTriangleExplosion(c, col);
                             }
                         });
-                        window.gameToast("🔺 TRIÁNGULO RIVAL", `Unió Nodos #${d.lastAction.p1 + 1} y #${d.lastAction.p2 + 1}`);
+                        const triTxt = count > 1 ? `¡Formó ${count} Triángulos!` : `Unió Nodos #${d.lastAction.p1 + 1} y #${d.lastAction.p2 + 1}`;
+                        window.gameToast("🔺 TRIÁNGULO RIVAL", triTxt);
                     } else {
                         playSfx('link');
                         window.gameToast("⚡ LÍNEA RIVAL", `Unió Nodos #${d.lastAction.p1 + 1} y #${d.lastAction.p2 + 1}`);
@@ -2343,23 +2339,34 @@
             // Gestión limpia de UI en Realidad Aumentada (WebXR o Cámara AR Universal)
             const arTxt = document.getElementById('ar-btn-txt');
             const isAnyAr = (ren && ren.xr.isPresenting) || isCameraArActive;
+            const pcControls = document.getElementById('pc-controls');
+            const acceptBtn = document.getElementById('btn-ar-accept');
+            const acceptTxt = document.getElementById('btn-ar-accept-txt');
+            const recalBtn = document.getElementById('btn-ar-recal');
+
             if (isAnyAr) {
                 document.getElementById('ar-controls').classList.remove('hidden');
                 document.getElementById('ar-controls').classList.add('flex');
                 document.getElementById('btn-start-ar-float').classList.add('hidden');
-                const acceptTxt = document.getElementById('btn-ar-accept-txt');
+                if (pcControls) pcControls.classList.add('hidden');
+
                 if (!placed) {
                     document.getElementById('ar-instructions').style.display = 'block';
-                    if (acceptTxt) acceptTxt.innerText = "FIJAR EN MESA";
+                    if (acceptBtn) acceptBtn.classList.add('animate-pulse');
+                    if (acceptTxt) acceptTxt.innerText = "📌 FIJAR JUEGO AQUÍ";
+                    if (recalBtn) recalBtn.classList.add('hidden');
                 } else {
                     document.getElementById('ar-instructions').style.display = 'none';
-                    if (acceptTxt) acceptTxt.innerText = localArLocked ? "DESBLOQUEAR MESA" : "FIJAR POSICIÓN";
+                    if (acceptBtn) acceptBtn.classList.remove('animate-pulse');
+                    if (acceptTxt) acceptTxt.innerText = localArLocked ? "🔒 TABLERO FIJO (DESBLOQUEAR)" : "📌 BLOQUEAR EN MESA";
+                    if (recalBtn) recalBtn.classList.remove('hidden');
                 }
             } else { 
                 document.getElementById('ar-controls').classList.add('hidden');
                 document.getElementById('ar-controls').classList.remove('flex');
                 document.getElementById('ar-instructions').style.display = 'none';
                 document.getElementById('btn-start-ar-float').classList.remove('hidden');
+                if (pcControls) pcControls.classList.remove('hidden');
                 if (arTxt) {
                     arTxt.innerText = t('start_ar');
                 }
@@ -2476,6 +2483,26 @@
         // 10. MOTOR 3D Y REALIDAD AUMENTADA UNIVERSAL (WEBXR + CÁMARA AR)
         // ==========================================
         let arSupportedFlag = false;
+        let devicePitch = 0;
+        let deviceYaw = 0;
+
+        // Escuchar sensores de orientación del celular para mover la mira sobre la superficie en Cámara AR Universal
+        window.addEventListener('deviceorientation', (e) => {
+            if (!isCameraArActive || placed) return;
+            if (e.beta !== null && e.gamma !== null) {
+                // Ajustar suavemente la posición de la retícula según hacia dónde inclines el celular
+                const targetZ = THREE.MathUtils.clamp(-0.6 + ((e.beta - 45) * 0.012), -1.2, 0.3);
+                const targetX = THREE.MathUtils.clamp((e.gamma * 0.012), -0.7, 0.7);
+                if (reticle && !placed) {
+                    reticle.position.x += (targetX - reticle.position.x) * 0.2;
+                    reticle.position.z += (targetZ - reticle.position.z) * 0.2;
+                }
+                if (ghostGroup && !placed && reticle) {
+                    ghostGroup.position.copy(reticle.position);
+                }
+            }
+        }, true);
+
         window.checkAR = () => {
             const el = document.getElementById('ar-status');
             if ('xr' in navigator) {
@@ -2540,23 +2567,24 @@
                     if (group) group.visible = false;
                     if (reticle) {
                         reticle.matrixAutoUpdate = true;
-                        reticle.position.set(0, -0.25, -0.35);
+                        reticle.position.set(0, -0.2, -0.35);
                         reticle.rotation.set(0, 0, 0);
+                        reticle.children.forEach(c => c.material.color.setHex(0x39ff14));
                         reticle.visible = true;
                     }
                     if (ghostGroup) {
-                        ghostGroup.position.set(0, -0.25, -0.35);
+                        ghostGroup.position.set(0, -0.2, -0.35);
                         ghostGroup.scale.set(0.45, 0.45, 0.45);
                         ghostGroup.visible = true;
                     }
                     if (cam) cam.position.set(0, 1.35, 1.85);
                     if (controls) {
-                        controls.target.set(0, -0.25, -0.35);
+                        controls.target.set(0, -0.2, -0.35);
                         controls.update();
                     }
 
                     document.getElementById('ar-instructions').style.display = 'block';
-                    document.getElementById('ar-instr-txt').innerHTML = `<span class='text-neon'>APUNTA TU CÁMARA A LA MESA O PISO</span><br>Toca la pantalla o "FIJAR AQUÍ" para anclar el tablero`;
+                    document.getElementById('ar-instr-txt').innerHTML = `<span class='text-neon'>MIRA VERDE DE SUPERFICIE ACTIVA</span><br>Apunta al lugar donde quieres jugar y pulsa <strong>"📌 FIJAR JUEGO AQUÍ"</strong>`;
                     document.getElementById('size-slider-container').style.display = 'flex';
                     playSfx('click');
                     window.ui();
@@ -2571,6 +2599,7 @@
             isCameraArActive = false;
             cameraArScanning = false;
             placed = true;
+            localArLocked = false;
             document.body.classList.remove('ar-camera-mode');
             const videoEl = document.getElementById('ar-camera-video');
             if (videoEl) {
@@ -2583,12 +2612,118 @@
             }
             if (reticle) reticle.visible = false;
             if (ghostGroup) ghostGroup.visible = false;
+            if (controls) {
+                controls.enabled = true;
+                controls.enablePan = true;
+            }
             if (group) {
                 group.visible = true;
                 group.position.set(0, 0, 0);
                 group.scale.set(1, 1, 1);
             }
+            document.getElementById('size-slider-container').style.display = 'none';
             window.recenter();
+            window.ui();
+        };
+
+        window.startARSession = () => {
+            window.toggleARMode();
+        };
+
+        window.exitAROnly = () => {
+            if (isCameraArActive) window.stopCameraAR();
+            if (ren && ren.xr.isPresenting) {
+                ren.xr.getSession().end().catch(console.error);
+            }
+        };
+
+        // Función unificada para el botón principal de AR: si aún no está puesto en la mesa lo fija, y si ya está puesto bloquea/desbloquea el movimiento
+        window.placeOrLockAR = () => {
+            if (!placed) {
+                window.doPlace();
+            } else {
+                window.lockLocalARBoard();
+            }
+        };
+
+        // Colocar tablero en el mundo físico (Funciona tanto en WebXR Nativo como en Cámara AR Universal)
+        window.doPlace = () => {
+            if ((ren && ren.xr.isPresenting && !placed) || (isCameraArActive && !placed)) {
+                placed = true; 
+                cameraArScanning = false;
+                localArLocked = true; // Fija el tablero en el lugar para poder moverse alrededor y seleccionar puntos cómodamente
+                if (reticle) {
+                    reticle.visible = false;
+                    if (ren && ren.xr.isPresenting) {
+                        if (reticle.matrixAutoUpdate) { 
+                            group.position.copy(reticle.position); 
+                            group.rotation.copy(reticle.rotation); 
+                        } else {
+                            group.position.setFromMatrixPosition(reticle.matrix); 
+                            group.rotation.setFromRotationMatrix(reticle.matrix);
+                        }
+                    } else {
+                        // En Cámara AR Universal lo ancla exactamente donde estaba la mira verde
+                        group.position.copy(reticle.position);
+                        group.rotation.set(0, THREE.MathUtils.degToRad(boardRotationY), 0);
+                        currentScale = 0.72;
+                        group.scale.set(currentScale, currentScale, currentScale);
+                        if (controls) {
+                            controls.target.copy(group.position);
+                            controls.enablePan = false;
+                            controls.update();
+                        }
+                    }
+                }
+                group.visible = true;
+                if (ghostGroup) ghostGroup.visible = false;
+                document.getElementById('ar-instructions').style.display = 'none';
+                document.getElementById('size-slider-container').style.display = 'flex';
+                playSfx('win');
+                window.gameToast("📌 JUEGO FIJADO EN SUPERFICIE", "Ahora puedes girar alrededor y tocar los puntos para jugar");
+                window.ui();
+            }
+        };
+
+        window.lockLocalARBoard = () => {
+            if (!placed) {
+                window.doPlace();
+                return;
+            }
+            localArLocked = !localArLocked;
+            if (controls && isCameraArActive) {
+                controls.enablePan = !localArLocked;
+            }
+            if (localArLocked) {
+                window.gameToast("🔒 TABLERO FIJO", "El tablero está anclado en la mesa. Gira alrededor y selecciona tus puntos");
+            } else {
+                window.gameToast("🔓 MODO LIBRE", "Puedes desplazar o reacomodar el tablero");
+            }
+            window.ui();
+        };
+
+        window.recalibrateAR = () => {
+            placed = false; 
+            cameraArScanning = true;
+            localArLocked = false;
+            if (controls) {
+                controls.enabled = true;
+                controls.enablePan = true;
+            }
+            if (group) group.visible = false; 
+            if (reticle) {
+                reticle.visible = true;
+                if (isCameraArActive) {
+                    reticle.matrixAutoUpdate = true;
+                    reticle.position.set(0, -0.2, -0.35);
+                }
+            }
+            if (ghostGroup) {
+                ghostGroup.visible = true;
+                if (isCameraArActive) ghostGroup.position.set(0, -0.2, -0.35);
+            }
+            document.getElementById('ar-instructions').style.display = 'block';
+            document.getElementById('ar-instr-txt').innerHTML = `<span class='text-warn'>ELIGE NUEVO LUGAR</span><br>Apunta a la superficie y pulsa <strong>"📌 FIJAR JUEGO AQUÍ"</strong>`;
             window.ui();
         };
 
@@ -2989,17 +3124,23 @@
             return sprite;
         }
 
-        // Redibujado optimizado con liberación de memoria GPU (Zero Memory Leaks)
+        // Redibujado optimizado con liberación de memoria GPU (Zero Memory Leaks) y resaltado de todos los triángulos
         window.draw = () => {
-            if (!S.data || !pts.length) return;
+            if (!S.data || !pts.length || !group) return;
             const d = S.data;
             const rivalSel = (selPt === null && d.activeSel !== undefined && d.activeSel !== null) ? d.activeSel : null;
+            const linesList = Array.isArray(d.lines) ? d.lines : [];
+            const trisList = Array.isArray(d.tris) ? d.tris : [];
+            const p1Col = (d.p1 && d.p1.c) ? d.p1.c : '#00f3ff';
+            const p2Col = (d.p2 && d.p2.c) ? d.p2.c : '#ff0055';
+            const p1Icon = (d.p1 && d.p1.i) ? d.p1.i : 'gem';
+            const p2Icon = (d.p2 && d.p2.i) ? d.p2.i : 'atom';
 
             pts.forEach((m, i) => {
                 const trapped = isNodeTrappedInCapsule(i);
-                const own = d.lines.filter(l => l.s === i || l.e === i).map(l => l.own);
+                const own = linesList.filter(l => Number(l.s) === i || Number(l.e) === i).map(l => l.own);
                 const isSelectedNow = (i === selPt || i === rivalSel);
-                const baseCol = isSelectedNow ? '#ffffff' : (trapped ? '#222222' : (own.includes('host') && own.includes('guest') ? '#b829ff' : (own.includes('host') ? d.p1.c : (own.includes('guest') ? (d.p2?.c || '#ff0055') : '#1c2d42'))));
+                const baseCol = isSelectedNow ? '#ffffff' : (trapped ? '#222222' : (own.includes('host') && own.includes('guest') ? '#b829ff' : (own.includes('host') ? p1Col : (own.includes('guest') ? p2Col : '#1c2d42'))));
                 const emiCol = i === selPt ? '#39ff14' : (i === rivalSel ? '#ffcc00' : (trapped ? '#111111' : (own.length > 0 ? baseCol : '#00f3ff')));
                 m.material.color.set(baseCol);
                 m.material.emissive.set(emiCol);
@@ -3015,19 +3156,28 @@
                 group.remove(c);
             });
 
-            const lineRadius = S.prof.skin === 'thick' ? 0.026 : 0.018;
+            const lineRadius = S.prof.skin === 'thick' ? 0.028 : 0.020;
 
-            d.lines.forEach(l => {
-                const ptsLine = [pts[l.s].position, pts[l.e].position];
+            linesList.forEach(l => {
+                const sIdx = Number(l.s);
+                const eIdx = Number(l.e);
+                if (!pts[sIdx] || !pts[eIdx]) return;
+                const ptsLine = [pts[sIdx].position, pts[eIdx].position];
                 const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ptsLine), 4, lineRadius, 8, false);
-                const col = l.own === 'host' ? d.p1.c : (d.p2?.c || '#ff0055');
+                const col = l.own === 'host' ? p1Col : p2Col;
                 const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col }));
                 mesh.userData.type = 'line'; 
+                mesh.raycast = () => {};
                 group.add(mesh);
             });
 
-            d.tris.forEach(t => {
-                const p1 = pts[t.p1].position; const p2 = pts[t.p2].position; const p3 = pts[t.p3].position;
+            // Encontrar el timestamp del último grupo de triángulos creados para resaltarlos con más brillo
+            const latestTriTs = trisList.reduce((max, t) => Math.max(max, t.ts || 0), 0);
+
+            trisList.forEach(t => {
+                const idx1 = Number(t.p1), idx2 = Number(t.p2), idx3 = Number(t.p3);
+                if (!pts[idx1] || !pts[idx2] || !pts[idx3]) return;
+                const p1 = pts[idx1].position; const p2 = pts[idx2].position; const p3 = pts[idx3].position;
                 const g = new THREE.BufferGeometry();
                 const vertices = new Float32Array([
                     p1.x, p1.y, p1.z,
@@ -3036,13 +3186,29 @@
                 ]);
                 g.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
                 g.computeVertexNormals();
-                const col = t.own === 'host' ? d.p1.c : (d.p2?.c || '#ff0055');
-                const icon = t.own === 'host' ? d.p1.i : (d.p2?.i || 'atom');
+                const col = t.own === 'host' ? p1Col : p2Col;
+                const icon = t.own === 'host' ? p1Icon : p2Icon;
+                const isNewlyFormed = latestTriTs > 0 && t.ts === latestTriTs && (Date.now() - latestTriTs < 8000);
                 
-                const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: col, opacity: 0.42, transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+                // Superficie translúcida del triángulo (más brillante si acaba de ser formado)
+                const mesh = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ 
+                    color: col, 
+                    opacity: isNewlyFormed ? 0.58 : 0.44, 
+                    transparent: true, 
+                    side: THREE.DoubleSide, 
+                    depthWrite: false 
+                }));
                 mesh.userData.type = 'tri'; 
                 mesh.raycast = () => {}; // CRÍTICO: Los triángulos conquistados no deben bloquear el toque a las esferas detrás de ellos
                 group.add(mesh);
+
+                // Contorno de neón para resaltar claramente cada triángulo individual (especialmente cuando una línea forma 2 o 3 a la vez)
+                const borderGeo = new THREE.BufferGeometry().setFromPoints([p1, p2, p3, p1]);
+                const borderMat = new THREE.LineBasicMaterial({ color: isNewlyFormed ? 0xffffff : col, transparent: true, opacity: 0.9 });
+                const borderLine = new THREE.Line(borderGeo, borderMat);
+                borderLine.userData.type = 'tri';
+                borderLine.raycast = () => {};
+                group.add(borderLine);
                 
                 const center = new THREE.Vector3().addVectors(p1, p2).add(p3).divideScalar(3);
                 const sprite = createIconSprite(icon, col);
