@@ -523,60 +523,60 @@
 
             <div id="mini-loader" class="hidden text-center">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-cyber mx-auto mb-2"></div>
-                <span id="mini-load-txt" class="bg-black/90 text-cyber text-[10px] px-3 py-1 rounded-full border border-cyber" data-i18n="loading">SINCRONIZANDO...</span>
-            </div>
-
-            <!-- Instrucciones de Escaneo AR -->
-            <div id="ar-instructions">
-                <div class="instr-card" id="ar-instr-txt">Apunta a una mesa o piso y toca para colocar</div>
-            </div>
-
-            <!-- Toast de Sistema Flotante -->
-            <div class="flex justify-center items-center flex-grow pointer-events-none">
-                <div id="toast" class="toast-box text-center">
-                    <p id="s-head" class="font-bold text-cyber text-xs mb-0.5 uppercase tracking-widest">SISTEMA</p>
-                    <p id="s-body" class="text-xs">Mensaje</p>
-                </div>
-            </div>
-
-            <!-- Controles Inferiores (Modo 3D y AR Unificados) -->
-            <div class="interactive flex flex-col gap-2 pb-4 w-full px-2">
-                <!-- Botón SIEMPRE VISIBLE para activar/desactivar Realidad Aumentada en cualquier celular -->
-                <div id="btn-start-ar-float" class="flex justify-center mb-1">
-                    <button id="btn-toggle-ar-main" onclick="window.toggleARMode()" class="btn-neon py-2.5 px-5 text-xs shadow-[0_0_20px_#00f3ff] bg-black/90 flex items-center gap-2 !border-neon !text-neon">
-                        <i class="fas fa-camera text-neon"></i> <span id="ar-btn-txt" data-i18n="start_ar">ACTIVAR REALIDAD AUMENTADA (AR)</span>
-                    </button>
+                    <div id="toast" class="toast-box text-center">
+                        <p id="s-head" class="font-bold text-cyber text-xs mb-0.5 uppercase tracking-widest">SISTEMA</p>
+                        <p id="s-body" class="text-xs">Mensaje</p>
+                    </div>
                 </div>
 
-                <!-- Controles cuando está dentro de WebXR Nativo -->
-                <div id="ar-controls" class="hidden justify-center gap-3 w-full">
-                    <button onclick="window.lockLocalARBoard()" id="btn-ar-accept" class="ar-sync-btn flex-1">
-                        <i class="fas fa-lock mr-1"></i> <span data-i18n="fix">FIJAR AQUÍ</span>
-                    </button>
-                    <button onclick="window.recalibrateAR()" id="btn-ar-recal" class="ar-sync-btn flex-1 !border-warn !text-warn">
-                        <i class="fas fa-arrows-alt mr-1"></i> <span data-i18n="move">REUBICAR</span>
-                    </button>
-                    <button onclick="window.exitAROnly()" class="ar-sync-btn !border-hot !text-hot px-3">
-                        <i class="fas fa-compress"></i> 3D
-                    </button>
-                </div>
+                <!-- Botón Flotante para entrar a Realidad Aumentada desde cualquier partida -->
+                <div class="interactive flex flex-col gap-2 w-full">
+                    <div id="btn-start-ar-float" class="flex justify-center mb-1">
+                        <button onclick="window.toggleARMode()" class="btn-neon py-2.5 px-5 text-xs shadow-[0_0_20px_rgba(0,243,255,0.4)] bg-black/90 flex items-center gap-2">
+                            <i class="fas fa-camera text-neon"></i> <span id="ar-btn-txt" data-i18n="start_ar">VER EN REALIDAD AUMENTADA (AR)</span>
+                        </button>
+                    </div>
 
-                <!-- Controles Estándar de Partida -->
-                <div class="flex justify-between items-center glass-panel px-4 py-2.5" id="pc-controls">
-                    <button onclick="window.confirmFinishGame()" class="btn-neon danger py-2 px-3 text-[10px] flex items-center gap-1.5">
-                        <i class="fas fa-flag"></i> <span data-i18n="surrender">RENDIRSE</span>
-                    </button>
-                    
-                    <button onclick="window.recenter()" id="btn-rec" class="btn-neon py-2 px-4 text-[10px] flex items-center gap-1.5">
-                        <i class="fas fa-crosshairs"></i> <span data-i18n="recenter">CENTRAR VISTA</span>
-                    </button>
+                    <!-- Controles cuando está dentro de Realidad Aumentada -->
+                    <div id="ar-controls" class="hidden flex-col gap-2 w-full">
+                        <!-- Barra de Calibración de Mesa Compartida (Para 2 celulares en la misma habitación) -->
+                        <div class="glass-panel px-3 py-2 flex items-center justify-between gap-2 border border-neon/50">
+                            <span class="text-[9px] text-neon font-bold uppercase leading-tight"><i class="fas fa-compass mr-1"></i>MESA AR<br>COMPARTIDA:</span>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="window.rotateARBoard(-15)" class="btn-neon px-2.5 py-1.5 text-[10px]" title="Girar Izquierda"><i class="fas fa-undo"></i></button>
+                                <button onclick="window.rotateARBoard(15)" class="btn-neon px-2.5 py-1.5 text-[10px]" title="Girar Derecha"><i class="fas fa-redo"></i></button>
+                                <button onclick="window.syncSharedARWithRival()" class="btn-neon !border-neon !text-neon px-2.5 py-1.5 text-[9px]"><i class="fas fa-sync"></i> IGUALAR</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-center gap-2 w-full">
+                            <button onclick="window.lockLocalARBoard()" id="btn-ar-accept" class="ar-sync-btn flex-1">
+                                <i class="fas fa-map-marker-alt mr-1"></i> <span id="btn-ar-accept-txt" data-i18n="fix">FIJAR EN MESA</span>
+                            </button>
+                            <button onclick="window.recalibrateAR()" id="btn-ar-recal" class="ar-sync-btn flex-1 !border-warn !text-warn">
+                                <i class="fas fa-crosshairs mr-1"></i> <span data-i18n="move">MOVER TERRENO</span>
+                            </button>
+                            <button onclick="window.exitAROnly()" class="ar-sync-btn !border-hot !text-hot px-3">
+                                <i class="fas fa-times"></i> 3D
+                            </button>
+                        </div>
+                    </div>
 
-                    <button onclick="window.toggleScaleSlider()" class="btn-neon gold py-2 px-3 text-[10px] flex items-center gap-1">
-                        <i class="fas fa-expand-arrows-alt"></i> ESCALA
-                    </button>
+                    <!-- Controles Estándar de Partida -->
+                    <div class="flex justify-between items-center glass-panel px-4 py-2.5" id="pc-controls">
+                        <button onclick="window.confirmFinishGame()" class="btn-neon danger py-2 px-3 text-[10px] flex items-center gap-1.5">
+                            <i class="fas fa-flag"></i> <span data-i18n="surrender">RENDIRSE</span>
+                        </button>
+                        
+                        <button onclick="window.recenter()" id="btn-rec" class="btn-neon py-2 px-4 text-[10px] flex items-center gap-1.5">
+                            <i class="fas fa-crosshairs"></i> <span data-i18n="recenter">CENTRAR VISTA</span>
+                        </button>
+
+                        <button onclick="window.toggleScaleSlider()" class="btn-neon gold py-2 px-3 text-[10px] flex items-center gap-1">
+                            <i class="fas fa-expand-arrows-alt"></i> ESCALA
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
 
         <!-- 4. PANTALLA DE FIN DE PARTIDA Y RECOMPENSAS -->
         <div id="win-screen" class="p-4">
@@ -983,6 +983,8 @@
         let html5QrCode = null;
         let arCameraStream = null;
         let isCameraArActive = false;
+        let cameraArScanning = false; // Indica si está apuntando para elegir terreno en Cámara AR
+        let boardRotationY = 0; // Rotación del tablero para alinear 2 celulares en la misma mesa
 
         function saveLocalEconomy() {
             localStorage.setItem('3lar_pts', S.points);
@@ -1778,7 +1780,19 @@
                 new THREE.MeshBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
             );
             outerRing.position.y = -0.03;
+            outerRing.raycast = () => {};
             boardBaseGroup.add(outerRing);
+            gridHelper.raycast = () => {};
+
+            // Marcador de Orientación Compartida (Faro Norte AR para que 2 celulares en la misma mesa se alineen igual)
+            const northMarker = new THREE.Mesh(
+                new THREE.ConeGeometry(0.08, 0.22, 4).rotateX(Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0x39ff14 })
+            );
+            northMarker.position.set(0, -0.02, 1.25);
+            northMarker.raycast = () => {};
+            boardBaseGroup.add(northMarker);
+
             group.add(boardBaseGroup);
 
             fxGroup = new THREE.Group();
@@ -1809,9 +1823,9 @@
                 m.userData.id = i;
                 m.userData.isNodeSphere = true;
                 
-                // Hitbox ajustado (0.085 en lugar de 0.14) para evitar que una esfera cercana robe el clic de otra esfera
+                // Hitbox táctil optimizado (0.11) para que en celular y PC detecte el toque de inmediato sin fallar
                 const hitSphere = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.085, 12, 12),
+                    new THREE.SphereGeometry(0.11, 14, 14),
                     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })
                 );
                 hitSphere.userData.id = i;
@@ -1920,10 +1934,10 @@
             updateValidNodeRings();
             const newSkips = (d.skips || 0) + 1; 
             if (newSkips >= 2) {
-                window.update({ stat: 'end' }); 
+                window.update({ stat: 'end', activeSel: null }); 
             } else { 
                 const nextRole = d.turn === 'host' ? 'guest' : 'host'; 
-                window.update({ movs: 0, turn: nextRole, dice: null, skips: newSkips }); 
+                window.update({ movs: 0, turn: nextRole, dice: null, skips: newSkips, activeSel: null }); 
                 window.gameToast(t('pass'), t('turn_skipped')); 
             } 
         };
@@ -1984,25 +1998,48 @@
         window.clickPt = (id) => {
             const d = S.data; 
             if (!d || d.stat !== 'play') return;
-            if (!isMyTurnNow()) return window.gameToast("✋", t('wait_turn'));
-            if (d.movs <= 0) {
-                playSfx('error');
-                return window.gameToast("🎲", t('roll_dice'));
+
+            // Si está en modo escaneo de terreno AR, primero debe fijar el tablero en la mesa
+            if ((ren && ren.xr.isPresenting || isCameraArActive) && !placed) {
+                window.doPlace();
+                return;
             }
-            if (ren.xr.isPresenting && !placed) return window.gameToast("AR", t('ar_tap_fix'));
+
+            // 1. Bloquear si NO es el turno de este jugador
+            if (!isMyTurnNow()) {
+                playSfx('error');
+                const activeName = d.turn === 'host' ? (d.hostName || 'Jugador 1') : (d.guestName || 'Jugador 2');
+                window.gameToast("✋ ESPERA TU TURNO", `Está jugando ${activeName}`);
+                return;
+            }
+
+            // 2. Exigir hundir el dado primero antes de poder seleccionar cualquier punto
+            if (!d.dice || d.movs <= 0) {
+                playSfx('error');
+                const dv = document.getElementById('dice-vis');
+                if (dv) {
+                    dv.classList.add('rolling');
+                    setTimeout(() => dv.classList.remove('rolling'), 350);
+                }
+                window.gameToast("🎲 LANZA EL DADO", "Hunde primero el dado central para activar tus líneas");
+                return;
+            }
             
+            // 3. Selección del primer punto o unión con el segundo punto (sincronizando en tiempo real con el otro dispositivo)
             if (selPt === null) { 
                 playSfx('click');
                 selPt = id; 
                 window.highlight(id, true); 
                 updateValidNodeRings();
-                window.gameToast(`NODO #${id + 1}`, "Toca otro punto para unir la línea");
+                window.update({ activeSel: id });
+                window.gameToast(`NODO #${id + 1} ACTIVO`, "Ahora toca otro punto con anillo verde para trazar la línea");
             } else { 
                 if (selPt === id) { 
                     playSfx('click');
                     window.highlight(id, false); 
                     selPt = null; 
                     updateValidNodeRings();
+                    window.update({ activeSel: null });
                     window.gameToast("CANCELADO", "Selección liberada");
                 } else { 
                     const prev = selPt;
@@ -2019,12 +2056,15 @@
             const check = canConnectNodes(p1, p2);
             if (!check.ok) {
                 playSfx('error');
-                // Si el nodo estaba ocupado, dejamos seleccionado el nuevo nodo para no interrumpir al jugador
+                // Mantener seleccionado el primer punto para que pueda intentar con otro punto válido de inmediato
+                selPt = p1;
+                window.highlight(p1, true);
+                updateValidNodeRings();
                 return window.gameToast(t('error'), t(check.reason));
             }
             
             const activeRole = getActiveRole();
-            const nl = [...d.lines, { s: p1, e: p2, own: activeRole }]; 
+            const nl = [...d.lines, { s: p1, e: p2, own: activeRole, ts: Date.now() }]; 
             const nt = window.checkTri(p1, p2, activeRole, nl); 
             const sc = { ...d.sc }; 
             
@@ -2050,7 +2090,17 @@
                 di = null; 
                 selPt = null;
             }
-            window.update({ lines: nl, tris: [...d.tris, ...nt], sc: sc, movs: m, turn: trn, dice: di, skips: 0 });
+            window.update({ 
+                lines: nl, 
+                tris: [...d.tris, ...nt], 
+                sc: sc, 
+                movs: m, 
+                turn: trn, 
+                dice: di, 
+                skips: 0,
+                activeSel: null,
+                lastAction: { type: nt.length > 0 ? 'tri' : 'line', p1, p2, by: activeRole, trisCount: nt.length, ts: Date.now() }
+            });
         };
 
         // Detección 3D Pura + Regla de No Triángulos Internos en Áreas Encapsuladas:
@@ -2199,11 +2249,13 @@
         // ==========================================
         // 9. INTERFAZ DE PARTIDA E INTELIGENCIA ARTIFICIAL
         // ==========================================
+        let lastProcessedActionTs = 0;
+
         window.update = (o) => {
             if (S.data) {
                 Object.assign(S.data, o);
             }
-            // 1. Si hay conexión directa P2P entre celulares, enviar el movimiento en tiempo real (< 50ms)
+            // 1. Si hay conexión directa P2P entre celulares/PC, enviar el movimiento en tiempo real (< 50ms)
             if (peerConn && peerConn.open) {
                 peerConn.send({ type: 'STATE_PATCH', patch: o });
             }
@@ -2260,18 +2312,48 @@
                 dv.classList.remove('my-turn-pulse');
                 dv.style.borderColor = '#444'; 
                 dv.style.color = '#666';
+                // Mostrar en tiempo real qué punto está seleccionando el rival
+                if (d.activeSel !== undefined && d.activeSel !== null) {
+                    window.gameToast("👀 RIVAL EN JUEGO", `Seleccionó el Nodo #${d.activeSel + 1}`);
+                }
+            }
+
+            // Reproducir efectos visuales y sonoros cuando el rival forma una línea o un triángulo en vivo
+            if (d.lastAction && d.lastAction.ts && d.lastAction.ts > lastProcessedActionTs) {
+                lastProcessedActionTs = d.lastAction.ts;
+                if (d.lastAction.by !== S.role) {
+                    if (d.lastAction.type === 'tri' && pts.length > 0) {
+                        playSfx('win');
+                        const col = d.lastAction.by === 'host' ? d.p1.c : (d.p2?.c || '#ff0055');
+                        const recentTris = d.tris.slice(-d.lastAction.trisCount);
+                        recentTris.forEach(tri => {
+                            if (pts[tri.p1] && pts[tri.p2] && pts[tri.p3]) {
+                                const c = new THREE.Vector3().addVectors(pts[tri.p1].position, pts[tri.p2].position).add(pts[tri.p3].position).divideScalar(3);
+                                spawnTriangleExplosion(c, col);
+                            }
+                        });
+                        window.gameToast("🔺 TRIÁNGULO RIVAL", `Unió Nodos #${d.lastAction.p1 + 1} y #${d.lastAction.p2 + 1}`);
+                    } else {
+                        playSfx('link');
+                        window.gameToast("⚡ LÍNEA RIVAL", `Unió Nodos #${d.lastAction.p1 + 1} y #${d.lastAction.p2 + 1}`);
+                    }
+                }
             }
 
             // Gestión limpia de UI en Realidad Aumentada (WebXR o Cámara AR Universal)
             const arTxt = document.getElementById('ar-btn-txt');
-            if (ren && ren.xr.isPresenting) {
+            const isAnyAr = (ren && ren.xr.isPresenting) || isCameraArActive;
+            if (isAnyAr) {
                 document.getElementById('ar-controls').classList.remove('hidden');
                 document.getElementById('ar-controls').classList.add('flex');
                 document.getElementById('btn-start-ar-float').classList.add('hidden');
+                const acceptTxt = document.getElementById('btn-ar-accept-txt');
                 if (!placed) {
                     document.getElementById('ar-instructions').style.display = 'block';
+                    if (acceptTxt) acceptTxt.innerText = "FIJAR EN MESA";
                 } else {
                     document.getElementById('ar-instructions').style.display = 'none';
+                    if (acceptTxt) acceptTxt.innerText = localArLocked ? "DESBLOQUEAR MESA" : "FIJAR POSICIÓN";
                 }
             } else { 
                 document.getElementById('ar-controls').classList.add('hidden');
@@ -2279,8 +2361,20 @@
                 document.getElementById('ar-instructions').style.display = 'none';
                 document.getElementById('btn-start-ar-float').classList.remove('hidden');
                 if (arTxt) {
-                    arTxt.innerText = isCameraArActive ? "VOLVER A FONDO 3D OSCURO" : t('start_ar');
+                    arTxt.innerText = t('start_ar');
                 }
+            }
+
+            // Sincronizar escala y rotación compartida si fue enviada desde el otro celular en AR
+            if (d.sharedArScale && isAnyAr && placed) {
+                currentScale = d.sharedArScale;
+                if (group) group.scale.set(currentScale, currentScale, currentScale);
+                const sl = document.getElementById('size-slider');
+                if (sl) sl.value = currentScale;
+            }
+            if (d.sharedArRotY !== undefined && isAnyAr && placed && S.role === 'guest') {
+                boardRotationY = d.sharedArRotY;
+                if (group) group.rotation.y = THREE.MathUtils.degToRad(boardRotationY);
             }
 
             window.draw();
@@ -2403,20 +2497,29 @@
         };
 
         // Botón Inteligente de Realidad Aumentada:
-        // Activa la Cámara AR en vivo para proyectar el holograma 3D sobre el mundo real en CUALQUIER celular
+        // 1. Intenta WebXR Nativo con detección láser de superficies si está soportado.
+        // 2. Si no, activa la Cámara AR Universal con Mira Láser de Escaneo de Terreno para fijar el tablero en tu mesa.
         window.toggleARMode = async () => {
-            // Si ya está en modo Cámara AR Universal, lo apaga y vuelve a fondo 3D oscuro
             if (isCameraArActive) {
                 window.stopCameraAR();
                 return;
             }
-            // Si está en sesión WebXR nativa, sale de ella
             if (ren && ren.xr.isPresenting) {
                 window.exitAROnly();
                 return;
             }
 
-            // Iniciar Cámara Trasera de Realidad Aumentada Universal (100% compatible con todos los Android y iPhone)
+            // Si el dispositivo soporta WebXR Nativo (ARCore), lo lanzamos primero para detección láser de plano real
+            if (arSupportedFlag && arBtn) {
+                try {
+                    arBtn.click();
+                    return;
+                } catch (e) {
+                    console.warn("Pasando a Cámara AR Universal:", e);
+                }
+            }
+
+            // Cámara Trasera de Realidad Aumentada Universal con Escaneo de Terreno (100% compatible Android/iOS)
             if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({
@@ -2428,27 +2531,46 @@
                     videoEl.srcObject = stream;
                     await videoEl.play();
                     isCameraArActive = true;
+                    cameraArScanning = true;
+                    placed = false;
+                    localArLocked = false;
                     document.body.classList.add('ar-camera-mode');
+
+                    // Ocultar el tablero temporalmente y mostrar la Mira Láser (Retícula) y el Fantasma para que el usuario elija la mesa
+                    if (group) group.visible = false;
+                    if (reticle) {
+                        reticle.matrixAutoUpdate = true;
+                        reticle.position.set(0, -0.25, -0.35);
+                        reticle.rotation.set(0, 0, 0);
+                        reticle.visible = true;
+                    }
+                    if (ghostGroup) {
+                        ghostGroup.position.set(0, -0.25, -0.35);
+                        ghostGroup.scale.set(0.45, 0.45, 0.45);
+                        ghostGroup.visible = true;
+                    }
+                    if (cam) cam.position.set(0, 1.35, 1.85);
+                    if (controls) {
+                        controls.target.set(0, -0.25, -0.35);
+                        controls.update();
+                    }
+
+                    document.getElementById('ar-instructions').style.display = 'block';
+                    document.getElementById('ar-instr-txt').innerHTML = `<span class='text-neon'>APUNTA TU CÁMARA A LA MESA O PISO</span><br>Toca la pantalla o "FIJAR AQUÍ" para anclar el tablero`;
                     document.getElementById('size-slider-container').style.display = 'flex';
-                    playSfx('win');
-                    window.gameToast("MODO AR ACTIVO", "Holograma proyectado en tu cámara. Usa 1 dedo para rotar y 2 para mover");
+                    playSfx('click');
                     window.ui();
                     return;
                 } catch (err) {
-                    console.warn("Intentando WebXR nativo tras permiso de cámara:", err);
+                    window.systemToast("PERMISO DE CÁMARA", "Permite el acceso a la cámara en tu navegador para activar la Realidad Aumentada");
                 }
-            }
-
-            // Si el navegador bloqueó getUserMedia directo pero tiene WebXR nativo
-            if (arSupportedFlag && arBtn) {
-                arBtn.click();
-            } else {
-                window.systemToast("PERMISO DE CÁMARA", "Acepta el permiso de cámara en tu navegador para ver en Realidad Aumentada");
             }
         };
 
         window.stopCameraAR = () => {
             isCameraArActive = false;
+            cameraArScanning = false;
+            placed = true;
             document.body.classList.remove('ar-camera-mode');
             const videoEl = document.getElementById('ar-camera-video');
             if (videoEl) {
@@ -2459,6 +2581,14 @@
                 arCameraStream.getTracks().forEach(track => track.stop());
                 arCameraStream = null;
             }
+            if (reticle) reticle.visible = false;
+            if (ghostGroup) ghostGroup.visible = false;
+            if (group) {
+                group.visible = true;
+                group.position.set(0, 0, 0);
+                group.scale.set(1, 1, 1);
+            }
+            window.recenter();
             window.ui();
         };
 
@@ -2473,48 +2603,98 @@
             }
         };
 
-        // Colocar tablero en el mundo físico local del jugador
+        // Colocar tablero en el mundo físico (Funciona tanto en WebXR Nativo como en Cámara AR Universal)
         window.doPlace = () => {
-            if (ren && ren.xr.isPresenting && !placed) {
+            if ((ren && ren.xr.isPresenting && !placed) || (isCameraArActive && !placed)) {
                 placed = true; 
-                localArLocked = false;
-                reticle.visible = false;
-                if (reticle.matrixAutoUpdate) { 
-                    group.position.copy(reticle.position); 
-                    group.rotation.copy(reticle.rotation); 
-                } else {
-                    group.position.setFromMatrixPosition(reticle.matrix); 
-                    group.rotation.setFromRotationMatrix(reticle.matrix);
+                cameraArScanning = false;
+                localArLocked = true; // Fija el tablero en el lugar para poder moverse alrededor y seleccionar puntos cómodamente
+                if (reticle) {
+                    reticle.visible = false;
+                    if (ren && ren.xr.isPresenting) {
+                        if (reticle.matrixAutoUpdate) { 
+                            group.position.copy(reticle.position); 
+                            group.rotation.copy(reticle.rotation); 
+                        } else {
+                            group.position.setFromMatrixPosition(reticle.matrix); 
+                            group.rotation.setFromRotationMatrix(reticle.matrix);
+                        }
+                    } else {
+                        // En Cámara AR Universal lo ancla sobre la superficie apuntada
+                        group.position.copy(reticle.position);
+                        group.rotation.set(0, THREE.MathUtils.degToRad(boardRotationY), 0);
+                        currentScale = 0.65;
+                        group.scale.set(currentScale, currentScale, currentScale);
+                    }
                 }
                 group.visible = true;
                 if (ghostGroup) ghostGroup.visible = false;
                 document.getElementById('ar-instructions').style.display = 'none';
                 document.getElementById('size-slider-container').style.display = 'flex';
                 playSfx('win');
-                window.gameToast(t('ar_sync'), t('ar_sync_msg'));
+                window.gameToast("MESA FIJADA", "Camina alrededor del holograma o gira la vista para organizar tu jugada");
+                window.ui();
             }
         };
 
         window.lockLocalARBoard = () => {
-            localArLocked = !localArLocked;
-            const btn = document.getElementById('btn-ar-accept');
-            if (localArLocked) {
-                btn.innerHTML = `<i class="fas fa-unlock mr-1"></i> DESBLOQUEAR`;
-                document.getElementById('size-slider-container').style.display = 'none';
-                window.gameToast("AR FIJADO", "Tablero anclado en tu mesa");
-            } else {
-                btn.innerHTML = `<i class="fas fa-lock mr-1"></i> ${t('fix')}`;
-                document.getElementById('size-slider-container').style.display = 'flex';
+            if (!placed) {
+                window.doPlace();
+                return;
             }
+            localArLocked = !localArLocked;
+            if (controls && isCameraArActive) {
+                // Incluso con la mesa fija permitimos orbitar con 2 dedos o caminar alrededor sin que el centro del tablero se desplace
+                controls.enablePan = !localArLocked;
+            }
+            if (localArLocked) {
+                window.gameToast("ANCLAJE FIJO", "El tablero está fijo en la mesa. Muévete alrededor y toca las esferas");
+            } else {
+                window.gameToast("AJUSTE LIBRE", "Puedes desplazar o escalar el holograma");
+            }
+            window.ui();
         };
 
         window.recalibrateAR = () => {
-            if (!ren || !ren.xr.isPresenting) return;
             placed = false; 
+            cameraArScanning = true;
             localArLocked = false;
-            group.visible = false; 
-            reticle.visible = true;
+            if (controls) controls.enabled = true;
+            if (group) group.visible = false; 
+            if (reticle) {
+                reticle.visible = true;
+                if (isCameraArActive) {
+                    reticle.matrixAutoUpdate = true;
+                    reticle.position.set(0, -0.25, -0.35);
+                }
+            }
+            if (ghostGroup) {
+                ghostGroup.visible = true;
+                if (isCameraArActive) ghostGroup.position.set(0, -0.25, -0.35);
+            }
             document.getElementById('ar-instructions').style.display = 'block';
+            document.getElementById('ar-instr-txt').innerHTML = `<span class='text-warn'>REUBICANDO EN LA MESA</span><br>Apunta al mismo punto de la mesa y toca "FIJAR EN MESA"`;
+            window.ui();
+        };
+
+        // Girar el tablero AR para que dos celulares en la misma mesa lo vean exactamente alineado
+        window.rotateARBoard = (degDelta) => {
+            boardRotationY = (boardRotationY + degDelta) % 360;
+            if (group) {
+                group.rotation.y = THREE.MathUtils.degToRad(boardRotationY);
+            }
+            playSfx('click');
+            window.gameToast("ORIENTACIÓN AR", `Ángulo de mesa: ${boardRotationY}° (Cono verde = Frente)`);
+        };
+
+        // Sincronizar escala y rotación entre los 2 celulares que están en la misma habitación
+        window.syncSharedARWithRival = () => {
+            window.update({
+                sharedArScale: currentScale,
+                sharedArRotY: boardRotationY
+            });
+            playSfx('win');
+            window.gameToast("AR COMPARTIDO", "Tamaño y orientación sincronizados con el otro celular");
         };
 
         window.toggleScaleSlider = () => {
@@ -2615,22 +2795,27 @@
             const rCross1 = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.015).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ color: 0x00f3ff }));
             const rCross2 = new THREE.Mesh(new THREE.PlaneGeometry(0.015, 0.28).rotateX(-Math.PI/2), new THREE.MeshBasicMaterial({ color: 0x00f3ff }));
             reticle.add(rRing); reticle.add(rCross1); reticle.add(rCross2);
-            reticle.visible = false; 
-            reticle.matrixAutoUpdate = false; 
+            reticle.visible = false;
+            reticle.matrixAutoUpdate = false;
             scene.add(reticle);
-            
-            ghostGroup = new THREE.Group(); 
+
+            ghostGroup = new THREE.Group();
             scene.add(ghostGroup);
 
-            ray = new THREE.Raycaster(); 
+            // CRÍTICO: Inicializar el Raycaster 3D y el Loop de Renderizado (sin esto los toques en las esferas no funcionaban)
+            ray = new THREE.Raycaster();
             ren.setAnimationLoop(window.loop);
-            
-            // Función auxiliar de precisión para encontrar la esfera exacta que el usuario quiso tocar
+
+            // Función auxiliar de precisión para encontrar la esfera exacta que el usuario quiso tocar (PC o Celular)
             function pickNodeFromPointer(clientX, clientY) {
-                const m = new THREE.Vector2((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
+                if (!ren || !cam || !pts.length || !ray) return null;
+                const rect = ren.domElement.getBoundingClientRect();
+                const normX = ((clientX - rect.left) / rect.width) * 2 - 1;
+                const normY = -((clientY - rect.top) / rect.height) * 2 + 1;
+                const m = new THREE.Vector2(normX, normY);
                 ray.setFromCamera(m, cam);
                 
-                // 1. Intersectar únicamente las esferas (ignorando líneas, anillos y pedestales)
+                // 1. Intersectar directamente las esferas en 3D
                 const hits = ray.intersectObjects(pts, true);
                 if (hits.length > 0) {
                     for (let h of hits) {
@@ -2642,9 +2827,9 @@
                     }
                 }
 
-                // 2. Asistencia magnética en pantalla: si el dedo tocó muy cerca de una esfera en el celular, elige la más cercana al toque en 2D
+                // 2. Asistencia magnética en pantalla táctil: ideal para dedos en celulares y AR
                 let closestId = null;
-                let minScreenDist = 0.11; // Radio magnético cómodo en coordenadas de pantalla
+                let minScreenDist = 0.17; // Radio magnético amplio para que nunca falle el toque en móvil
                 const tempVec = new THREE.Vector3();
                 pts.forEach((ptMesh, idx) => {
                     ptMesh.getWorldPosition(tempVec);
@@ -2661,9 +2846,12 @@
             }
 
             let pointerDownPos = { x: 0, y: 0 };
+            let pointerDownTime = 0;
+
             window.addEventListener('pointerdown', (e) => {
                 pointerDownPos = { x: e.clientX, y: e.clientY };
-            });
+                pointerDownTime = Date.now();
+            }, { passive: true });
 
             // Mostrar línea láser guía cuando tienes un nodo seleccionado y mueves el cursor/dedo hacia otro
             window.addEventListener('pointermove', (e) => {
@@ -2676,14 +2864,17 @@
                 } else {
                     previewLine.visible = false;
                 }
-            });
+            }, { passive: true });
 
             window.addEventListener('pointerup', (e) => {
                 if (e.target.closest('.interactive') || e.target.closest('#ar-zone') || e.target.closest('#size-slider-container') || e.target.closest('.top-bar-pill')) return;
-                // Si el usuario arrastró la cámara para rotar el tablero 3D, no disparamos selección de punto
-                if (Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > 16) return;
+                
+                const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+                const elapsed = Date.now() - pointerDownTime;
+                // Si el usuario arrastró el dedo para girar/orbitar alrededor del modelo, no dispara selección por accidente
+                if (moveDist > 30 && elapsed > 320) return;
 
-                if (ren.xr.isPresenting && !placed) { 
+                if (((ren && ren.xr.isPresenting) || isCameraArActive) && !placed) { 
                     window.doPlace(); 
                     return; 
                 }
@@ -2698,23 +2889,26 @@
             controls.enableDamping = true;
             controls.dampingFactor = 0.07;
             controls.maxDistance = 6;
-            controls.minDistance = 0.7;
+            controls.minDistance = 0.5;
             window.recenter();
         };
 
         window.loop = (time, frame) => {
             if (controls && controls.enabled) controls.update(); 
 
-            // Animación de pulso en el nodo seleccionado y orientación hacia la cámara de los anillos verdes
-            if (selPt !== null && pts[selPt]) {
-                const s = 1.45 + Math.sin(time * 0.008) * 0.2;
-                pts[selPt].scale.set(s, s, s);
-                pts.forEach(m => {
-                    if (m.userData.validRing && m.userData.validRing.visible && cam) {
-                        m.userData.validRing.lookAt(cam.position);
-                    }
-                });
-            }
+            // Animación de pulso tanto en el nodo seleccionado localmente como en el nodo que está seleccionando el rival en vivo
+            const activeId = selPt !== null ? selPt : (S.data && S.data.activeSel !== undefined ? S.data.activeSel : null);
+            pts.forEach((m, idx) => {
+                if (idx === activeId) {
+                    const s = 1.45 + Math.sin(time * 0.01) * 0.22;
+                    m.scale.set(s, s, s);
+                } else {
+                    m.scale.set(1, 1, 1);
+                }
+                if (m.userData.validRing && m.userData.validRing.visible && cam) {
+                    m.userData.validRing.lookAt(cam.position);
+                }
+            });
             for (let i = activeParticles.length - 1; i >= 0; i--) {
                 const p = activeParticles[i];
                 p.position.add(p.userData.vel);
@@ -2799,14 +2993,17 @@
         window.draw = () => {
             if (!S.data || !pts.length) return;
             const d = S.data;
+            const rivalSel = (selPt === null && d.activeSel !== undefined && d.activeSel !== null) ? d.activeSel : null;
+
             pts.forEach((m, i) => {
                 const trapped = isNodeTrappedInCapsule(i);
                 const own = d.lines.filter(l => l.s === i || l.e === i).map(l => l.own);
-                const baseCol = i === selPt ? '#ffffff' : (trapped ? '#222222' : (own.includes('host') && own.includes('guest') ? '#b829ff' : (own.includes('host') ? d.p1.c : (own.includes('guest') ? (d.p2?.c || '#ff0055') : '#1c2d42'))));
-                const emiCol = i === selPt ? '#39ff14' : (trapped ? '#111111' : (own.length > 0 ? baseCol : '#00f3ff'));
+                const isSelectedNow = (i === selPt || i === rivalSel);
+                const baseCol = isSelectedNow ? '#ffffff' : (trapped ? '#222222' : (own.includes('host') && own.includes('guest') ? '#b829ff' : (own.includes('host') ? d.p1.c : (own.includes('guest') ? (d.p2?.c || '#ff0055') : '#1c2d42'))));
+                const emiCol = i === selPt ? '#39ff14' : (i === rivalSel ? '#ffcc00' : (trapped ? '#111111' : (own.length > 0 ? baseCol : '#00f3ff')));
                 m.material.color.set(baseCol);
                 m.material.emissive.set(emiCol);
-                m.material.emissiveIntensity = i === selPt ? 2.0 : (trapped ? 0.15 : (own.length > 0 ? 1.3 : 0.6));
+                m.material.emissiveIntensity = isSelectedNow ? 2.2 : (trapped ? 0.15 : (own.length > 0 ? 1.3 : 0.6));
             });
 
             updateValidNodeRings();
