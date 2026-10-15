@@ -945,6 +945,15 @@
         let cameraArScanning = false; // Indica si está apuntando para elegir terreno en Cámara AR
         let boardRotationY = 0; // Rotación del tablero para alinear 2 celulares en la misma mesa
 
+        // Guardar código de sala si el jugador abrió el link directamente desde el lector QR de su celular
+        const initialUrlParams = new URLSearchParams(window.location.search);
+        let pendingAutoJoinRoom = (initialUrlParams.get('room') || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().substring(0, 4);
+        if (pendingAutoJoinRoom.length === 4) {
+            sessionStorage.setItem('3lar_pending_room', pendingAutoJoinRoom);
+        } else {
+            pendingAutoJoinRoom = sessionStorage.getItem('3lar_pending_room') || '';
+        }
+
         function saveLocalEconomy() {
             localStorage.setItem('3lar_pts', S.points);
             localStorage.setItem('3lar_coins', S.coins);
@@ -969,15 +978,17 @@
         });
 
         // ==========================================
-        // 4.5 MULTIJUGADOR DUAL (P2P GOOGLE STUN + FIRESTORE EN VIVO)
+        // 4.5 MULTIJUGADOR DUAL INFALIBLE (P2P RETRY + FIRESTORE EN VIVO)
         // ==========================================
         const ROOMS_COLL = db ? collection(db, 'artifacts', appId, 'public', 'data', 'rooms') : null;
-        const PEER_PREFIX = "3linear-v56-room-";
+        const PEER_PREFIX = "3linear-v58-room-";
         let hostWaitPollInterval = null;
+        let guestJoinRetryTimer = null;
 
         // Configuración oficial de servidores STUN de Google para atravesar firewalls entre PC y Celular
         const PEER_CONFIG = {
-            debug: 1,
+            debug: 0,
+            pingInterval: 4000,
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
@@ -994,6 +1005,10 @@
                 clearInterval(hostWaitPollInterval);
                 hostWaitPollInterval = null;
             }
+            if (guestJoinRetryTimer) {
+                clearInterval(guestJoinRetryTimer);
+                guestJoinRetryTimer = null;
+            }
             if (peerConn) {
                 try { peerConn.close(); } catch (e) {}
                 peerConn = null;
@@ -1002,6 +1017,19 @@
                 try { peer.destroy(); } catch (e) {}
                 peer = null;
             }
+        }
+
+        // Extractor inteligente de código de 4 letras desde cualquier QR, URL o texto
+        function extractRoomCode(rawText) {
+            if (!rawText) return '';
+            const text = String(rawText).trim();
+            const paramMatch = text.match(/[?&]room=([A-Za-z0-9]{4})/i);
+            if (paramMatch && paramMatch[1]) {
+                return paramMatch[1].toUpperCase();
+            }
+            const clean = text.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            if (clean.length === 4) return clean;
+            return '';
         }
 
         // Modal unificado para Escanear QR con la Cámara o Escribir el Código de 4 letras
@@ -1022,19 +1050,9 @@
                 html5QrCode = new Html5Qrcode("qr-reader");
                 html5QrCode.start(
                     { facingMode: "environment" },
-                    { fps: 10, qrbox: { width: 180, height: 180 } },
+                    { fps: 12, qrbox: { width: 190, height: 190 } },
                     (decodedText) => {
-                        let code = decodedText.trim().toUpperCase();
-                        try {
-                            if (decodedText.includes('room=')) {
-                                const urlObj = new URL(decodedText);
-                                code = (urlObj.searchParams.get('room') || '').toUpperCase();
-                            }
-                        } catch (e) {
-                            const match = decodedText.match(/room=([A-Z0-9]{4})/i);
-                            if (match) code = match[1].toUpperCase();
-                        }
-                        code = code.replace(/[^A-Z0-9]/g, '').substring(0, 4);
+                        const code = extractRoomCode(decodedText);
                         if (code && code.length === 4) {
                             playSfx('win');
                             window.stopQRScanner();
@@ -1073,7 +1091,7 @@
 
         window.joinFromScannerInput = () => {
             const raw = document.getElementById('scanner-code-in').value || '';
-            const c = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            const c = extractRoomCode(raw);
             if (c.length === 4) {
                 window.stopQRScanner();
                 window.join(c);
@@ -1091,6 +1109,74 @@
                     console.warn("Firebase Auth anónimo no disponible:", e);
                 }
             }
+        }
+
+        function setupHostPeerListeners(hostPeer) {
+            hostPeer.on('connection', (conn) => {
+                peerConn = conn;
+                const handleIncomingMsg = (msg) => {
+                    if (!msg) return;
+                    if (msg.type === 'JOIN_REQUEST') {
+                        let guestProf = msg.prof || { c: '#ff0055', i: 'bolt' };
+                        if (S.data.p1 && S.data.p1.c === guestProf.c) {
+                            guestProf.c = guestProf.c === '#00f3ff' ? '#ff0055' : '#00f3ff';
+                        }
+                        S.data.guest = msg.uid || 'guest_p2p';
+                        S.data.guestName = msg.name || 'AGENTE 2';
+                        S.data.p2 = guestProf;
+                        S.data.stat = 'play';
+                        S.data.lastUpdate = Date.now();
+
+                        // Enviar estado inicial varias veces para garantizar recepción en redes móviles
+                        const sendSync = () => {
+                            if (conn && conn.open) {
+                                try { conn.send({ type: 'SYNC_STATE', state: S.data }); } catch (e) {}
+                            }
+                        };
+                        sendSync();
+                        setTimeout(sendSync, 250);
+                        setTimeout(sendSync, 700);
+
+                        if (db && S.room) {
+                            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), S.data, { merge: true }).catch(()=>{});
+                        }
+
+                        isMatchmaking = false;
+                        if (matchmakingFallbackTimer) { clearTimeout(matchmakingFallbackTimer); matchmakingFallbackTimer = null; }
+                        if (hostWaitPollInterval) { clearInterval(hostWaitPollInterval); hostWaitPollInterval = null; }
+                        if (document.getElementById('s-game').classList.contains('hidden')) {
+                            window.start();
+                            playSfx('win');
+                        }
+                        window.draw();
+                        window.ui();
+                    } else if (msg.type === 'STATE_PATCH') {
+                        if (!S.data) S.data = {};
+                        Object.assign(S.data, msg.patch);
+                        if (msg.patch.lines) S.data.lines = [...msg.patch.lines];
+                        if (msg.patch.tris) S.data.tris = [...msg.patch.tris];
+                        if (msg.patch.sc) S.data.sc = { ...msg.patch.sc };
+                        if (S.data.stat === 'end') window.endGame(S.data);
+                        else {
+                            window.draw();
+                            window.ui();
+                        }
+                    }
+                };
+
+                conn.on('data', handleIncomingMsg);
+                conn.on('open', () => {
+                    if (S.data && S.data.stat === 'play') {
+                        try { conn.send({ type: 'SYNC_STATE', state: S.data }); } catch (e) {}
+                    }
+                });
+                conn.on('close', () => {
+                    if (S.data && S.data.stat === 'play' && !db) {
+                        window.systemToast("DESCONECTADO", "El otro dispositivo cerró la conexión");
+                        window.endGame(S.data);
+                    }
+                });
+            });
         }
 
         window.quickMatch = async () => {
@@ -1196,7 +1282,7 @@
         window.createRoom = () => window.create(false);
         window.joinRoom = () => { 
             const raw = document.getElementById('code-in').value || '';
-            const c = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase(); 
+            const c = extractRoomCode(raw); 
             if (c.length === 4) window.join(c); 
             else window.systemToast("CÓDIGO", "Ingresa las 4 letras de la sala"); 
         };
@@ -1217,61 +1303,8 @@
             window.start();
         };
 
-        function setupHostPeerListeners(hostPeer) {
-            hostPeer.on('connection', (conn) => {
-                peerConn = conn;
-                conn.on('data', (msg) => {
-                    if (!msg) return;
-                    if (msg.type === 'JOIN_REQUEST') {
-                        let guestProf = msg.prof || { c: '#ff0055', i: 'bolt' };
-                        if (S.data.p1 && S.data.p1.c === guestProf.c) {
-                            guestProf.c = guestProf.c === '#00f3ff' ? '#ff0055' : '#00f3ff';
-                        }
-                        S.data.guest = msg.uid || 'guest_p2p';
-                        S.data.guestName = msg.name || 'AGENTE 2';
-                        S.data.p2 = guestProf;
-                        S.data.stat = 'play';
-                        S.data.lastUpdate = Date.now();
-
-                        try { conn.send({ type: 'SYNC_STATE', state: S.data }); } catch (e) {}
-
-                        if (db && S.room) {
-                            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), S.data, { merge: true }).catch(()=>{});
-                        }
-
-                        isMatchmaking = false;
-                        if (matchmakingFallbackTimer) { clearTimeout(matchmakingFallbackTimer); matchmakingFallbackTimer = null; }
-                        if (hostWaitPollInterval) { clearInterval(hostWaitPollInterval); hostWaitPollInterval = null; }
-                        if (document.getElementById('s-game').classList.contains('hidden')) {
-                            window.start();
-                            playSfx('win');
-                        }
-                        window.draw();
-                        window.ui();
-                    } else if (msg.type === 'STATE_PATCH') {
-                        if (!S.data) S.data = {};
-                        Object.assign(S.data, msg.patch);
-                        if (msg.patch.lines) S.data.lines = [...msg.patch.lines];
-                        if (msg.patch.tris) S.data.tris = [...msg.patch.tris];
-                        if (msg.patch.sc) S.data.sc = { ...msg.patch.sc };
-                        if (S.data.stat === 'end') window.endGame(S.data);
-                        else {
-                            window.draw();
-                            window.ui();
-                        }
-                    }
-                });
-                conn.on('close', () => {
-                    if (S.data && S.data.stat === 'play' && !db) {
-                        window.systemToast("DESCONECTADO", "El otro dispositivo cerró la conexión");
-                        window.endGame(S.data);
-                    }
-                });
-            });
-        }
-
         window.create = async (pub) => {
-            if (!S.user) return; 
+            if (!S.user) await window.doGuestLogin();
             cleanupPeer();
             await ensureFirebaseAuth();
 
@@ -1292,19 +1325,49 @@
 
             if (!pub) {
                 document.getElementById('waiting-code').innerText = c;
+                // Usar solo el código directo de 4 letras en el QR para que el escáner dentro del juego lo lea al instante y sin errores de URL
                 const joinUrl = `${window.location.origin}${window.location.pathname}?room=${c}`;
-                document.getElementById('room-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(joinUrl)}`;
+                document.getElementById('room-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(joinUrl)}`;
                 const statusLbl = document.getElementById('waiting-status-lbl');
-                if (statusLbl) statusLbl.innerText = "PREPARANDO SALA " + c + "...";
+                if (statusLbl) statusLbl.innerText = "ABRIENDO CANAL P2P PARA SALA " + c + "...";
                 nav('s-waiting'); 
             }
 
+            // 1. Registrar siempre en PeerJS con autoreconexión si el ID o la red parpadean
+            const startHostPeer = () => {
+                if (typeof Peer === 'undefined') return;
+                try {
+                    peer = new Peer(PEER_PREFIX + c, PEER_CONFIG);
+                    peer.on('open', () => {
+                        const statusLbl = document.getElementById('waiting-status-lbl');
+                        if (statusLbl) statusLbl.innerText = `🟢 SALA ${c} LISTA. ESCANEA EL QR O ESCRIBE ${c}`;
+                    });
+                    setupHostPeerListeners(peer);
+                    peer.on('disconnected', () => {
+                        if (peer && !peer.destroyed && S.room === c) {
+                            try { peer.reconnect(); } catch (e) {}
+                        }
+                    });
+                    peer.on('error', (err) => {
+                        console.warn("Host Peer aviso:", err.type);
+                        if (err.type === 'unavailable-id') {
+                            // Si el código colisionó, generar otro automáticamente
+                            if (S.data && S.data.stat === 'wait') window.create(pub);
+                        }
+                    });
+                } catch (e) {
+                    console.warn("Error iniciando Peer:", e);
+                }
+            };
+            startHostPeer();
+
+            // 2. Respaldo simultáneo en Firestore
             if (db) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
                 setDoc(docRef, S.data).then(() => {
                     window.sub(c);
                     const statusLbl = document.getElementById('waiting-status-lbl');
-                    if (statusLbl) statusLbl.innerText = `SALA ${c} ACTIVA. ESCANEA EL QR O ESCRIBE EL CÓDIGO...`;
+                    if (statusLbl) statusLbl.innerText = `🟢 SALA ${c} ACTIVA. ESCANEA EL QR O ESCRIBE ${c}`;
                 }).catch((err) => {
                     console.warn("Aviso Firestore Create:", err);
                 });
@@ -1333,33 +1396,46 @@
                     } catch (e) {}
                 }, 1500);
             }
-
-            if (typeof Peer !== 'undefined') {
-                try {
-                    peer = new Peer(PEER_PREFIX + c, PEER_CONFIG);
-                    peer.on('open', () => {
-                        const statusLbl = document.getElementById('waiting-status-lbl');
-                        if (statusLbl) statusLbl.innerText = `SALA ${c} LISTA (P2P + NUBE). ESPERANDO RIVAL...`;
-                    });
-                    setupHostPeerListeners(peer);
-                } catch (e) {
-                    console.warn("Error iniciando Peer:", e);
-                }
-            }
         };
 
         window.join = async (rawCode) => {
-            if (!S.user) return; 
-            const c = (rawCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-            if (c.length !== 4) return window.systemToast("CÓDIGO", "El código debe tener 4 caracteres");
+            const c = extractRoomCode(rawCode);
+            if (c.length !== 4) return window.systemToast("CÓDIGO", "El código debe tener 4 letras o números");
+
+            // Si el usuario aún no había iniciado sesión (por ejemplo, vino directo de escanear el QR), iniciar sesión de invitado automáticamente
+            if (!S.user) {
+                await window.doGuestLogin();
+            }
 
             cleanupPeer();
             await ensureFirebaseAuth();
 
+            sessionStorage.removeItem('3lar_pending_room');
+            pendingAutoJoinRoom = '';
+
             S.cpu = false; S.passPlay = false; S.role = 'guest'; S.room = c; 
-            showLoad(true, `ENTRANDO A SALA ${c}...`);
+            showLoad(true, `CONECTANDO A SALA ${c}...`);
             
             let gameStartedFlag = false;
+
+            const finalizeGuestStart = (roomState) => {
+                if (gameStartedFlag) return;
+                gameStartedFlag = true;
+                if (guestJoinRetryTimer) {
+                    clearInterval(guestJoinRetryTimer);
+                    guestJoinRetryTimer = null;
+                }
+                S.data = roomState;
+                showLoad(false);
+                isMatchmaking = false;
+                document.getElementById('room-lbl').innerText = c;
+                if (document.getElementById('s-game').classList.contains('hidden')) {
+                    window.start();
+                    playSfx('win');
+                }
+                window.draw();
+                window.ui();
+            };
 
             const attemptFirestoreJoin = async () => {
                 if (!db || gameStartedFlag) return false;
@@ -1368,6 +1444,7 @@
                     const s = await getDoc(docRef);
                     if (!s.exists()) return false;
                     const d = s.data();
+                    if (d.stat === 'end') return false;
                     let guestProf = { ...S.prof };
                     if (d.p1 && d.p1.c === guestProf.c) {
                         guestProf.c = guestProf.c === '#00f3ff' ? '#ff0055' : '#00f3ff';
@@ -1380,89 +1457,104 @@
                         lastUpdate: Date.now()
                     };
                     await updateDoc(docRef, up);
-                    S.data = { ...d, ...up };
-                    gameStartedFlag = true;
-                    showLoad(false);
-                    isMatchmaking = false;
                     window.sub(c);
-                    document.getElementById('room-lbl').innerText = c;
-                    if (document.getElementById('s-game').classList.contains('hidden')) {
-                        window.start();
-                        playSfx('win');
-                    }
-                    window.draw();
-                    window.ui();
+                    finalizeGuestStart({ ...d, ...up });
                     return true;
                 } catch (e) {
-                    console.warn("Intento Firestore Join:", e);
                     return false;
                 }
             };
 
-            const joinedFirestoreImmediately = await attemptFirestoreJoin();
+            // 1. Intentar conexión por Firestore inmediatamente
+            await attemptFirestoreJoin();
+            if (gameStartedFlag) return;
 
+            // 2. Conectar por WebRTC P2P con reintentos automáticos cada 900ms hasta que el Host responda SYNC_STATE
             if (typeof Peer !== 'undefined') {
                 try {
                     peer = new Peer(PEER_CONFIG);
                     peer.on('open', () => {
-                        const conn = peer.connect(PEER_PREFIX + c, { reliable: true });
-                        peerConn = conn;
+                        const connectToHostPeer = () => {
+                            if (gameStartedFlag || !peer || peer.destroyed) return;
+                            const conn = peer.connect(PEER_PREFIX + c, { reliable: true });
+                            peerConn = conn;
 
-                        conn.on('open', () => {
-                            conn.send({
-                                type: 'JOIN_REQUEST',
-                                uid: S.user.uid,
-                                name: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2",
-                                prof: S.prof
+                            const sendJoinPacket = () => {
+                                if (gameStartedFlag || !conn || !conn.open) return;
+                                try {
+                                    conn.send({
+                                        type: 'JOIN_REQUEST',
+                                        uid: S.user.uid,
+                                        name: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2",
+                                        prof: S.prof
+                                    });
+                                } catch (e) {}
+                            };
+
+                            conn.on('open', () => {
+                                sendJoinPacket();
                             });
-                        });
 
-                        conn.on('data', (msg) => {
-                            if (!msg) return;
-                            if (msg.type === 'SYNC_STATE') {
-                                S.data = msg.state;
-                                gameStartedFlag = true;
-                                showLoad(false);
-                                isMatchmaking = false;
-                                if (document.getElementById('s-game').classList.contains('hidden')) {
-                                    window.start();
-                                    playSfx('win');
+                            conn.on('data', (msg) => {
+                                if (!msg) return;
+                                if (msg.type === 'SYNC_STATE') {
+                                    finalizeGuestStart(msg.state);
+                                } else if (msg.type === 'STATE_PATCH') {
+                                    if (!S.data) return;
+                                    Object.assign(S.data, msg.patch);
+                                    if (msg.patch.lines) S.data.lines = [...msg.patch.lines];
+                                    if (msg.patch.tris) S.data.tris = [...msg.patch.tris];
+                                    if (msg.patch.sc) S.data.sc = { ...msg.patch.sc };
+                                    if (S.data.stat === 'end') window.endGame(S.data);
+                                    else {
+                                        window.draw();
+                                        window.ui();
+                                    }
                                 }
-                                window.draw();
-                                window.ui();
-                            } else if (msg.type === 'STATE_PATCH') {
-                                if (!S.data) return;
-                                Object.assign(S.data, msg.patch);
-                                if (msg.patch.lines) S.data.lines = [...msg.patch.lines];
-                                if (msg.patch.tris) S.data.tris = [...msg.patch.tris];
-                                if (msg.patch.sc) S.data.sc = { ...msg.patch.sc };
-                                if (S.data.stat === 'end') window.endGame(S.data);
-                                else {
-                                    window.draw();
-                                    window.ui();
-                                }
+                            });
+                        };
+
+                        connectToHostPeer();
+
+                        // Bucle de reintento activo durante 8 segundos para asegurar que el paquete llegue aunque la red móvil tarde en abrir el puerto
+                        let attempts = 0;
+                        if (guestJoinRetryTimer) clearInterval(guestJoinRetryTimer);
+                        guestJoinRetryTimer = setInterval(async () => {
+                            if (gameStartedFlag) {
+                                clearInterval(guestJoinRetryTimer);
+                                guestJoinRetryTimer = null;
+                                return;
                             }
-                        });
+                            attempts++;
+                            await attemptFirestoreJoin();
+                            if (gameStartedFlag) return;
+
+                            if (peerConn && peerConn.open) {
+                                try {
+                                    peerConn.send({
+                                        type: 'JOIN_REQUEST',
+                                        uid: S.user.uid,
+                                        name: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2",
+                                        prof: S.prof
+                                    });
+                                } catch (e) {}
+                            } else if (attempts % 2 === 0) {
+                                connectToHostPeer();
+                            }
+
+                            if (attempts >= 10 && !gameStartedFlag) {
+                                clearInterval(guestJoinRetryTimer);
+                                guestJoinRetryTimer = null;
+                                showLoad(false);
+                                window.systemToast("SALA NO ENCONTRADA", `Verifica que la sala ${c} siga abierta en el otro dispositivo`);
+                                S.room = null;
+                                nav('s-menu');
+                            }
+                        }, 850);
                     });
-                } catch (e) {}
-            }
-
-            if (!joinedFirestoreImmediately) {
-                setTimeout(async () => {
-                    if (!gameStartedFlag) await attemptFirestoreJoin();
-                }, 1800);
-
-                setTimeout(async () => {
-                    if (!gameStartedFlag) {
-                        const ok = await attemptFirestoreJoin();
-                        if (!ok && !gameStartedFlag) {
-                            showLoad(false);
-                            window.systemToast("SALA NO ENCONTRADA", `Verifica que el código ${c} esté abierto en el otro dispositivo`);
-                            S.room = null;
-                            nav('s-menu');
-                        }
-                    }
-                }, 5000);
+                } catch (e) {
+                    console.warn("Error Guest Peer:", e);
+                }
             }
         };
 
@@ -1529,12 +1621,13 @@
             nav('s-menu');
             window.checkAR();
 
-            // Si el jugador entró con un link de invitación (?room=XXXX), lo une automáticamente
-            const urlParams = new URLSearchParams(window.location.search);
-            const autoRoom = urlParams.get('room');
-            if (autoRoom && autoRoom.length === 4) {
+            // Si el jugador entró con un link de invitación o código QR (?room=XXXX), lo une automáticamente
+            const roomToJoin = pendingAutoJoinRoom || extractRoomCode(window.location.search);
+            if (roomToJoin && roomToJoin.length === 4) {
+                pendingAutoJoinRoom = '';
+                sessionStorage.removeItem('3lar_pending_room');
                 window.history.replaceState({}, document.title, window.location.pathname);
-                setTimeout(() => window.join(autoRoom.toUpperCase()), 400);
+                setTimeout(() => window.join(roomToJoin), 350);
             }
         }
 
@@ -1542,12 +1635,17 @@
             onAuthStateChanged(auth, (u) => {
                 if (u) {
                     onUserAuthenticated(u);
+                } else if (pendingAutoJoinRoom && pendingAutoJoinRoom.length === 4) {
+                    // Si escaneó un QR con la cámara del celular y no tenía sesión iniciada, entra directo como invitado a la sala
+                    window.doGuestLogin();
                 } else {
                     S.user = null;
                     nav('s-login');
                     document.getElementById('login-btn-txt').innerText = t('login');
                 }
             });
+        } else if (pendingAutoJoinRoom && pendingAutoJoinRoom.length === 4) {
+            setTimeout(() => window.doGuestLogin(), 200);
         }
         
         window.setLanguage(window.detectLanguage());
