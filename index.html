@@ -633,140 +633,91 @@
         import { getAuth, signInWithPopup, signInAnonymously, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // ==========================================
-        // 1. FONDO DE PARTÍCULAS NEURONALES 2D
-        // ==========================================
-        const bgCanvas = document.getElementById('bg-canvas');
-        const bgCtx = bgCanvas.getContext('2d');
-        let bgNodes = [];
-
-        function initBgCanvas() {
-            bgCanvas.width = window.innerWidth;
-            bgCanvas.height = window.innerHeight;
-            bgNodes = Array.from({ length: 38 }, () => ({
-                x: Math.random() * bgCanvas.width,
-                y: Math.random() * bgCanvas.height,
-                vx: (Math.random() - 0.5) * 0.6,
-                vy: (Math.random() - 0.5) * 0.6,
-                r: Math.random() * 2 + 1
-            }));
-        }
-        function renderBgCanvas() {
-            if (!document.body.classList.contains('ar-active')) {
-                bgCtx.fillStyle = '#03060c';
-                bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-                for (let i = 0; i < bgNodes.length; i++) {
-                    const n = bgNodes[i];
-                    n.x += n.vx; n.y += n.vy;
-                    if (n.x < 0 || n.x > bgCanvas.width) n.vx *= -1;
-                    if (n.y < 0 || n.y > bgCanvas.height) n.vy *= -1;
-                    bgCtx.beginPath();
-                    bgCtx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-                    bgCtx.fillStyle = '#00f3ff';
-                    bgCtx.fill();
-                    for (let j = i + 1; j < bgNodes.length; j++) {
-                        const m = bgNodes[j];
-                        const dist = Math.hypot(n.x - m.x, n.y - m.y);
-                        if (dist < 130) {
-                            bgCtx.beginPath();
-                            bgCtx.moveTo(n.x, n.y);
-                            bgCtx.lineTo(m.x, m.y);
-                            bgCtx.strokeStyle = `rgba(0, 243, 255, ${(1 - dist / 130) * 0.25})`;
-                            bgCtx.lineWidth = 1;
-                            bgCtx.stroke();
-                        }
-                    }
-                }
-            }
-            requestAnimationFrame(renderBgCanvas);
-        }
-        window.addEventListener('resize', () => {
-            initBgCanvas();
-            if (cam && ren && !ren.xr.isPresenting) {
-                cam.aspect = window.innerWidth / window.innerHeight;
-                cam.updateProjectionMatrix();
-                ren.setSize(window.innerWidth, window.innerHeight);
-            }
-        });
-        initBgCanvas();
-        renderBgCanvas();
-
-        // ==========================================
-        // 2. SISTEMA MULTI-IDIOMA (I18N)
+        // 1. DICCIONARIO MULTI-IDIOMA (I18N)
         // ==========================================
         const TR = {
             es: {
                 login: "CONECTAR CON GOOGLE", guest_login: "JUGAR AHORA (INVITADO)", connecting: "CONECTANDO...", cancel: "CANCELAR",
-                agent: "AGENTE", color: "LÁSER", mark: "INSIGNIA", quick_match: "PARTIDA ONLINE", create_room: "CREAR SALA",
-                join_room: "CONECTAR CÓDIGO", vs_cpu: "VS IA BOT", pass_play: "1 CELULAR (2J)", shop: "MEJORAS", invite: "INVITAR",
-                ranking: "RANKING", check_hw: "VERIFICANDO HARDWARE AR...", searching: "BUSCANDO RIVAL", scanning: "ESCANEANDO SERVIDORES...",
-                private_room: "ENLACE DE SALA", share_code: "CÓDIGO DE CONEXIÓN:", waiting_player: "ESPERANDO CONEXIÓN DEL RIVAL...",
-                score: "TÚ", lines: "ENERGÍA:", skip: "PASAR", rival: "RIVAL", loading: "SINCRONIZANDO...", surrender: "RENDIRSE",
-                recenter: "CENTRAR", start_ar: "VER EN REALIDAD AUMENTADA (AR)", fix: "FIJAR AQUÍ", move: "REUBICAR",
-                victory: "VICTORIA", defeat: "DERROTA", draw: "EMPATE", back_menu: "VOLVER AL CENTRO DE MANDO",
-                wait_turn: "Turno del Rival", play_turn: "Conecta nodos cercanos", roll_dice: "Toca el dado para lanzar",
-                energy: "ENERGÍA", pass: "PASO", turn_skipped: "Turno cedido", error: "INVÁLIDO", login_req: "Inicia sesión primero",
-                room_full: "La sala ya está llena", ar_scan: "MODO ESCANEO AR", ar_tap_fix: "Toca la superficie para colocar el tablero",
-                ar_floor: "SUPERFICIE DETECTADA", ar_air: "MODO HOLOGRAMA LIBRE", ar_sync: "LISTO", ar_sync_msg: "Tablero fijado en tu espacio.",
-                pts: "PTS", win_msg: "¡DOMINIO TÁCTICO TOTAL!", lose_msg: "BUEN INTENTO, AGENTE", draw_msg: "EMPATE TÁCTICO",
-                blocked: "Atraviesa una pared o esfera existente", range: "Selecciona otro nodo distinto", occupied: "Esa línea ya está creada",
-                encapsulated: "¡Zona Encapsulada! No se permiten más triángulos adentro",
-                conquest: "¡Triángulo 3D Conquistado! +1 PTO", link: "Línea 3D establecida"
+                agent: "AGENTE", color: "LÁSER", mark: "INSIGNIA", quick_match: "BUSCAR RIVAL ONLINE", create_room: "CREAR SALA (QR)",
+                join_room: "ESCANEAR / CÓDIGO", vs_cpu: "ENTRENAR CONTRA IA BOT (AR / 3D)", invite: "INVITAR", ranking: "RANKING",
+                shop: "MEJORAS", check_hw: "SISTEMA AR / 3D LISTO", searching: "BUSCANDO RIVAL", scanning: "ESCANEANDO SERVIDORES...",
+                private_room: "SALA MULTIJUGADOR", share_code: "CÓDIGO PARA EL OTRO CELULAR:", waiting_player: "CANAL P2P LISTO. ESPERANDO RIVAL...",
+                score: "TÚ", lines: "ENERGÍA:", skip: "PASAR", rival: "RIVAL", loading: "CARGANDO...", surrender: "RENDIRSE",
+                recenter: "CENTRAR VISTA", start_ar: "VER EN REALIDAD AUMENTADA (AR)", move: "MOVER LUGAR", victory: "VICTORIA",
+                defeat: "DERROTA", draw: "EMPATE", back_menu: "VOLVER AL CENTRO DE MANDO", wait_turn: "Turno del Rival",
+                play_turn: "Usa tus líneas activas", roll_dice: "Toca el dado para lanzar", energy: "ENERGÍA", pass: "PASO",
+                turn_skipped: "Turno cedido", error: "ACCIÓN INVÁLIDA", login_req: "Inicia sesión primero",
+                ar_floor: "SUPERFICIE DETECTADA", ar_air: "MODO HOLOGRAMA FLOTANTE", ar_tap_fix: "Pulsa FIJAR JUEGO AQUÍ",
+                win_msg: "DOMINIO TÁCTICO COMPLETADO", lose_msg: "BUENA BATALLA, INTÉNTALO DE NUEVO", draw_msg: "EQUILIBRIO PERFECTO",
+                blocked: "Cruza una pared o nodo intermedio", range: "Fuera de rango", occupied: "Esa línea ya existe",
+                encapsulated: "¡Zona Encapsulada! Prohibido formar triángulos adentro"
             },
             en: {
                 login: "SIGN IN WITH GOOGLE", guest_login: "PLAY NOW (GUEST)", connecting: "CONNECTING...", cancel: "CANCEL",
-                agent: "AGENT", color: "LASER", mark: "BADGE", quick_match: "ONLINE MATCH", create_room: "CREATE ROOM",
-                join_room: "JOIN CODE", vs_cpu: "VS AI BOT", pass_play: "PASS & PLAY (2P)", shop: "UPGRADES", invite: "SHARE",
-                ranking: "RANKING", check_hw: "CHECKING AR HARDWARE...", searching: "SEARCHING RIVAL", scanning: "SCANNING NETWORK...",
-                private_room: "ROOM LINK", share_code: "CONNECTION CODE:", waiting_player: "WAITING FOR OPPONENT...",
-                score: "YOU", lines: "ENERGY:", skip: "SKIP", rival: "RIVAL", loading: "SYNCING...", surrender: "FORFEIT",
-                recenter: "CENTER", start_ar: "LAUNCH AUGMENTED REALITY (AR)", fix: "LOCK HERE", move: "MOVE",
-                victory: "VICTORY", defeat: "DEFEAT", draw: "DRAW", back_menu: "BACK TO COMMAND CENTER",
-                wait_turn: "Opponent's Turn", play_turn: "Connect highlighted nodes", roll_dice: "Tap the dice to roll",
-                energy: "ENERGY", pass: "PASS", turn_skipped: "Turn Skipped", error: "INVALID", login_req: "Login Required",
-                room_full: "Room is full", ar_scan: "AR SCAN MODE", ar_tap_fix: "Tap surface to place board",
-                ar_floor: "SURFACE DETECTED", ar_air: "FREE HOLOGRAM MODE", ar_sync: "LOCKED", ar_sync_msg: "Board locked in your space.",
-                pts: "PTS", win_msg: "TOTAL TACTICAL DOMINATION!", lose_msg: "GOOD EFFORT, AGENT", draw_msg: "TACTICAL BALANCE",
-                blocked: "Crosses an existing wall or node", range: "Select a different node", occupied: "Link already exists",
-                encapsulated: "Encapsulated Zone! Closed externally",
-                conquest: "3D Nexus Captured! +1 PT", link: "3D Link Established"
-            },
-            zh: {
-                login: "谷歌登录", guest_login: "游客立即开始", connecting: "连接中...", cancel: "取消",
-                agent: "特工", color: "激光", mark: "标志", quick_match: "在线匹配", create_room: "创建房间",
-                join_room: "输入代码", vs_cpu: "对战电脑", pass_play: "双人同机", shop: "商店", invite: "分享",
-                ranking: "排行榜", check_hw: "检查AR硬件...", searching: "寻找对手", scanning: "扫描网络...",
-                private_room: "私人房间", share_code: "连接代码:", waiting_player: "等待玩家加入...",
-                score: "你", lines: "能量:", skip: "跳过", rival: "对手", loading: "同步中...", surrender: "投降",
-                recenter: "重置视角", start_ar: "启动增强现实 (AR)", fix: "固定棋盘", move: "重新放置",
-                victory: "胜利", defeat: "失败", draw: "平局", back_menu: "返回主菜单",
-                wait_turn: "对手回合", play_turn: "连接绿色圆圈节点", roll_dice: "点击掷骰子",
-                energy: "能量", pass: "跳过", turn_skipped: "回合已跳过", error: "无效", login_req: "请先登录",
-                room_full: "房间已满", ar_scan: "AR扫描", ar_tap_fix: "点击平面放置棋盘",
-                ar_floor: "检测到平面", ar_air: "空中全息模式", ar_sync: "完成", ar_sync_msg: "棋盘已固定",
-                pts: "分", win_msg: "完全统治!", lose_msg: "再接再厉", draw_msg: "势均力敌",
-                blocked: "不能穿过现有的墙", range: "距离太远", occupied: "连线已存在",
-                encapsulated: "该区域已被外部封闭!",
-                conquest: "占领三角区! +1分", link: "链接已建立"
-            },
-            fr: {
-                login: "CONNEXION GOOGLE", guest_login: "JOUER EN INVITÉ", connecting: "CONNEXION...", cancel: "ANNULER",
-                agent: "AGENT", color: "LASER", mark: "INSIGNE", quick_match: "MATCH EN LIGNE", create_room: "CRÉER SALLE",
-                join_room: "CODE SALLE", vs_cpu: "VS BOT IA", pass_play: "2 JOUEURS LOCAL", shop: "BOUTIQUE", invite: "INVITER",
-                ranking: "CLASSEMENT", check_hw: "VÉRIFICATION AR...", searching: "RECHERCHE...", scanning: "SCAN RÉSEAU...",
-                private_room: "SALLE PRIVÉE", share_code: "CODE:", waiting_player: "EN ATTENTE D'UN JOUEUR...",
-                score: "VOUS", lines: "ÉNERGIE:", skip: "PASSER", rival: "RIVAL", loading: "CHARGEMENT...", surrender: "ABANDON",
-                recenter: "CENTRER", start_ar: "MODE RÉALITÉ AUGMENTÉE (AR)", fix: "FIXER ICI", move: "DÉPLACER",
-                victory: "VICTOIRE", defeat: "DÉFAITE", draw: "ÉGALITÉ", back_menu: "RETOUR AU MENU",
-                wait_turn: "Tour Adverse", play_turn: "Connectez les nœuds", roll_dice: "Lancez le dé",
-                energy: "ÉNERGIE", pass: "PASSE", turn_skipped: "Tour passé", error: "ERREUR", login_req: "Connexion requise",
-                room_full: "Salle complète", ar_scan: "SCAN AR", ar_tap_fix: "Touchez pour placer",
-                ar_floor: "SOL DÉTECTÉ", ar_air: "MODE HOLOGRAMME", ar_sync: "OK", ar_sync_msg: "Plateau fixé.",
-                pts: "PTS", win_msg: "DOMINATION TOTALE", lose_msg: "BIEN ESSAYÉ", draw_msg: "ÉQUILIBRE",
-                blocked: "Croisement interdit", range: "Trop loin", occupied: "Lien occupé",
-                encapsulated: "Zone encapsulée à l'extérieur!",
-                conquest: "Triangle Capturé! +1", link: "Lien Établi"
+                agent: "AGENT", color: "LASER", mark: "BADGE", quick_match: "FIND ONLINE MATCH", create_room: "CREATE ROOM (QR)",
+                join_room: "SCAN QR / CODE", vs_cpu: "TRAIN VS AI BOT (AR / 3D)", invite: "INVITE", ranking: "RANKING",
+                shop: "UPGRADES", check_hw: "AR / 3D SYSTEM READY", searching: "SEARCHING RIVAL", scanning: "SCANNING NETWORK...",
+                private_room: "MULTIPLAYER ROOM", share_code: "ROOM CODE:", waiting_player: "WAITING FOR PLAYER...",
+                score: "YOU", lines: "ENERGY:", skip: "SKIP", rival: "RIVAL", loading: "LOADING...", surrender: "SURRENDER",
+                recenter: "RE-CENTER", start_ar: "VIEW IN AUGMENTED REALITY (AR)", move: "MOVE BOARD", victory: "VICTORY",
+                defeat: "DEFEAT", draw: "DRAW", back_menu: "RETURN TO COMMAND CENTER", wait_turn: "Opponent's Turn",
+                play_turn: "Use your active lines", roll_dice: "Tap dice to roll", energy: "ENERGY", pass: "SKIP",
+                turn_skipped: "Turn skipped", error: "INVALID MOVE", login_req: "Login required",
+                ar_floor: "SURFACE DETECTED", ar_air: "FLOATING HOLOGRAM MODE", ar_tap_fix: "Tap LOCK BOARD HERE",
+                win_msg: "TACTICAL DOMINATION", lose_msg: "GOOD FIGHT, TRY AGAIN", draw_msg: "PERFECT BALANCE",
+                blocked: "Crosses an existing wall or node", range: "Invalid node", occupied: "Line already exists",
+                encapsulated: "Encapsulated Zone! Cannot form inner triangles"
             }
         };
+
+        // ==========================================
+        // 2. FONDO NEURONAL ANIMADO 2D (MENÚS)
+        // ==========================================
+        (function initBgCanvas() {
+            const c = document.getElementById('bg-canvas');
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            let w, h, nodes = [];
+            function resize() {
+                w = c.width = window.innerWidth;
+                h = c.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+            for (let i = 0; i < 32; i++) {
+                nodes.push({
+                    x: Math.random() * w, y: Math.random() * h,
+                    vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6
+                });
+            }
+            function drawBg() {
+                ctx.clearRect(0, 0, w, h);
+                ctx.fillStyle = '#00f3ff';
+                for (let i = 0; i < nodes.length; i++) {
+                    const n = nodes[i];
+                    n.x += n.vx; n.y += n.vy;
+                    if (n.x < 0 || n.x > w) n.vx *= -1;
+                    if (n.y < 0 || n.y > h) n.vy *= -1;
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, 1.8, 0, Math.PI * 2);
+                    ctx.fill();
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const n2 = nodes[j];
+                        const dist = Math.hypot(n.x - n2.x, n.y - n2.y);
+                        if (dist < 130) {
+                            ctx.strokeStyle = `rgba(0, 243, 255, ${(1 - dist / 130) * 0.22})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(n.x, n.y);
+                            ctx.lineTo(n2.x, n2.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(drawBg);
+            }
+            drawBg();
+        })();
 
         // ==========================================
         // 2.5 GESTOR PUBLICITARIO GOOGLE H5 GAMES ADS
@@ -1018,12 +969,31 @@
         });
 
         // ==========================================
-        // 8. MULTIJUGADOR P2P ENTRE CELULARES + ESCÁNER QR POR CÁMARA
+        // 4.5 MULTIJUGADOR DUAL (P2P GOOGLE STUN + FIRESTORE EN VIVO)
         // ==========================================
         const ROOMS_COLL = db ? collection(db, 'artifacts', appId, 'public', 'data', 'rooms') : null;
-        const PEER_PREFIX = "3linear-v55-room-";
+        const PEER_PREFIX = "3linear-v56-room-";
+        let hostWaitPollInterval = null;
+
+        // Configuración oficial de servidores STUN de Google para atravesar firewalls entre PC y Celular
+        const PEER_CONFIG = {
+            debug: 1,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' }
+                ]
+            }
+        };
 
         function cleanupPeer() {
+            if (hostWaitPollInterval) {
+                clearInterval(hostWaitPollInterval);
+                hostWaitPollInterval = null;
+            }
             if (peerConn) {
                 try { peerConn.close(); } catch (e) {}
                 peerConn = null;
@@ -1039,7 +1009,11 @@
             const modal = document.getElementById('qr-scanner-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            document.getElementById('scanner-code-in').value = '';
+            const inputEl = document.getElementById('scanner-code-in');
+            if (inputEl) {
+                inputEl.value = '';
+                setTimeout(() => inputEl.focus(), 200);
+            }
 
             if (typeof Html5Qrcode !== 'undefined') {
                 if (html5QrCode) {
@@ -1050,7 +1024,6 @@
                     { facingMode: "environment" },
                     { fps: 10, qrbox: { width: 180, height: 180 } },
                     (decodedText) => {
-                        // Extraer código de 4 letras del QR (ya sea URL completa o código directo)
                         let code = decodedText.trim().toUpperCase();
                         try {
                             if (decodedText.includes('room=')) {
@@ -1061,6 +1034,7 @@
                             const match = decodedText.match(/room=([A-Z0-9]{4})/i);
                             if (match) code = match[1].toUpperCase();
                         }
+                        code = code.replace(/[^A-Z0-9]/g, '').substring(0, 4);
                         if (code && code.length === 4) {
                             playSfx('win');
                             window.stopQRScanner();
@@ -1068,12 +1042,15 @@
                         }
                     },
                     () => {}
-                ).catch((err) => {
-                    document.getElementById('qr-reader').innerHTML = `
-                        <div class="p-6 text-center text-xs text-gray-400">
-                            <i class="fas fa-keyboard text-2xl text-cyber mb-2 block"></i>
-                            Escribe abajo las 4 letras del código que aparece en el otro celular.
-                        </div>`;
+                ).catch(() => {
+                    const readerEl = document.getElementById('qr-reader');
+                    if (readerEl) {
+                        readerEl.innerHTML = `
+                            <div class="p-6 text-center text-xs text-gray-300 flex flex-col items-center justify-center h-[200px]">
+                                <i class="fas fa-keyboard text-3xl text-cyber mb-3 block"></i>
+                                <span>Escribe abajo el código de 4 letras que aparece en la otra pantalla y pulsa <strong>ENTRAR</strong>.</span>
+                            </div>`;
+                    }
                 });
             }
         };
@@ -1083,15 +1060,20 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
+                try {
+                    html5QrCode.stop().then(() => {
+                        html5QrCode.clear();
+                        html5QrCode = null;
+                    }).catch(() => { html5QrCode = null; });
+                } catch (e) {
                     html5QrCode = null;
-                }).catch(() => {});
+                }
             }
         };
 
         window.joinFromScannerInput = () => {
-            const c = document.getElementById('scanner-code-in').value.trim().toUpperCase();
+            const raw = document.getElementById('scanner-code-in').value || '';
+            const c = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
             if (c.length === 4) {
                 window.stopQRScanner();
                 window.join(c);
@@ -1100,7 +1082,17 @@
             }
         };
 
-        // Partida Online Automática: Usa Lobby P2P Público + Respaldo Inteligente
+        async function ensureFirebaseAuth() {
+            if (!auth) return;
+            if (!auth.currentUser) {
+                try {
+                    await signInAnonymously(auth);
+                } catch (e) {
+                    console.warn("Firebase Auth anónimo no disponible:", e);
+                }
+            }
+        }
+
         window.quickMatch = async () => {
             if (!S.user) return window.systemToast("INFO", t('login_req'));
             S.cpu = false; S.passPlay = false; isMatchmaking = true;
@@ -1110,12 +1102,33 @@
             document.getElementById('match-status-title').innerText = t('searching');
             document.getElementById('match-status-desc').innerText = "CONECTANDO AL LOBBY MUNDIAL...";
 
-            // Intentar unirse primero al slot de lobby público P2P; si está libre, nos convertimos en Host del Lobby Público
+            await ensureFirebaseAuth();
+
+            if (ROOMS_COLL) {
+                try {
+                    const q = await getDocs(ROOMS_COLL);
+                    const activeThreshold = Date.now() - 45000;
+                    const openRooms = [];
+                    q.forEach(d => {
+                        const r = d.data();
+                        if (r.stat === 'wait' && r.pub === true && r.host !== S.user.uid && !r.guest && r.lastUpdate > activeThreshold) {
+                            openRooms.push(d.id.replace('room_', ''));
+                        }
+                    });
+                    if (openRooms.length > 0) {
+                        const targetRoom = openRooms[0];
+                        document.getElementById('match-status-title').innerText = "¡RIVAL ENCONTRADO!";
+                        document.getElementById('match-status-desc').innerText = `ENTRANDO A SALA ${targetRoom}...`;
+                        setTimeout(() => window.join(targetRoom), 300);
+                        return;
+                    }
+                } catch (e) {}
+            }
+
             const publicLobbyCode = "PUB1";
             if (typeof Peer !== 'undefined') {
-                const tempPeer = new Peer(PEER_PREFIX + publicLobbyCode);
+                const tempPeer = new Peer(PEER_PREFIX + publicLobbyCode, PEER_CONFIG);
                 tempPeer.on('open', () => {
-                    // Nadie estaba esperando en PUB1, así que nosotros esperamos como Host de PUB1
                     peer = tempPeer;
                     S.role = 'host';
                     S.room = publicLobbyCode;
@@ -1129,7 +1142,6 @@
                     };
                     setupHostPeerListeners(peer);
 
-                    // Si en 10 segundos no entra otro celular al lobby rápido, inicia partida contra Bot Táctico
                     if (matchmakingFallbackTimer) clearTimeout(matchmakingFallbackTimer);
                     matchmakingFallbackTimer = setTimeout(() => {
                         if (isMatchmaking && (!S.data || S.data.stat === 'wait')) {
@@ -1142,11 +1154,10 @@
                 });
 
                 tempPeer.on('error', (err) => {
-                    // Si el ID 'PUB1' ya está ocupado, ¡significa que hay otro jugador real esperando! Nos conectamos a él
                     if (err.type === 'unavailable-id') {
                         try { tempPeer.destroy(); } catch (e) {}
                         document.getElementById('match-status-title').innerText = "¡RIVAL ENCONTRADO!";
-                        document.getElementById('match-status-desc').innerText = "ENLAZANDO CELULARES...";
+                        document.getElementById('match-status-desc').innerText = "ENLAZANDO DISPOSITIVOS...";
                         setTimeout(() => window.join(publicLobbyCode), 400);
                     } else {
                         setTimeout(() => {
@@ -1176,7 +1187,7 @@
 
         window.cancelWaitingRoom = () => {
             cleanupPeer();
-            if (S.room && S.role === 'host' && db && !S.user?.isLocalFallback) {
+            if (S.room && S.role === 'host' && db) {
                 updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), { stat: 'end' }).catch(()=>{});
             }
             window.goHome();
@@ -1184,12 +1195,12 @@
 
         window.createRoom = () => window.create(false);
         window.joinRoom = () => { 
-            const c = document.getElementById('code-in').value.trim().toUpperCase(); 
+            const raw = document.getElementById('code-in').value || '';
+            const c = raw.replace(/[^a-zA-Z0-9]/g, '').toUpperCase(); 
             if (c.length === 4) window.join(c); 
             else window.systemToast("CÓDIGO", "Ingresa las 4 letras de la sala"); 
         };
         
-        // Modo VS IA Mejorado
         window.vsCpu = (customBotName = "CPU TÁCTICO") => {
             cleanupPeer();
             S.cpu = true; S.passPlay = false; S.role = 'host'; S.room = 'IA-BOT';
@@ -1206,14 +1217,11 @@
             window.start();
         };
 
-        // Configurar el Host P2P para recibir al segundo celular instantáneamente
         function setupHostPeerListeners(hostPeer) {
             hostPeer.on('connection', (conn) => {
                 peerConn = conn;
-                conn.on('open', () => {
-                    console.log("Rival conectado por P2P directo");
-                });
                 conn.on('data', (msg) => {
+                    if (!msg) return;
                     if (msg.type === 'JOIN_REQUEST') {
                         let guestProf = msg.prof || { c: '#ff0055', i: 'bolt' };
                         if (S.data.p1 && S.data.p1.c === guestProf.c) {
@@ -1225,15 +1233,20 @@
                         S.data.stat = 'play';
                         S.data.lastUpdate = Date.now();
 
-                        // Enviar estado inicial completo al Celular 2
-                        conn.send({ type: 'SYNC_STATE', state: S.data });
+                        try { conn.send({ type: 'SYNC_STATE', state: S.data }); } catch (e) {}
+
+                        if (db && S.room) {
+                            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), S.data, { merge: true }).catch(()=>{});
+                        }
 
                         isMatchmaking = false;
                         if (matchmakingFallbackTimer) { clearTimeout(matchmakingFallbackTimer); matchmakingFallbackTimer = null; }
+                        if (hostWaitPollInterval) { clearInterval(hostWaitPollInterval); hostWaitPollInterval = null; }
                         if (document.getElementById('s-game').classList.contains('hidden')) {
                             window.start();
                             playSfx('win');
                         }
+                        window.draw();
                         window.ui();
                     } else if (msg.type === 'STATE_PATCH') {
                         if (!S.data) S.data = {};
@@ -1249,18 +1262,19 @@
                     }
                 });
                 conn.on('close', () => {
-                    if (S.data && S.data.stat === 'play') {
-                        window.systemToast("DESCONECTADO", "El otro celular cerró la conexión");
+                    if (S.data && S.data.stat === 'play' && !db) {
+                        window.systemToast("DESCONECTADO", "El otro dispositivo cerró la conexión");
                         window.endGame(S.data);
                     }
                 });
             });
         }
 
-        // Crear Sala con soporte P2P Directo + QR en Vivo
         window.create = async (pub) => {
             if (!S.user) return; 
             cleanupPeer();
+            await ensureFirebaseAuth();
+
             S.cpu = false; S.passPlay = false; S.role = 'host'; 
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let c = '';
@@ -1281,149 +1295,176 @@
                 const joinUrl = `${window.location.origin}${window.location.pathname}?room=${c}`;
                 document.getElementById('room-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(joinUrl)}`;
                 const statusLbl = document.getElementById('waiting-status-lbl');
-                if (statusLbl) statusLbl.innerText = "INICIANDO SEÑAL DE SALA...";
+                if (statusLbl) statusLbl.innerText = "PREPARANDO SALA " + c + "...";
                 nav('s-waiting'); 
             }
 
-            // 1. Abrir Canal P2P WebRTC directo (Funciona sin importar permisos de Firebase)
-            if (typeof Peer !== 'undefined') {
-                peer = new Peer(PEER_PREFIX + c);
-                peer.on('open', () => {
-                    const statusLbl = document.getElementById('waiting-status-lbl');
-                    if (statusLbl) statusLbl.innerText = "SALA ACTIVA. ESCANEA EL QR EN EL OTRO CELULAR...";
-                });
-                setupHostPeerListeners(peer);
-            }
-
-            // 2. Respaldo secundario en Firestore si está disponible
-            if (db && !S.user.isLocalFallback) {
-                try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
-                    await setDoc(docRef, S.data);
+            if (db) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
+                setDoc(docRef, S.data).then(() => {
                     window.sub(c);
-                } catch (e) {
-                    console.log("Usando canal P2P directo para la sala:", c);
-                }
-            }
-        };
+                    const statusLbl = document.getElementById('waiting-status-lbl');
+                    if (statusLbl) statusLbl.innerText = `SALA ${c} ACTIVA. ESCANEA EL QR O ESCRIBE EL CÓDIGO...`;
+                }).catch((err) => {
+                    console.warn("Aviso Firestore Create:", err);
+                });
 
-        // Unirse a una Sala (por Escáner QR, Link o Código de 4 letras)
-        window.join = async (rawCode) => {
-            if (!S.user) return; 
-            const c = (rawCode || '').trim().toUpperCase();
-            if (c.length !== 4) return window.systemToast("CÓDIGO", "El código debe tener 4 caracteres");
-
-            cleanupPeer();
-            S.cpu = false; S.passPlay = false; S.role = 'guest'; S.room = c; 
-            showLoad(true, `CONECTANDO A SALA ${c}...`);
-            
-            let connectedViaP2P = false;
-
-            // 1. Conectar vía P2P WebRTC directo al Celular Host
-            if (typeof Peer !== 'undefined') {
-                peer = new Peer();
-                peer.on('open', () => {
-                    const conn = peer.connect(PEER_PREFIX + c, { reliable: true });
-                    peerConn = conn;
-
-                    const timeoutId = setTimeout(() => {
-                        if (!connectedViaP2P) {
-                            tryFirestoreJoinFallback(c);
-                        }
-                    }, 4500);
-
-                    conn.on('open', () => {
-                        connectedViaP2P = true;
-                        clearTimeout(timeoutId);
-                        conn.send({
-                            type: 'JOIN_REQUEST',
-                            uid: S.user.uid,
-                            name: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2",
-                            prof: S.prof
-                        });
-                    });
-
-                    conn.on('data', (msg) => {
-                        if (msg.type === 'SYNC_STATE') {
-                            S.data = msg.state;
-                            showLoad(false);
-                            isMatchmaking = false;
-                            if (document.getElementById('s-game').classList.contains('hidden')) {
-                                window.start();
-                                playSfx('win');
-                            }
-                            window.draw();
-                            window.ui();
-                        } else if (msg.type === 'STATE_PATCH') {
-                            if (!S.data) return;
-                            Object.assign(S.data, msg.patch);
-                            if (msg.patch.lines) S.data.lines = [...msg.patch.lines];
-                            if (msg.patch.tris) S.data.tris = [...msg.patch.tris];
-                            if (msg.patch.sc) S.data.sc = { ...msg.patch.sc };
-                            if (S.data.stat === 'end') window.endGame(S.data);
-                            else {
+                if (hostWaitPollInterval) clearInterval(hostWaitPollInterval);
+                hostWaitPollInterval = setInterval(async () => {
+                    if (!S.room || S.data?.stat === 'play') {
+                        clearInterval(hostWaitPollInterval);
+                        return;
+                    }
+                    try {
+                        const snap = await getDoc(docRef);
+                        if (snap.exists()) {
+                            const remoteData = snap.data();
+                            if (remoteData.stat === 'play' && remoteData.guest) {
+                                clearInterval(hostWaitPollInterval);
+                                S.data = remoteData;
+                                if (document.getElementById('s-game').classList.contains('hidden')) {
+                                    window.start();
+                                    playSfx('win');
+                                }
                                 window.draw();
                                 window.ui();
                             }
                         }
-                    });
+                    } catch (e) {}
+                }, 1500);
+            }
 
-                    conn.on('close', () => {
-                        if (S.data && S.data.stat === 'play') {
-                            window.systemToast("DESCONECTADO", "El anfitrión salió de la partida");
-                            window.endGame(S.data);
-                        }
+            if (typeof Peer !== 'undefined') {
+                try {
+                    peer = new Peer(PEER_PREFIX + c, PEER_CONFIG);
+                    peer.on('open', () => {
+                        const statusLbl = document.getElementById('waiting-status-lbl');
+                        if (statusLbl) statusLbl.innerText = `SALA ${c} LISTA (P2P + NUBE). ESPERANDO RIVAL...`;
                     });
-                });
-
-                peer.on('error', () => {
-                    if (!connectedViaP2P) tryFirestoreJoinFallback(c);
-                });
-            } else {
-                tryFirestoreJoinFallback(c);
+                    setupHostPeerListeners(peer);
+                } catch (e) {
+                    console.warn("Error iniciando Peer:", e);
+                }
             }
         };
 
-        async function tryFirestoreJoinFallback(c) {
-            if (!db) {
-                showLoad(false);
-                window.systemToast("NO ENCONTRADA", `Verifica que el otro celular tenga abierta la sala ${c}`);
-                S.room = null;
-                nav('s-menu');
-                return;
-            }
-            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
-            try {
-                const s = await getDoc(docRef);
-                if (!s.exists()) { 
-                    showLoad(false); 
-                    window.systemToast("SALA NO ACTIVA", `Asegúrate de que el otro celular esté en la pantalla del QR (${c})`); 
-                    S.room = null; 
-                    nav('s-menu');
-                    return; 
+        window.join = async (rawCode) => {
+            if (!S.user) return; 
+            const c = (rawCode || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+            if (c.length !== 4) return window.systemToast("CÓDIGO", "El código debe tener 4 caracteres");
+
+            cleanupPeer();
+            await ensureFirebaseAuth();
+
+            S.cpu = false; S.passPlay = false; S.role = 'guest'; S.room = c; 
+            showLoad(true, `ENTRANDO A SALA ${c}...`);
+            
+            let gameStartedFlag = false;
+
+            const attemptFirestoreJoin = async () => {
+                if (!db || gameStartedFlag) return false;
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${c}`);
+                try {
+                    const s = await getDoc(docRef);
+                    if (!s.exists()) return false;
+                    const d = s.data();
+                    let guestProf = { ...S.prof };
+                    if (d.p1 && d.p1.c === guestProf.c) {
+                        guestProf.c = guestProf.c === '#00f3ff' ? '#ff0055' : '#00f3ff';
+                    }
+                    const up = { 
+                        guest: S.user.uid, 
+                        guestName: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2", 
+                        stat: 'play', 
+                        p2: guestProf,
+                        lastUpdate: Date.now()
+                    };
+                    await updateDoc(docRef, up);
+                    S.data = { ...d, ...up };
+                    gameStartedFlag = true;
+                    showLoad(false);
+                    isMatchmaking = false;
+                    window.sub(c);
+                    document.getElementById('room-lbl').innerText = c;
+                    if (document.getElementById('s-game').classList.contains('hidden')) {
+                        window.start();
+                        playSfx('win');
+                    }
+                    window.draw();
+                    window.ui();
+                    return true;
+                } catch (e) {
+                    console.warn("Intento Firestore Join:", e);
+                    return false;
                 }
-                const d = s.data();
-                let guestProf = { ...S.prof };
-                if (d.p1 && d.p1.c === guestProf.c) {
-                    guestProf.c = guestProf.c === '#00f3ff' ? '#ff0055' : '#00f3ff';
-                }
-                let up = { 
-                    guest: S.user.uid, 
-                    guestName: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2", 
-                    stat: 'play', 
-                    p2: guestProf,
-                    lastUpdate: Date.now()
-                };
-                await updateDoc(docRef, up); 
-                window.sub(c); 
-                document.getElementById('room-lbl').innerText = c;
-            } catch(e) { 
-                showLoad(false); 
-                window.systemToast("CONEXIÓN", `No se encontró la sala ${c}`); 
-                S.room = null; 
-                nav('s-menu');
+            };
+
+            const joinedFirestoreImmediately = await attemptFirestoreJoin();
+
+            if (typeof Peer !== 'undefined') {
+                try {
+                    peer = new Peer(PEER_CONFIG);
+                    peer.on('open', () => {
+                        const conn = peer.connect(PEER_PREFIX + c, { reliable: true });
+                        peerConn = conn;
+
+                        conn.on('open', () => {
+                            conn.send({
+                                type: 'JOIN_REQUEST',
+                                uid: S.user.uid,
+                                name: S.user.displayName ? S.user.displayName.split(' ')[0] : "Agente 2",
+                                prof: S.prof
+                            });
+                        });
+
+                        conn.on('data', (msg) => {
+                            if (!msg) return;
+                            if (msg.type === 'SYNC_STATE') {
+                                S.data = msg.state;
+                                gameStartedFlag = true;
+                                showLoad(false);
+                                isMatchmaking = false;
+                                if (document.getElementById('s-game').classList.contains('hidden')) {
+                                    window.start();
+                                    playSfx('win');
+                                }
+                                window.draw();
+                                window.ui();
+                            } else if (msg.type === 'STATE_PATCH') {
+                                if (!S.data) return;
+                                Object.assign(S.data, msg.patch);
+                                if (msg.patch.lines) S.data.lines = [...msg.patch.lines];
+                                if (msg.patch.tris) S.data.tris = [...msg.patch.tris];
+                                if (msg.patch.sc) S.data.sc = { ...msg.patch.sc };
+                                if (S.data.stat === 'end') window.endGame(S.data);
+                                else {
+                                    window.draw();
+                                    window.ui();
+                                }
+                            }
+                        });
+                    });
+                } catch (e) {}
             }
-        }
+
+            if (!joinedFirestoreImmediately) {
+                setTimeout(async () => {
+                    if (!gameStartedFlag) await attemptFirestoreJoin();
+                }, 1800);
+
+                setTimeout(async () => {
+                    if (!gameStartedFlag) {
+                        const ok = await attemptFirestoreJoin();
+                        if (!ok && !gameStartedFlag) {
+                            showLoad(false);
+                            window.systemToast("SALA NO ENCONTRADA", `Verifica que el código ${c} esté abierto en el otro dispositivo`);
+                            S.room = null;
+                            nav('s-menu');
+                        }
+                    }
+                }, 5000);
+            }
+        };
 
         // ==========================================
         // 5. GESTIÓN DE IDIOMA Y NAVEGACIÓN DE PANTALLAS
@@ -2251,15 +2292,15 @@
             }
             // 1. Si hay conexión directa P2P entre celulares/PC, enviar el movimiento en tiempo real (< 50ms)
             if (peerConn && peerConn.open) {
-                peerConn.send({ type: 'STATE_PATCH', patch: o });
+                try { peerConn.send({ type: 'STATE_PATCH', patch: o }); } catch (e) {}
             }
             // 2. Actualizar UI local o fin de juego
             if (S.cpu || S.passPlay || (peerConn && peerConn.open)) { 
                 if (S.data && S.data.stat === 'end') window.endGame(S.data); 
                 else window.ui(); 
             }
-            // 3. Si además está conectado a Firestore, respaldar estado
-            if (!S.cpu && !S.passPlay && db && S.room && !S.user?.isLocalFallback) { 
+            // 3. Respaldar SIEMPRE en Firestore para que ambos dispositivos mantengan las líneas y triángulos sincronizados
+            if (!S.cpu && !S.passPlay && db && S.room) { 
                 updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${S.room}`), { ...o, lastUpdate: Date.now() }).catch(() => {}); 
             }
         };
@@ -2724,91 +2765,6 @@
             }
             document.getElementById('ar-instructions').style.display = 'block';
             document.getElementById('ar-instr-txt').innerHTML = `<span class='text-warn'>ELIGE NUEVO LUGAR</span><br>Apunta a la superficie y pulsa <strong>"📌 FIJAR JUEGO AQUÍ"</strong>`;
-            window.ui();
-        };
-
-        window.startARSession = () => {
-            window.toggleARMode();
-        };
-
-        window.exitAROnly = () => {
-            if (isCameraArActive) window.stopCameraAR();
-            if (ren && ren.xr.isPresenting) {
-                ren.xr.getSession().end().catch(console.error);
-            }
-        };
-
-        // Colocar tablero en el mundo físico (Funciona tanto en WebXR Nativo como en Cámara AR Universal)
-        window.doPlace = () => {
-            if ((ren && ren.xr.isPresenting && !placed) || (isCameraArActive && !placed)) {
-                placed = true; 
-                cameraArScanning = false;
-                localArLocked = true; // Fija el tablero en el lugar para poder moverse alrededor y seleccionar puntos cómodamente
-                if (reticle) {
-                    reticle.visible = false;
-                    if (ren && ren.xr.isPresenting) {
-                        if (reticle.matrixAutoUpdate) { 
-                            group.position.copy(reticle.position); 
-                            group.rotation.copy(reticle.rotation); 
-                        } else {
-                            group.position.setFromMatrixPosition(reticle.matrix); 
-                            group.rotation.setFromRotationMatrix(reticle.matrix);
-                        }
-                    } else {
-                        // En Cámara AR Universal lo ancla sobre la superficie apuntada
-                        group.position.copy(reticle.position);
-                        group.rotation.set(0, THREE.MathUtils.degToRad(boardRotationY), 0);
-                        currentScale = 0.65;
-                        group.scale.set(currentScale, currentScale, currentScale);
-                    }
-                }
-                group.visible = true;
-                if (ghostGroup) ghostGroup.visible = false;
-                document.getElementById('ar-instructions').style.display = 'none';
-                document.getElementById('size-slider-container').style.display = 'flex';
-                playSfx('win');
-                window.gameToast("MESA FIJADA", "Camina alrededor del holograma o gira la vista para organizar tu jugada");
-                window.ui();
-            }
-        };
-
-        window.lockLocalARBoard = () => {
-            if (!placed) {
-                window.doPlace();
-                return;
-            }
-            localArLocked = !localArLocked;
-            if (controls && isCameraArActive) {
-                // Incluso con la mesa fija permitimos orbitar con 2 dedos o caminar alrededor sin que el centro del tablero se desplace
-                controls.enablePan = !localArLocked;
-            }
-            if (localArLocked) {
-                window.gameToast("ANCLAJE FIJO", "El tablero está fijo en la mesa. Muévete alrededor y toca las esferas");
-            } else {
-                window.gameToast("AJUSTE LIBRE", "Puedes desplazar o escalar el holograma");
-            }
-            window.ui();
-        };
-
-        window.recalibrateAR = () => {
-            placed = false; 
-            cameraArScanning = true;
-            localArLocked = false;
-            if (controls) controls.enabled = true;
-            if (group) group.visible = false; 
-            if (reticle) {
-                reticle.visible = true;
-                if (isCameraArActive) {
-                    reticle.matrixAutoUpdate = true;
-                    reticle.position.set(0, -0.25, -0.35);
-                }
-            }
-            if (ghostGroup) {
-                ghostGroup.visible = true;
-                if (isCameraArActive) ghostGroup.position.set(0, -0.25, -0.35);
-            }
-            document.getElementById('ar-instructions').style.display = 'block';
-            document.getElementById('ar-instr-txt').innerHTML = `<span class='text-warn'>REUBICANDO EN LA MESA</span><br>Apunta al mismo punto de la mesa y toca "FIJAR EN MESA"`;
             window.ui();
         };
 
